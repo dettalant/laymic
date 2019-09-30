@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "module": "es6",
+    "esModuleInterop": true,
+    "charset": "utf8",
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationDir": "dist/types",
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["src/*"],
+      "swiper": ["types/swiper"]
+    },
+    "typeRoots": ["types", "node_modules/@types"]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+
+}

@@ -1,0 +1,49 @@
+[config]
+skip_core_tasks = true
+
+[tasks.clean]
+script = [
+"""
+dist="./dist"
+[ -d $dist ] \
+  && find $dist -maxdepth 1 ! -path $dist | xargs -r rm -r \
+  || :
+
+pub="./public"
+[ -d $pub ] \
+  && find $pub -maxdepth 1 ! -path $pub  ! -path $pub/base.html ! -path $pub/main.css ! -path $pub/swiper.css ! -path $pub/ksact2_75 | xargs -r rm -r \
+  || :
+"""
+]
+
+[tasks.copy]
+script = [
+"""
+dist="./dist"
+pub="./public"
+
+cp $dist/index_iife.js $pub
+
+cat $pub/base.html \
+  | sed -e 's/{{$date}}/'$(date +%s)'/g' \
+  > $pub/index.html
+"""
+]
+
+[tasks.rollup]
+command = "yarn"
+args = ["run", "rollup", "-c"]
+
+[tasks.build]
+dependencies = [
+  "clean",
+  "rollup"
+]
+
+[tasks.serve]
+command = "yarn"
+args = ["run", "http-server", "./public", "-p", "8931"]
+dependencies = [
+  "build",
+  "copy"
+]
