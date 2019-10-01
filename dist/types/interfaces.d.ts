@@ -1,8 +1,17 @@
+export interface IconData {
+    id: string;
+    viewBox: string;
+    pathDs: string[];
+}
+export interface MangaViewerIcons {
+    close: IconData;
+}
 export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
     isLTR?: boolean;
     isLightbox?: boolean;
+    icons?: MangaViewerIcons;
 }
 export interface PageSize {
     w: number;

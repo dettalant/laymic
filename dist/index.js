@@ -8092,20 +8092,40 @@ const viewerCnt = () => {
     return _viewerCntNum++;
 };
 
-class MangaViewer {
-    constructor(queryStr, pages, options) {
-        const rootEl = document.querySelector(queryStr);
-        if (!(rootEl instanceof HTMLElement))
-            throw new Error("rootElの取得に失敗");
-        rootEl.classList.add("mangaViewer_root");
-        const controllerEl = document.createElement("div");
-        controllerEl.className = "swiper-controller";
-        const swiperEl = document.createElement("div");
+class ViewerHTMLBuilder {
+    constructor(viewerId, icons) {
+        this.icons = this.defaultMangaViewerIcons;
+        this.viewerId = viewerId;
+        if (icons)
+            this.icons = Object.assign(this.icons, icons);
+    }
+    get mangaViewerId() {
+        return "mangaViewer" + this.viewerId;
+    }
+    get mangaViewerControllerId() {
+        return "mangaViewerController" + this.viewerId;
+    }
+    get defaultMangaViewerIcons() {
+        const close = {
+            id: "mangaViewer_svgClose",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            ]
+        };
+        return {
+            close
+        };
+    }
+    createSwiperContainer(id, pages, isLTR) {
+        const swiperEl = this.createDiv();
         swiperEl.className = "swiper-container";
-        const wrapperEl = document.createElement("div");
+        swiperEl.id = id;
+        swiperEl.dir = (isLTR) ? "" : "rtl";
+        const wrapperEl = this.createDiv();
         wrapperEl.className = "swiper-wrapper";
         for (let p of pages) {
-            const divEl = document.createElement("div");
+            const divEl = this.createDiv();
             divEl.className = "swiper-slide";
             const imgEl = new Image();
             imgEl.dataset.src = p;
@@ -8114,88 +8134,27 @@ class MangaViewer {
             wrapperEl.appendChild(divEl);
         }
         swiperEl.appendChild(wrapperEl);
-        rootEl.appendChild(controllerEl);
-        rootEl.appendChild(swiperEl);
-        this.el = {
-            rootEl,
-            swiperEl,
-            controllerEl
-        };
-        if (options) {
-            const [pw, ph] = (options.pageWidth && options.pageHeight)
-                ? [options.pageWidth, options.pageHeight]
-                : [720, 1024];
-            const gcd = calcGCD(pw, ph);
-            const isLTR = (options.isLTR) ? options.isLTR : false;
-            this.state = {
-                multiplyNum: 0.9,
-                swiperRect: this.swiperElRect,
-                viewerId: viewerCnt(),
-                pageSize: {
-                    w: pw,
-                    h: ph,
-                },
-                pageAspect: {
-                    w: pw / gcd,
-                    h: ph / gcd,
-                },
-                isLTR,
-            };
-        }
-        else {
-            this.state = this.defaultMangaViewerStates;
-        }
-        if (this.state.viewerId === 0) {
-            // ページにつき一度だけの処理
-            this.addSvgIcons();
-        }
-        this.el.swiperEl.id = this.mangaViewerId;
-        this.el.swiperEl.dir = (this.state.isLTR) ? "" : "rtl";
-        this.el.controllerEl.id = this.mangaViewerControllerId;
-        this.cssPageWidthUpdate();
-        this.swiper = new Swiper("#" + this.mangaViewerId, {
-            direction: "horizontal",
-            loop: false,
-            effect: "slide",
-            speed: 200,
-            slidesPerView: 2,
-            slidesPerGroup: 2,
-            centeredSlides: false,
-            on: {
-                resize: () => {
-                    // swiperElRectの更新
-                    this.state.swiperRect = this.swiperElRect;
-                    this.cssPageWidthUpdate();
-                },
-                tap: (e) => this.slideClickHandler(e),
-            },
-            keyboard: true,
-            mousewheel: true,
-            lazy: {
-                loadPrevNext: true,
-                loadPrevNextAmount: 4,
-            },
-        });
+        return swiperEl;
     }
-    addSvgIcons() {
+    createViewerController(id) {
+        const ctrlEl = this.createDiv();
+        ctrlEl.className = "mangaViewer_controller";
+        ctrlEl.id = id;
+        return ctrlEl;
+    }
+    createSVGIcons() {
         const ns = "http://www.w3.org/2000/svg";
         const linkNs = "http://www.w3.org/1999/xlink";
-        const icons = [
-            {
-                id: "mv_svgClose",
-                viewBox: "0 0 24 24",
-                pathDs: [
-                    "M10 2c-1.82 0-3.53.5-5 1.35C7.99 5.08 10 8.3 10 12s-2.01 6.92-5 8.65C6.47 21.5 8.18 22 10 22c5.52 0 10-4.48 10-10S15.52 2 10 2z"
-                ]
-            }
-        ];
         const svgCtn = document.createElementNS(ns, "svg");
         svgCtn.setAttributeNS(null, "version", "1.1");
         svgCtn.setAttribute("xmlns", ns);
         svgCtn.setAttribute("xmlns:xlink", linkNs);
         svgCtn.setAttribute("class", "mangaViewer_svg_container");
         const defs = document.createElementNS(ns, "defs");
-        icons.forEach(icon => {
+        Object.values(this.icons).forEach(icon => {
+            if (!this.isIconData(icon)) {
+                return;
+            }
             const symbol = document.createElementNS(ns, "symbol");
             symbol.setAttribute("id", icon.id);
             symbol.setAttribute("viewBox", icon.viewBox);
@@ -8207,7 +8166,114 @@ class MangaViewer {
             defs.appendChild(symbol);
         });
         svgCtn.appendChild(defs);
-        document.body.appendChild(svgCtn);
+        return svgCtn;
+    }
+    createDiv() {
+        return document.createElement("div");
+    }
+    isIconData(icon) {
+        return typeof icon.id === "string"
+            && typeof icon.viewBox === "string"
+            && Array.isArray(icon.pathDs);
+    }
+}
+
+class MangaViewer {
+    constructor(queryStr, pages, options) {
+        this.state = this.defaultMangaViewerStates;
+        const rootEl = document.querySelector(queryStr);
+        if (!(rootEl instanceof HTMLElement))
+            throw new Error("rootElの取得に失敗");
+        const builder = new ViewerHTMLBuilder(this.state.viewerId);
+        if (this.state.viewerId === 0) {
+            // ページにつき一度だけの処理
+            const svgCtn = builder.createSVGIcons();
+            document.body.appendChild(svgCtn);
+        }
+        if (options) {
+            const [pw, ph] = (options.pageWidth && options.pageHeight)
+                ? [options.pageWidth, options.pageHeight]
+                : [720, 1024];
+            const gcd = calcGCD(pw, ph);
+            this.state.pageSize = {
+                w: pw,
+                h: ph
+            };
+            this.state.pageAspect = {
+                w: pw / gcd,
+                h: ph / gcd,
+            };
+            this.state.isLTR = (options.isLTR) ? options.isLTR : false;
+        }
+        rootEl.classList.add("mangaViewer_root");
+        const controllerEl = builder.createViewerController(this.mangaViewerControllerId);
+        const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
+        rootEl.appendChild(controllerEl);
+        rootEl.appendChild(swiperEl);
+        this.el = {
+            rootEl,
+            swiperEl,
+            controllerEl
+        };
+        // サイズ設定の初期化
+        this.windowResizeHandler();
+        this.swiper = new Swiper("#" + this.mangaViewerId, {
+            direction: "horizontal",
+            loop: false,
+            effect: "slide",
+            speed: 200,
+            slidesPerView: 2,
+            slidesPerGroup: 2,
+            centeredSlides: false,
+            on: {
+                resize: () => this.windowResizeHandler(),
+                tap: (e) => this.slideClickHandler(e),
+            },
+            keyboard: true,
+            mousewheel: true,
+            lazy: {
+                loadPrevNext: true,
+                loadPrevNextAmount: 4,
+            },
+        });
+    }
+    get mangaViewerId() {
+        return "mangaViewer" + this.state.viewerId;
+    }
+    get mangaViewerControllerId() {
+        return "mangaViewerController" + this.state.viewerId;
+    }
+    get swiperElRect() {
+        const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
+        return {
+            w,
+            h,
+            l,
+            t
+        };
+    }
+    get defaultMangaViewerStates() {
+        const { innerHeight: ih, innerWidth: iw, } = window;
+        return {
+            multiplyNum: 0.9,
+            // デフォルト値としてウィンドウ幅を指定
+            swiperRect: {
+                l: 0,
+                t: 0,
+                w: iw,
+                h: ih,
+            },
+            viewerId: viewerCnt(),
+            pageSize: {
+                w: 720,
+                h: 1024
+            },
+            pageAspect: {
+                w: 45,
+                h: 64
+            },
+            isLTR: false,
+        };
     }
     slideClickHandler(e) {
         const { left: l, 
@@ -8228,6 +8294,11 @@ class MangaViewer {
             console.log("中側クリック");
         }
     }
+    windowResizeHandler() {
+        // swiperElRectの更新
+        this.state.swiperRect = this.swiperElRect;
+        this.cssPageWidthUpdate();
+    }
     cssPageWidthUpdate() {
         const { w: aw, h: ah } = this.state.pageAspect;
         const h = this.el.rootEl.offsetHeight * this.state.multiplyNum;
@@ -8235,37 +8306,6 @@ class MangaViewer {
         const pageHeight = Math.round(pageWidth * ah / aw);
         this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
         this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
-    }
-    get mangaViewerId() {
-        return "mangaViewer" + this.state.viewerId;
-    }
-    get mangaViewerControllerId() {
-        return "mangaViewerController" + this.state.viewerId;
-    }
-    get swiperElRect() {
-        const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
-        return {
-            w,
-            h,
-            l,
-            t
-        };
-    }
-    get defaultMangaViewerStates() {
-        return {
-            multiplyNum: 0.9,
-            swiperRect: this.swiperElRect,
-            viewerId: viewerCnt(),
-            pageSize: {
-                w: 720,
-                h: 1024
-            },
-            pageAspect: {
-                w: 45,
-                h: 64
-            },
-            isLTR: false,
-        };
     }
 }
 
