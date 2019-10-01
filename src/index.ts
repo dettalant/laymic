@@ -75,6 +75,11 @@ export default class MangaViewer {
       this.state = this.defaultMangaViewerStates;
     }
 
+    if (this.state.viewerId === 0) {
+      // ページにつき一度だけの処理
+      this.addSvgIcons();
+    }
+
     this.el.swiperEl.id = this.mangaViewerId;
     this.el.swiperEl.dir = (this.state.isLTR) ? "" : "rtl";
     this.el.controllerEl.id = this.mangaViewerControllerId;
@@ -97,11 +102,52 @@ export default class MangaViewer {
         },
         tap: (e) => this.slideClickHandler(e),
       },
+      keyboard: true,
+      mousewheel: true,
       lazy: {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
     });
+  }
+
+  private addSvgIcons() {
+    const ns = "http://www.w3.org/2000/svg";
+    const linkNs = "http://www.w3.org/1999/xlink";
+    const icons = [
+      {
+        id: "mangaViewer_svgClose",
+        viewBox: "0 0 24 24",
+        pathDs: [
+          "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+        ]
+      }
+    ]
+
+    const svgCtn = document.createElementNS(ns, "svg");
+    svgCtn.setAttributeNS(null, "version", "1.1");
+    svgCtn.setAttribute("xmlns", ns);
+    svgCtn.setAttribute("xmlns:xlink", linkNs);
+    svgCtn.setAttribute("class", "mangaViewer_svg_container");
+
+    const defs = document.createElementNS(ns, "defs");
+
+    icons.forEach(icon => {
+      const symbol = document.createElementNS(ns, "symbol");
+      symbol.setAttribute("id", icon.id);
+      symbol.setAttribute("viewBox", icon.viewBox);
+
+      icon.pathDs.forEach(d => {
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", d);
+        symbol.appendChild(path);
+      })
+
+      defs.appendChild(symbol);
+    })
+
+    svgCtn.appendChild(defs);
+    document.body.appendChild(svgCtn);
   }
 
   private slideClickHandler(e: PointerEvent) {

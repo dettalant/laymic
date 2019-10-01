@@ -5,6 +5,7 @@ export default class MangaViewer {
     state: MangaViewerStates;
     swiper: Swiper;
     constructor(queryStr: string, pages: string[], options?: MangaViewerOptions);
+    private addSvgIcons;
     private slideClickHandler;
     private cssPageWidthUpdate;
     private readonly mangaViewerId;

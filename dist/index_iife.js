@@ -8146,6 +8146,10 @@ var mangaViewer = (function () {
           else {
               this.state = this.defaultMangaViewerStates;
           }
+          if (this.state.viewerId === 0) {
+              // ページにつき一度だけの処理
+              this.addSvgIcons();
+          }
           this.el.swiperEl.id = this.mangaViewerId;
           this.el.swiperEl.dir = (this.state.isLTR) ? "" : "rtl";
           this.el.controllerEl.id = this.mangaViewerControllerId;
@@ -8166,11 +8170,45 @@ var mangaViewer = (function () {
                   },
                   tap: (e) => this.slideClickHandler(e),
               },
+              keyboard: true,
+              mousewheel: true,
               lazy: {
                   loadPrevNext: true,
                   loadPrevNextAmount: 4,
               },
           });
+      }
+      addSvgIcons() {
+          const ns = "http://www.w3.org/2000/svg";
+          const linkNs = "http://www.w3.org/1999/xlink";
+          const icons = [
+              {
+                  id: "mv_svgClose",
+                  viewBox: "0 0 24 24",
+                  pathDs: [
+                      "M10 2c-1.82 0-3.53.5-5 1.35C7.99 5.08 10 8.3 10 12s-2.01 6.92-5 8.65C6.47 21.5 8.18 22 10 22c5.52 0 10-4.48 10-10S15.52 2 10 2z"
+                  ]
+              }
+          ];
+          const svgCtn = document.createElementNS(ns, "svg");
+          svgCtn.setAttributeNS(null, "version", "1.1");
+          svgCtn.setAttribute("xmlns", ns);
+          svgCtn.setAttribute("xmlns:xlink", linkNs);
+          svgCtn.setAttribute("class", "mangaViewer_svg_container");
+          const defs = document.createElementNS(ns, "defs");
+          icons.forEach(icon => {
+              const symbol = document.createElementNS(ns, "symbol");
+              symbol.setAttribute("id", icon.id);
+              symbol.setAttribute("viewBox", icon.viewBox);
+              icon.pathDs.forEach(d => {
+                  const path = document.createElementNS(ns, "path");
+                  path.setAttribute("d", d);
+                  symbol.appendChild(path);
+              });
+              defs.appendChild(symbol);
+          });
+          svgCtn.appendChild(defs);
+          document.body.appendChild(svgCtn);
       }
       slideClickHandler(e) {
           const { left: l, 
