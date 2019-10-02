@@ -24,11 +24,15 @@ export interface PageRect extends PageSize {
 export interface MangaViewerElements {
     rootEl: HTMLElement;
     swiperEl: HTMLElement;
+    buttons: MangaViewerUIButtons;
     controllerEl: HTMLElement;
+}
+export interface MangaViewerUIButtons {
+    close: HTMLButtonElement;
 }
 export interface MangaViewerStates {
     viewerId: number;
-    multiplyNum: number;
+    viewerHeightPer: number;
     pageSize: PageSize;
     pageAspect: PageSize;
     swiperRect: PageRect;

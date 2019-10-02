@@ -43,7 +43,7 @@ export default class MangaViewer {
     }
 
     rootEl.classList.add("mangaViewer_root");
-    const controllerEl = builder.createViewerController(this.mangaViewerControllerId);
+    const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
     rootEl.appendChild(controllerEl);
     rootEl.appendChild(swiperEl);
@@ -51,7 +51,8 @@ export default class MangaViewer {
     this.el = {
       rootEl,
       swiperEl,
-      controllerEl
+      controllerEl,
+      buttons: uiButtons,
     }
 
     // サイズ設定の初期化
@@ -75,6 +76,10 @@ export default class MangaViewer {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
+    });
+
+    this.el.buttons.close.addEventListener("pointerup", () => {
+      console.log("close button click");
     });
   }
 
@@ -108,7 +113,7 @@ export default class MangaViewer {
     } = window;
 
     return {
-      multiplyNum: 0.9,
+      viewerHeightPer: 0.9,
       // デフォルト値としてウィンドウ幅を指定
       swiperRect: {
         l: 0,
@@ -161,7 +166,7 @@ export default class MangaViewer {
 
   private cssPageWidthUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
-    const h = this.el.rootEl.offsetHeight * this.state.multiplyNum;
+    const h = this.el.rootEl.offsetHeight * this.state.viewerHeightPer;
     const pageWidth = Math.round(h * aw / ah);
     const pageHeight = Math.round(pageWidth * ah / aw);
     this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");

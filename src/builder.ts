@@ -1,4 +1,7 @@
-import { MangaViewerIcons, IconData } from "./interfaces"
+import { MangaViewerIcons, MangaViewerUIButtons, IconData } from "./interfaces"
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 
 export class ViewerHTMLBuilder {
   private viewerId: number;
@@ -55,37 +58,66 @@ export class ViewerHTMLBuilder {
     return swiperEl;
   }
 
-  createViewerController(id: string): HTMLElement {
+  createViewerController(id: string): [HTMLElement, MangaViewerUIButtons] {
     const ctrlEl = this.createDiv();
     ctrlEl.className = "mangaViewer_controller";
     ctrlEl.id = id;
 
-    return ctrlEl
+    const ctrlTopEl = this.createDiv();
+    ctrlTopEl.className = "mangaViewer_controller_top";
+
+    const closeBtn = this.createButton();
+    closeBtn.className = "mangaViewer_ui_button mangaViewer_close";
+    const closeIcon = this.createSvgUseElement(this.icons.close.id, "icon_close");
+    closeBtn.appendChild(closeIcon);
+    ctrlTopEl.appendChild(closeBtn);
+
+    const ctrlBottomEl = this.createDiv();
+    ctrlBottomEl.className = "mangaViewer_controller_bottom";
+
+    ctrlEl.appendChild(ctrlTopEl);
+    ctrlEl.appendChild(ctrlBottomEl);
+
+    const uiButtons: MangaViewerUIButtons = {
+      close: closeBtn
+    }
+
+    return [ctrlEl, uiButtons]
+  }
+
+  private createSvgUseElement(linkId: string, className: string): SVGElement {
+    const svgEl = document.createElementNS(SVG_NS, "svg");
+    svgEl.setAttribute("class", `svg_icon ${className}`);
+    svgEl.setAttribute("role", "img");
+
+    const useEl = document.createElementNS(SVG_NS, "use");
+    useEl.setAttribute("class", "svg_default_prop");
+    useEl.setAttributeNS(SVG_XLINK_NS, "xlink:href", "#" + linkId);
+    svgEl.appendChild(useEl);
+
+    return svgEl;
   }
 
   createSVGIcons(): SVGElement {
-    const ns = "http://www.w3.org/2000/svg";
-    const linkNs = "http://www.w3.org/1999/xlink";
-
-    const svgCtn = document.createElementNS(ns, "svg");
+    const svgCtn = document.createElementNS(SVG_NS, "svg");
     svgCtn.setAttributeNS(null, "version", "1.1");
-    svgCtn.setAttribute("xmlns", ns);
-    svgCtn.setAttribute("xmlns:xlink", linkNs);
+    svgCtn.setAttribute("xmlns", SVG_NS);
+    svgCtn.setAttribute("xmlns:xlink", SVG_XLINK_NS);
     svgCtn.setAttribute("class", "mangaViewer_svg_container");
 
-    const defs = document.createElementNS(ns, "defs");
+    const defs = document.createElementNS(SVG_NS, "defs");
 
     Object.values(this.icons).forEach(icon => {
       if (!this.isIconData(icon)) {
         return;
       }
 
-      const symbol = document.createElementNS(ns, "symbol");
+      const symbol = document.createElementNS(SVG_NS, "symbol");
       symbol.setAttribute("id", icon.id);
       symbol.setAttribute("viewBox", icon.viewBox);
 
       icon.pathDs.forEach(d => {
-        const path = document.createElementNS(ns, "path");
+        const path = document.createElementNS(SVG_NS, "path");
         path.setAttribute("d", d);
         symbol.appendChild(path);
       })
@@ -99,6 +131,12 @@ export class ViewerHTMLBuilder {
 
   private createDiv(): HTMLDivElement {
     return document.createElement("div");
+  }
+
+  private createButton(): HTMLButtonElement {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    return btn;
   }
 
   private isIconData(icon: any): icon is IconData {

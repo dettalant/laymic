@@ -38,16 +38,21 @@ export interface PageRect extends PageSize {
 // swiperElについてはswiper instanceから触れるけど
 // わかりやすさ重視でここに入れておく
 export interface MangaViewerElements {
-  rootEl: HTMLElement;
+  rootEl: HTMLElement,
   swiperEl: HTMLElement,
-  controllerEl: HTMLElement;
+  buttons: MangaViewerUIButtons,
+  controllerEl: HTMLElement,
+}
+
+export interface MangaViewerUIButtons {
+  close: HTMLButtonElement,
 }
 
 export interface MangaViewerStates {
-  viewerId: number;
-  multiplyNum: number;
+  viewerId: number,
+  viewerHeightPer: number,
   pageSize: PageSize,
   pageAspect: PageSize,
-  swiperRect: PageRect
+  swiperRect: PageRect,
   isLTR: boolean,
 }
