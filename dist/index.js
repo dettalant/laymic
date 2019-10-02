@@ -8191,6 +8191,11 @@ class ViewerHTMLBuilder {
             defs.appendChild(symbol);
         });
         svgCtn.appendChild(defs);
+        // 画面上に表示させないためのスタイル定義
+        svgCtn.style.height = "1px";
+        svgCtn.style.width = "1px";
+        svgCtn.style.position = "absolute";
+        svgCtn.style.left = "-9px";
         return svgCtn;
     }
     createDiv() {
@@ -8214,6 +8219,9 @@ class MangaViewer {
         const rootEl = document.querySelector(queryStr);
         if (!(rootEl instanceof HTMLElement))
             throw new Error("rootElの取得に失敗");
+        if (rootEl.parentNode)
+            rootEl.parentNode.removeChild(rootEl);
+        rootEl.style.display = "none";
         const builder = new ViewerHTMLBuilder(this.state.viewerId);
         if (this.state.viewerId === 0) {
             // ページにつき一度だけの処理
@@ -8246,9 +8254,12 @@ class MangaViewer {
             controllerEl,
             buttons: uiButtons,
         };
+        this.close();
+        // 一旦DOMから外していたroot要素を再度放り込む
+        document.body.appendChild(this.el.rootEl);
         // サイズ設定の初期化
         this.windowResizeHandler();
-        this.swiper = new Swiper("#" + this.mangaViewerId, {
+        this.swiper = new Swiper(this.el.swiperEl, {
             direction: "horizontal",
             loop: false,
             effect: "slide",
@@ -8268,7 +8279,7 @@ class MangaViewer {
             },
         });
         this.el.buttons.close.addEventListener("pointerup", () => {
-            console.log("close button click");
+            this.close();
         });
     }
     get mangaViewerId() {
@@ -8276,6 +8287,26 @@ class MangaViewer {
     }
     get mangaViewerControllerId() {
         return "mangaViewerController" + this.state.viewerId;
+    }
+    open() {
+        const rootStyle = this.el.rootEl.style;
+        if (rootStyle.display === "none") {
+            rootStyle.display = "";
+        }
+        // swiper表示更新
+        this.windowResizeHandler();
+        this.swiper.update();
+        rootStyle.opacity = "1";
+        rootStyle.visibility = "visible";
+        // オーバーレイ下要素のスクロール停止
+        this.disableBodyScroll();
+    }
+    close() {
+        const rootStyle = this.el.rootEl.style;
+        rootStyle.opacity = "0";
+        rootStyle.visibility = "hidden";
+        // オーバーレイ下要素のスクロール再開
+        this.enableBodyScroll();
     }
     get swiperElRect() {
         const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
@@ -8340,6 +8371,14 @@ class MangaViewer {
         const pageHeight = Math.round(pageWidth * ah / aw);
         this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
         this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+    }
+    disableBodyScroll() {
+        document.documentElement.style.overflowY = "hidden";
+        document.body.style.overflowY = "hidden";
+    }
+    enableBodyScroll() {
+        document.documentElement.style.overflowY = "";
+        document.body.style.overflowY = "";
     }
 }
 

@@ -7,9 +7,13 @@ export default class MangaViewer {
     constructor(queryStr: string, pages: string[], options?: MangaViewerOptions);
     private readonly mangaViewerId;
     private readonly mangaViewerControllerId;
+    open(): void;
+    close(): void;
     private readonly swiperElRect;
     private readonly defaultMangaViewerStates;
     private slideClickHandler;
     private windowResizeHandler;
     private cssPageWidthUpdate;
+    private disableBodyScroll;
+    private enableBodyScroll;
 }

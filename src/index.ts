@@ -17,6 +17,8 @@ export default class MangaViewer {
     const rootEl = document.querySelector(queryStr);
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
+    if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
+    rootEl.style.display = "none";
 
     const builder = new ViewerHTMLBuilder(this.state.viewerId);
     if (this.state.viewerId === 0) {
@@ -55,9 +57,14 @@ export default class MangaViewer {
       buttons: uiButtons,
     }
 
+    this.close();
+
+    // 一旦DOMから外していたroot要素を再度放り込む
+    document.body.appendChild(this.el.rootEl);
+
     // サイズ設定の初期化
     this.windowResizeHandler();
-    this.swiper = new Swiper("#" + this.mangaViewerId, {
+    this.swiper = new Swiper(this.el.swiperEl, {
       direction: "horizontal",
       loop: false,
       effect: "slide",
@@ -79,7 +86,7 @@ export default class MangaViewer {
     });
 
     this.el.buttons.close.addEventListener("pointerup", () => {
-      console.log("close button click");
+      this.close();
     });
   }
 
@@ -89,6 +96,29 @@ export default class MangaViewer {
 
   private get mangaViewerControllerId(): string {
     return "mangaViewerController" + this.state.viewerId;
+  }
+
+  public open() {
+    // display:none状態の場合にそれを解除する
+    if (this.el.rootEl.style.display === "none") {
+      this.el.rootEl.style.display = "";
+    }
+
+    // swiper表示更新
+    this.windowResizeHandler();
+    this.swiper.update();
+
+    this.showRootEl();
+
+    // オーバーレイ下要素のスクロール停止
+    this.disableBodyScroll();
+  }
+
+  public close() {
+    this.hideRootEl();
+
+    // オーバーレイ下要素のスクロール再開
+    this.enableBodyScroll();
   }
 
   private get swiperElRect(): PageRect {
@@ -171,5 +201,25 @@ export default class MangaViewer {
     const pageHeight = Math.round(pageWidth * ah / aw);
     this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+  }
+
+  private showRootEl() {
+    this.el.rootEl.style.opacity = "1";
+    this.el.rootEl.style.visibility = "visible";
+  }
+
+  private hideRootEl() {
+    this.el.rootEl.style.opacity = "0";
+    this.el.rootEl.style.visibility = "hidden";
+  }
+
+  private disableBodyScroll() {
+    document.documentElement.style.overflowY = "hidden";
+    document.body.style.overflowY = "hidden";
+  }
+
+  private enableBodyScroll() {
+    document.documentElement.style.overflowY = "";
+    document.body.style.overflowY = "";
   }
 }

@@ -126,6 +126,13 @@ export class ViewerHTMLBuilder {
     })
 
     svgCtn.appendChild(defs);
+
+    // 画面上に表示させないためのスタイル定義
+    svgCtn.style.height = "1px";
+    svgCtn.style.width = "1px";
+    svgCtn.style.position = "absolute";
+    svgCtn.style.left = "-9px";
+
     return svgCtn;
   }
 
