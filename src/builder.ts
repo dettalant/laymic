@@ -46,10 +46,28 @@ export class ViewerHTMLBuilder {
       ]
     }
 
+    const theater = {
+      id: "mangaViewer_svgTheater",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M4 17.98V6.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v11.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 18h12V6H6z"
+      ]
+    };
+
+    const exitTheater = {
+      id: "mangaViewer_svgExitTheater",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M4 15.98V8.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v7.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 16h12V8H6z"
+      ]
+    }
+
     return {
       close,
       fullscreen,
       exitFullscreen,
+      theater,
+      exitTheater,
     }
   }
 
@@ -86,10 +104,19 @@ export class ViewerHTMLBuilder {
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = "mangaViewer_controller_top";
 
+    const theaterBtn = this.createButton();
+    const theaterIcon = this.createSvgUseElement(this.icons.theater.id, "icon_theater");
+    const exitTheaterIcon = this.createSvgUseElement(this.icons.exitTheater.id, "icon_exitTheater");
+
+    theaterBtn.className = `${this.uiButtonClass} mangaViewer_theater`;
+    theaterBtn.appendChild(theaterIcon);
+    theaterBtn.appendChild(exitTheaterIcon);
+    ctrlTopEl.appendChild(theaterBtn);
+
     const fullscreenBtn = this.createButton();
     const fullscreenIcon = this.createSvgUseElement(this.icons.fullscreen.id, "icon_fullscreen");
     const exitFullscreenIcon = this.createSvgUseElement(this.icons.exitFullscreen.id, "icon_exitFullscreen");
-    
+
     fullscreenBtn.className = `${this.uiButtonClass} mangaViewer_fullscreen`;
     fullscreenBtn.appendChild(fullscreenIcon);
     fullscreenBtn.appendChild(exitFullscreenIcon);
@@ -104,6 +131,7 @@ export class ViewerHTMLBuilder {
     const uiButtons: MangaViewerUIButtons = {
       close: closeBtn,
       fullscreen: fullscreenBtn,
+      theater: theaterBtn,
     }
 
     const ctrlBottomEl = this.createDiv();

@@ -86,15 +86,16 @@ export default class MangaViewer {
       },
     });
 
+    this.el.buttons.theater.addEventListener("pointerup", () => {
+      this.el.rootEl.classList.toggle("is_theater");
+    })
+
     this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
 
     this.el.buttons.close.addEventListener("pointerup", () => {
       this.close();
     });
 
-    window.addEventListener("resize", () => {
-      console.log("resize event");
-    })
   }
 
   private get mangaViewerId(): string {

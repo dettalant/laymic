@@ -44,11 +44,14 @@ export interface MangaViewerIcons {
   close: IconData,
   fullscreen: IconData,
   exitFullscreen: IconData,
+  theater: IconData,
+  exitTheater: IconData,
 }
 
 export interface MangaViewerUIButtons {
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
+  theater: HTMLButtonElement,
 }
 
 export interface MangaViewerStates {
