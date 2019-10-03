@@ -65,6 +65,11 @@ export default class MangaViewer {
 
     // サイズ設定の初期化
     this.viewUpdate();
+
+    const spaceBetweenNum = (options && options.spaceBetween)
+      ? options.spaceBetween
+      : 0;
+
     this.swiper = new Swiper(this.el.swiperEl, {
       direction: "horizontal",
       loop: false,
@@ -72,6 +77,7 @@ export default class MangaViewer {
       speed: 200,
       slidesPerView: 2,
       slidesPerGroup: 2,
+      spaceBetween: spaceBetweenNum,
       centeredSlides: false,
 
       on: {
@@ -149,7 +155,7 @@ export default class MangaViewer {
     }
   }
 
-  public open() {
+  public open(isFullscreen: boolean) {
     // display:none状態の場合にそれを解除する
     if (this.el.rootEl.style.display === "none") {
       this.el.rootEl.style.display = "";
@@ -162,6 +168,10 @@ export default class MangaViewer {
 
     // オーバーレイ下要素のスクロール停止
     this.disableBodyScroll();
+
+    if (isFullscreen) {
+      this.fullscreenButtonHandler();
+    }
   }
 
   public close() {

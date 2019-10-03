@@ -9,7 +9,7 @@ export default class MangaViewer {
     private readonly mangaViewerControllerId;
     private readonly swiperElRect;
     private readonly defaultMangaViewerStates;
-    open(): void;
+    open(isFullscreen: boolean): void;
     close(): void;
     private slideClickHandler;
     private viewUpdate;

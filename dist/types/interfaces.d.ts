@@ -4,6 +4,7 @@ export interface MangaViewerOptions {
     isLTR?: boolean;
     isLightbox?: boolean;
     icons?: MangaViewerIcons;
+    spaceBetween: number;
 }
 export interface PageSize {
     w: number;

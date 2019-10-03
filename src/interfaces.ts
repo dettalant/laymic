@@ -1,13 +1,14 @@
 export interface MangaViewerOptions {
   // ページ横幅
-  pageWidth?: number;
+  pageWidth?: number,
   // ページの縦幅
-  pageHeight?: number;
+  pageHeight?: number,
   // 左から右へと流れる形式で初期化する
-  isLTR?: boolean;
+  isLTR?: boolean,
   // ライトボックスとして初期化する
-  isLightbox?: boolean;
-  icons?: MangaViewerIcons;
+  isLightbox?: boolean,
+  icons?: MangaViewerIcons,
+  spaceBetween: number,
 }
 
 export interface PageSize {
