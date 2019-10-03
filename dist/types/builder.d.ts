@@ -1,7 +1,8 @@
 import { MangaViewerIcons, MangaViewerUIButtons } from "./interfaces";
 export declare class ViewerHTMLBuilder {
-    private viewerId;
+    private readonly viewerId;
     private icons;
+    private readonly uiButtonClass;
     constructor(viewerId: number, icons?: MangaViewerIcons);
     readonly mangaViewerId: string;
     readonly mangaViewerControllerId: string;

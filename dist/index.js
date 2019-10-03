@@ -8077,6 +8077,189 @@ if (typeof Swiper.use === 'undefined') {
 
 Swiper.use(components);
 
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var screenfull = createCommonjsModule(function (module) {
+/*!
+* screenfull
+* v5.0.0 - 2019-09-09
+* (c) Sindre Sorhus; MIT License
+*/
+(function () {
+
+	var document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+	var isCommonjs =  module.exports;
+
+	var fn = (function () {
+		var val;
+
+		var fnMap = [
+			[
+				'requestFullscreen',
+				'exitFullscreen',
+				'fullscreenElement',
+				'fullscreenEnabled',
+				'fullscreenchange',
+				'fullscreenerror'
+			],
+			// New WebKit
+			[
+				'webkitRequestFullscreen',
+				'webkitExitFullscreen',
+				'webkitFullscreenElement',
+				'webkitFullscreenEnabled',
+				'webkitfullscreenchange',
+				'webkitfullscreenerror'
+
+			],
+			// Old WebKit
+			[
+				'webkitRequestFullScreen',
+				'webkitCancelFullScreen',
+				'webkitCurrentFullScreenElement',
+				'webkitCancelFullScreen',
+				'webkitfullscreenchange',
+				'webkitfullscreenerror'
+
+			],
+			[
+				'mozRequestFullScreen',
+				'mozCancelFullScreen',
+				'mozFullScreenElement',
+				'mozFullScreenEnabled',
+				'mozfullscreenchange',
+				'mozfullscreenerror'
+			],
+			[
+				'msRequestFullscreen',
+				'msExitFullscreen',
+				'msFullscreenElement',
+				'msFullscreenEnabled',
+				'MSFullscreenChange',
+				'MSFullscreenError'
+			]
+		];
+
+		var i = 0;
+		var l = fnMap.length;
+		var ret = {};
+
+		for (; i < l; i++) {
+			val = fnMap[i];
+			if (val && val[1] in document) {
+				for (i = 0; i < val.length; i++) {
+					ret[fnMap[0][i]] = val[i];
+				}
+				return ret;
+			}
+		}
+
+		return false;
+	})();
+
+	var eventNameMap = {
+		change: fn.fullscreenchange,
+		error: fn.fullscreenerror
+	};
+
+	var screenfull = {
+		request: function (element) {
+			return new Promise(function (resolve, reject) {
+				var onFullScreenEntered = function () {
+					this.off('change', onFullScreenEntered);
+					resolve();
+				}.bind(this);
+
+				this.on('change', onFullScreenEntered);
+
+				element = element || document.documentElement;
+
+				Promise.resolve(element[fn.requestFullscreen]()).catch(reject);
+			}.bind(this));
+		},
+		exit: function () {
+			return new Promise(function (resolve, reject) {
+				if (!this.isFullscreen) {
+					resolve();
+					return;
+				}
+
+				var onFullScreenExit = function () {
+					this.off('change', onFullScreenExit);
+					resolve();
+				}.bind(this);
+
+				this.on('change', onFullScreenExit);
+
+				Promise.resolve(document[fn.exitFullscreen]()).catch(reject);
+			}.bind(this));
+		},
+		toggle: function (element) {
+			return this.isFullscreen ? this.exit() : this.request(element);
+		},
+		onchange: function (callback) {
+			this.on('change', callback);
+		},
+		onerror: function (callback) {
+			this.on('error', callback);
+		},
+		on: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.addEventListener(eventName, callback, false);
+			}
+		},
+		off: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.removeEventListener(eventName, callback, false);
+			}
+		},
+		raw: fn
+	};
+
+	if (!fn) {
+		if (isCommonjs) {
+			module.exports = {isEnabled: false};
+		} else {
+			window.screenfull = {isEnabled: false};
+		}
+
+		return;
+	}
+
+	Object.defineProperties(screenfull, {
+		isFullscreen: {
+			get: function () {
+				return Boolean(document[fn.fullscreenElement]);
+			}
+		},
+		element: {
+			enumerable: true,
+			get: function () {
+				return document[fn.fullscreenElement];
+			}
+		},
+		isEnabled: {
+			enumerable: true,
+			get: function () {
+				// Coerce to boolean in case of old WebKit
+				return Boolean(document[fn.fullscreenEnabled]);
+			}
+		}
+	});
+
+	if (isCommonjs) {
+		module.exports = screenfull;
+	} else {
+		window.screenfull = screenfull;
+	}
+})();
+});
+var screenfull_1 = screenfull.isEnabled;
+
 // 最大公約数を計算する
 // ユークリッドの互除法を使用
 const calcGCD = (x, y) => {
@@ -8091,12 +8274,14 @@ let _viewerCntNum = 0;
 const viewerCnt = () => {
     return _viewerCntNum++;
 };
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 class ViewerHTMLBuilder {
     constructor(viewerId, icons) {
         this.icons = this.defaultMangaViewerIcons;
+        this.uiButtonClass = "mangaViewer_ui_button";
         this.viewerId = viewerId;
         if (icons)
             this.icons = Object.assign(this.icons, icons);
@@ -8116,8 +8301,25 @@ class ViewerHTMLBuilder {
                 "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
             ]
         };
+        // material.io: fullscreen
+        const fullscreen = {
+            id: "mangaViewer_svgFullscreen",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z",
+            ]
+        };
+        const exitFullscreen = {
+            id: "mangaViewer_svgExitFullscreen",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"
+            ]
+        };
         return {
-            close
+            close,
+            fullscreen,
+            exitFullscreen,
         };
     }
     createSwiperContainer(id, pages, isLTR) {
@@ -8145,18 +8347,26 @@ class ViewerHTMLBuilder {
         ctrlEl.id = id;
         const ctrlTopEl = this.createDiv();
         ctrlTopEl.className = "mangaViewer_controller_top";
+        const fullscreenBtn = this.createButton();
+        const fullscreenIcon = this.createSvgUseElement(this.icons.fullscreen.id, "icon_fullscreen");
+        const exitFullscreenIcon = this.createSvgUseElement(this.icons.exitFullscreen.id, "icon_exitFullscreen");
+        fullscreenBtn.className = `${this.uiButtonClass} mangaViewer_fullscreen`;
+        fullscreenBtn.appendChild(fullscreenIcon);
+        fullscreenBtn.appendChild(exitFullscreenIcon);
+        ctrlTopEl.appendChild(fullscreenBtn);
         const closeBtn = this.createButton();
-        closeBtn.className = "mangaViewer_ui_button mangaViewer_close";
+        closeBtn.className = `${this.uiButtonClass} mangaViewer_close`;
         const closeIcon = this.createSvgUseElement(this.icons.close.id, "icon_close");
         closeBtn.appendChild(closeIcon);
         ctrlTopEl.appendChild(closeBtn);
+        const uiButtons = {
+            close: closeBtn,
+            fullscreen: fullscreenBtn,
+        };
         const ctrlBottomEl = this.createDiv();
         ctrlBottomEl.className = "mangaViewer_controller_bottom";
         ctrlEl.appendChild(ctrlTopEl);
         ctrlEl.appendChild(ctrlBottomEl);
-        const uiButtons = {
-            close: closeBtn
-        };
         return [ctrlEl, uiButtons];
     }
     createSvgUseElement(linkId, className) {
@@ -8258,7 +8468,7 @@ class MangaViewer {
         // 一旦DOMから外していたroot要素を再度放り込む
         document.body.appendChild(this.el.rootEl);
         // サイズ設定の初期化
-        this.windowResizeHandler();
+        this.viewUpdate();
         this.swiper = new Swiper(this.el.swiperEl, {
             direction: "horizontal",
             loop: false,
@@ -8268,7 +8478,7 @@ class MangaViewer {
             slidesPerGroup: 2,
             centeredSlides: false,
             on: {
-                resize: () => this.windowResizeHandler(),
+                resize: () => this.viewUpdate(),
                 tap: (e) => this.slideClickHandler(e),
             },
             keyboard: true,
@@ -8278,8 +8488,12 @@ class MangaViewer {
                 loadPrevNextAmount: 4,
             },
         });
+        this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
         this.el.buttons.close.addEventListener("pointerup", () => {
             this.close();
+        });
+        window.addEventListener("resize", () => {
+            console.log("resize event");
         });
     }
     get mangaViewerId() {
@@ -8287,26 +8501,6 @@ class MangaViewer {
     }
     get mangaViewerControllerId() {
         return "mangaViewerController" + this.state.viewerId;
-    }
-    open() {
-        const rootStyle = this.el.rootEl.style;
-        if (rootStyle.display === "none") {
-            rootStyle.display = "";
-        }
-        // swiper表示更新
-        this.windowResizeHandler();
-        this.swiper.update();
-        rootStyle.opacity = "1";
-        rootStyle.visibility = "visible";
-        // オーバーレイ下要素のスクロール停止
-        this.disableBodyScroll();
-    }
-    close() {
-        const rootStyle = this.el.rootEl.style;
-        rootStyle.opacity = "0";
-        rootStyle.visibility = "hidden";
-        // オーバーレイ下要素のスクロール再開
-        this.enableBodyScroll();
     }
     get swiperElRect() {
         const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
@@ -8340,6 +8534,26 @@ class MangaViewer {
             isLTR: false,
         };
     }
+    open() {
+        // display:none状態の場合にそれを解除する
+        if (this.el.rootEl.style.display === "none") {
+            this.el.rootEl.style.display = "";
+        }
+        // swiper表示更新
+        this.viewUpdate();
+        this.showRootEl();
+        // オーバーレイ下要素のスクロール停止
+        this.disableBodyScroll();
+    }
+    close() {
+        this.hideRootEl();
+        // フルスクリーン状態にあるならそれを解除
+        if (document.fullscreenElement) {
+            this.fullscreenButtonHandler();
+        }
+        // オーバーレイ下要素のスクロール再開
+        this.enableBodyScroll();
+    }
     slideClickHandler(e) {
         const { left: l, 
         // top: t,
@@ -8359,10 +8573,33 @@ class MangaViewer {
             console.log("中側クリック");
         }
     }
-    windowResizeHandler() {
-        // swiperElRectの更新
+    viewUpdate() {
         this.state.swiperRect = this.swiperElRect;
         this.cssPageWidthUpdate();
+        if (this.swiper)
+            this.swiper.update();
+    }
+    fullscreenButtonHandler() {
+        // フルスクリーン切り替え後に呼び出される関数
+        const postToggleFullscreen = () => {
+            const isFullscreen = document.fullscreenElement;
+            if (isFullscreen) {
+                // 全画面有効時
+                this.el.rootEl.classList.add("is_fullscreen");
+            }
+            else {
+                // 通常時
+                this.el.rootEl.classList.remove("is_fullscreen");
+            }
+            this.viewUpdate();
+        };
+        if (screenfull.isEnabled) {
+            screenfull.toggle(this.el.rootEl)
+                // 0.1秒ウェイトを取る
+                .then(() => sleep(150))
+                // フルスクリーン切り替え後処理
+                .then(() => postToggleFullscreen());
+        }
     }
     cssPageWidthUpdate() {
         const { w: aw, h: ah } = this.state.pageAspect;
@@ -8371,6 +8608,14 @@ class MangaViewer {
         const pageHeight = Math.round(pageWidth * ah / aw);
         this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
         this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+    }
+    showRootEl() {
+        this.el.rootEl.style.opacity = "1";
+        this.el.rootEl.style.visibility = "visible";
+    }
+    hideRootEl() {
+        this.el.rootEl.style.opacity = "0";
+        this.el.rootEl.style.visibility = "hidden";
     }
     disableBodyScroll() {
         document.documentElement.style.overflowY = "hidden";

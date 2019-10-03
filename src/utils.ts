@@ -13,3 +13,5 @@ let _viewerCntNum = 0;
 export const viewerCnt = () => {
   return _viewerCntNum++;
 }
+
+export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(res, ms))

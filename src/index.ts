@@ -1,5 +1,6 @@
 import Swiper from "swiper";
-import { calcGCD, viewerCnt } from "./utils";
+import screenfull from "screenfull";
+import { calcGCD, viewerCnt, sleep } from "./utils";
 import { ViewerHTMLBuilder } from "./builder";
 import {
   MangaViewerElements,
@@ -63,7 +64,7 @@ export default class MangaViewer {
     document.body.appendChild(this.el.rootEl);
 
     // サイズ設定の初期化
-    this.windowResizeHandler();
+    this.viewUpdate();
     this.swiper = new Swiper(this.el.swiperEl, {
       direction: "horizontal",
       loop: false,
@@ -74,7 +75,7 @@ export default class MangaViewer {
       centeredSlides: false,
 
       on: {
-        resize: () => this.windowResizeHandler(),
+        resize: () => this.viewUpdate(),
         tap: (e) => this.slideClickHandler(e),
       },
       keyboard: true,
@@ -85,9 +86,15 @@ export default class MangaViewer {
       },
     });
 
+    this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
+
     this.el.buttons.close.addEventListener("pointerup", () => {
       this.close();
     });
+
+    window.addEventListener("resize", () => {
+      console.log("resize event");
+    })
   }
 
   private get mangaViewerId(): string {
@@ -96,29 +103,6 @@ export default class MangaViewer {
 
   private get mangaViewerControllerId(): string {
     return "mangaViewerController" + this.state.viewerId;
-  }
-
-  public open() {
-    // display:none状態の場合にそれを解除する
-    if (this.el.rootEl.style.display === "none") {
-      this.el.rootEl.style.display = "";
-    }
-
-    // swiper表示更新
-    this.windowResizeHandler();
-    this.swiper.update();
-
-    this.showRootEl();
-
-    // オーバーレイ下要素のスクロール停止
-    this.disableBodyScroll();
-  }
-
-  public close() {
-    this.hideRootEl();
-
-    // オーバーレイ下要素のスクロール再開
-    this.enableBodyScroll();
   }
 
   private get swiperElRect(): PageRect {
@@ -164,6 +148,33 @@ export default class MangaViewer {
     }
   }
 
+  public open() {
+    // display:none状態の場合にそれを解除する
+    if (this.el.rootEl.style.display === "none") {
+      this.el.rootEl.style.display = "";
+    }
+
+    // swiper表示更新
+    this.viewUpdate();
+
+    this.showRootEl();
+
+    // オーバーレイ下要素のスクロール停止
+    this.disableBodyScroll();
+  }
+
+  public close() {
+    this.hideRootEl();
+
+    // フルスクリーン状態にあるならそれを解除
+    if (document.fullscreenElement) {
+      this.fullscreenButtonHandler();
+    }
+
+    // オーバーレイ下要素のスクロール再開
+    this.enableBodyScroll();
+  }
+
   private slideClickHandler(e: PointerEvent) {
     const {
       left: l,
@@ -188,10 +199,35 @@ export default class MangaViewer {
     }
   }
 
-  private windowResizeHandler() {
-    // swiperElRectの更新
+  private viewUpdate() {
     this.state.swiperRect = this.swiperElRect;
-    this.cssPageWidthUpdate()
+    this.cssPageWidthUpdate();
+
+    if (this.swiper) this.swiper.update();
+  }
+
+  private fullscreenButtonHandler() {
+    // フルスクリーン切り替え後に呼び出される関数
+    const postToggleFullscreen = () => {
+      const isFullscreen = document.fullscreenElement;
+      if (isFullscreen) {
+        // 全画面有効時
+        this.el.rootEl.classList.add("is_fullscreen");
+      } else {
+        // 通常時
+        this.el.rootEl.classList.remove("is_fullscreen");
+      }
+
+      this.viewUpdate();
+    }
+
+    if (screenfull.isEnabled) {
+      screenfull.toggle(this.el.rootEl)
+        // 0.1秒ウェイトを取る
+        .then(() => sleep(150))
+        // フルスクリーン切り替え後処理
+        .then(() => postToggleFullscreen());
+    }
   }
 
   private cssPageWidthUpdate() {

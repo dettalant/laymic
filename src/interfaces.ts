@@ -1,13 +1,3 @@
-export interface IconData {
-  id: string,
-  viewBox: string,
-  pathDs: string[],
-}
-
-export interface MangaViewerIcons {
-  close: IconData
-}
-
 export interface MangaViewerOptions {
   // ページ横幅
   pageWidth?: number;
@@ -44,8 +34,21 @@ export interface MangaViewerElements {
   controllerEl: HTMLElement,
 }
 
+export interface IconData {
+  id: string,
+  viewBox: string,
+  pathDs: string[],
+}
+
+export interface MangaViewerIcons {
+  close: IconData,
+  fullscreen: IconData,
+  exitFullscreen: IconData,
+}
+
 export interface MangaViewerUIButtons {
   close: HTMLButtonElement,
+  fullscreen: HTMLButtonElement,
 }
 
 export interface MangaViewerStates {
