@@ -8276,6 +8276,14 @@ var mangaViewer = (function () {
       return _viewerCntNum++;
   };
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+  const readImage = (path) => {
+      return new Promise((res, rej) => {
+          const img = new Image();
+          img.onload = () => res(img);
+          img.onerror = (e) => rej(e);
+          img.src = path;
+      });
+  };
 
   const SVG_NS = "http://www.w3.org/2000/svg";
   const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
@@ -8522,6 +8530,25 @@ var mangaViewer = (function () {
               };
               this.state.isLTR = (options.isLTR) ? options.isLTR : false;
           }
+          if (!options || !options.pageHeight || !options.pageWidth) {
+              // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
+              // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
+              const src = pages[0];
+              readImage(src).then(img => {
+                  const { width: w, height: h } = img;
+                  this.state.pageSize = {
+                      w,
+                      h
+                  };
+                  const gcd = calcGCD(w, h);
+                  this.state.pageAspect = {
+                      w: w / gcd,
+                      h: h / gcd,
+                  };
+                  // もしここでエラーが起きても問題ないので握りつぶす
+                  this.viewUpdate();
+              }).catch(e => console.error(e));
+          }
           rootEl.classList.add("mangaViewer_root");
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
           const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
@@ -8538,18 +8565,18 @@ var mangaViewer = (function () {
           document.body.appendChild(this.el.rootEl);
           // サイズ設定の初期化
           // this.viewUpdate();
-          const horizViewSlideMargin = (options && options.horizViewSlideMargin)
-              ? options.horizViewSlideMargin
+          const horizPageMargin = (options && options.horizPageMargin)
+              ? options.horizPageMargin
               : 0;
-          const vertViewSlideMargin = (options && options.vertViewSlideMargin)
-              ? options.vertViewSlideMargin
+          const vertPageMargin = (options && options.vertPageMargin)
+              ? options.vertPageMargin
               : 10;
           const swiperHorizView = {
               direction: "horizontal",
               speed: 200,
               slidesPerView: 2,
               slidesPerGroup: 2,
-              spaceBetween: horizViewSlideMargin,
+              spaceBetween: horizPageMargin,
               on: {
                   resize: () => this.viewUpdate(),
                   tap: (e) => this.slideClickHandler(e),
@@ -8564,11 +8591,14 @@ var mangaViewer = (function () {
           };
           const swiperVertView = {
               direction: "vertical",
-              spaceBetween: vertViewSlideMargin,
+              spaceBetween: vertPageMargin,
               speed: 200,
               mousewheel: true,
               keyboard: true,
               freeMode: true,
+              freeModeMomentumRatio: 0.36,
+              freeModeMomentumVelocityRatio: 1,
+              freeModeMinimumVelocity: 0.02,
               on: {},
               preloadImages: false,
               lazy: {

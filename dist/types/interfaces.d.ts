@@ -5,8 +5,8 @@ export interface MangaViewerOptions {
     isLTR?: boolean;
     isLightbox?: boolean;
     icons?: MangaViewerIcons;
-    vertViewSlideMargin: number;
-    horizViewSlideMargin: number;
+    vertPageMargin: number;
+    horizPageMargin: number;
 }
 export interface PageSize {
     w: number;

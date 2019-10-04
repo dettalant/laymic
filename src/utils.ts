@@ -15,3 +15,12 @@ export const viewerCnt = () => {
 }
 
 export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(res, ms))
+
+export const readImage = (path: string): Promise<HTMLImageElement> => {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = (e) => rej(e);
+    img.src = path;
+  })
+}

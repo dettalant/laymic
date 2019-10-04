@@ -1,6 +1,6 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
-import { calcGCD, viewerCnt, sleep } from "./utils";
+import { calcGCD, viewerCnt, sleep, readImage } from "./utils";
 import { ViewerHTMLBuilder } from "./builder";
 import {
   MangaViewerElements,
@@ -47,6 +47,29 @@ export default class MangaViewer {
       this.state.isLTR = (options.isLTR) ? options.isLTR : false;
     }
 
+    if (!options || !options.pageHeight || !options.pageWidth) {
+      // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
+      // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
+      const src = pages[0];
+      readImage(src).then(img => {
+        const {width: w, height: h} = img;
+
+        this.state.pageSize = {
+          w,
+          h
+        };
+
+        const gcd = calcGCD(w, h);
+        this.state.pageAspect = {
+          w: w / gcd,
+          h: h / gcd,
+        }
+
+        // もしここでエラーが起きても問題ないので握りつぶす
+        this.viewUpdate();
+      }).catch(e => console.error(e));
+    }
+
     rootEl.classList.add("mangaViewer_root");
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
@@ -68,11 +91,11 @@ export default class MangaViewer {
     // サイズ設定の初期化
     // this.viewUpdate();
 
-    const horizViewSlideMargin = (options && options.horizViewSlideMargin)
-      ? options.horizViewSlideMargin
+    const horizPageMargin = (options && options.horizPageMargin)
+      ? options.horizPageMargin
       : 0;
-    const vertViewSlideMargin = (options && options.vertViewSlideMargin)
-      ? options.vertViewSlideMargin
+    const vertPageMargin = (options && options.vertPageMargin)
+      ? options.vertPageMargin
       : 10;
 
     const swiperHorizView: SwiperOptions = {
@@ -80,7 +103,7 @@ export default class MangaViewer {
       speed: 200,
       slidesPerView: 2,
       slidesPerGroup: 2,
-      spaceBetween: horizViewSlideMargin,
+      spaceBetween: horizPageMargin,
 
       on: {
         resize: () => this.viewUpdate(),
@@ -98,11 +121,14 @@ export default class MangaViewer {
 
     const swiperVertView: SwiperOptions = {
       direction: "vertical",
-      spaceBetween: vertViewSlideMargin,
+      spaceBetween: vertPageMargin,
       speed: 200,
       mousewheel: true,
       keyboard: true,
       freeMode: true,
+      freeModeMomentumRatio: 0.36,
+      freeModeMomentumVelocityRatio: 1,
+      freeModeMinimumVelocity: 0.02,
       on: {},
       preloadImages: false,
       lazy: {
@@ -250,7 +276,7 @@ export default class MangaViewer {
     const conf = Object.assign(this.conf.swiperHorizView, {
       initialSlide: this.swiper.activeIndex
     })
-    
+
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
   }
