@@ -1,7 +1,8 @@
 import Swiper from "swiper";
-import { MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
+import { MangaViewerElements, MangaViewerOptions, MangaViewerStates, MangaViewerConfigs } from "./interfaces";
 export default class MangaViewer {
     el: MangaViewerElements;
+    conf: MangaViewerConfigs;
     state: MangaViewerStates;
     swiper: Swiper;
     constructor(queryStr: string, pages: string[], options?: MangaViewerOptions);
@@ -11,6 +12,8 @@ export default class MangaViewer {
     private readonly defaultMangaViewerStates;
     open(isFullscreen: boolean): void;
     close(): void;
+    private enableVerticalView;
+    private disableVerticalView;
     private slideClickHandler;
     private viewUpdate;
     private fullscreenButtonHandler;

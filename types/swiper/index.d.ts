@@ -1370,6 +1370,10 @@ export default class Swiper {
     updateSlidesClasses(): void;
 
     /**
+     * Changes slider direction from horizontal to vertical and back.
+     */
+    changeDirection(direction: 'horizontal' | 'vertical'): void;
+    /**
      * tach all events listeners
      */
     detachEvents(): void;

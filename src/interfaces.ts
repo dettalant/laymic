@@ -1,3 +1,5 @@
+import { SwiperOptions } from "swiper";
+
 export interface MangaViewerOptions {
   // ページ横幅
   pageWidth?: number,
@@ -8,7 +10,8 @@ export interface MangaViewerOptions {
   // ライトボックスとして初期化する
   isLightbox?: boolean,
   icons?: MangaViewerIcons,
-  spaceBetween: number,
+  vertViewSlideMargin: number,
+  horizViewSlideMargin: number,
 }
 
 export interface PageSize {
@@ -47,12 +50,18 @@ export interface MangaViewerIcons {
   exitFullscreen: IconData,
   theater: IconData,
   exitTheater: IconData,
+  preference: IconData,
+  vertView: IconData,
+  horizView: IconData,
 }
 
 export interface MangaViewerUIButtons {
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
   theater: HTMLButtonElement,
+  preference: HTMLButtonElement,
+  // direction change button
+  direction: HTMLButtonElement,
 }
 
 export interface MangaViewerStates {
@@ -62,4 +71,10 @@ export interface MangaViewerStates {
   pageAspect: PageSize,
   swiperRect: PageRect,
   isLTR: boolean,
+  isVertView: boolean,
+}
+
+export interface MangaViewerConfigs {
+  swiperVertView: SwiperOptions,
+  swiperHorizView: SwiperOptions
 }

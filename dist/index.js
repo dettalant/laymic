@@ -8306,14 +8306,15 @@ class ViewerHTMLBuilder {
             id: "mangaViewer_svgFullscreen",
             viewBox: "0 0 24 24",
             pathDs: [
-                "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z",
+                "M6 15H4v5h5v-2H6zM4 9h2V6h3V4H4zm14 9h-3v2h5v-5h-2zM15 4v2h3v3h2V4z",
             ]
         };
+        // material.io: fullscreen-exit
         const exitFullscreen = {
             id: "mangaViewer_svgExitFullscreen",
             viewBox: "0 0 24 24",
             pathDs: [
-                "M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"
+                "M4 17h3v3h2v-5H4zM7 7H4v2h5V4H7zm8 13h2v-3h3v-2h-5zm2-13V4h-2v5h5V7z"
             ]
         };
         const theater = {
@@ -8330,12 +8331,37 @@ class ViewerHTMLBuilder {
                 "M4 15.98V8.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v7.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 16h12V8H6z"
             ]
         };
+        // material.io: settings_applications(modified)
+        const preference = {
+            id: "mangaViewer_svgPreference",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M4.283 14.626l1.6 2.76c.106.173.306.24.492.173l1.986-.8c.414.32.854.586 1.347.786l.293 2.12c.04.186.2.333.4.333h3.2c.2 0 .359-.147.399-.347l.293-2.12c.48-.2.933-.466 1.347-.786l1.986.8c.186.067.386 0 .493-.173l1.6-2.76c.106-.173.053-.386-.094-.52l-1.693-1.319c.04-.253.054-.52.054-.773 0-.267-.027-.52-.054-.786l1.693-1.32c.147-.12.2-.347.094-.52l-1.6-2.76a.408.408 0 00-.493-.173l-1.986.8a5.657 5.657 0 00-1.347-.786L14 4.335a.414.414 0 00-.4-.333h-3.2c-.199 0-.359.147-.399.347l-.293 2.12c-.48.2-.947.452-1.347.772l-1.986-.8a.408.408 0 00-.493.174l-1.6 2.759c-.106.173-.053.387.094.52l1.693 1.32c-.04.266-.067.52-.067.786 0 .267.027.52.053.786l-1.692 1.32a.408.408 0 00-.08.52zM12 9.721A2.287 2.287 0 0114.28 12 2.287 2.287 0 0112 14.28 2.287 2.287 0 019.722 12a2.287 2.287 0 012.28-2.28z"
+            ]
+        };
+        const horizView = {
+            id: "mangaViewer_svgHorizView",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm2 1v10h5V7H6zm7 0v10h5V7h-5z"
+            ]
+        };
+        const vertView = {
+            id: "mangaViewer_svgVertView",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm2 1v4h12V7H6zm0 6v4h12v-4H6z"
+            ]
+        };
         return {
             close,
             fullscreen,
             exitFullscreen,
             theater,
             exitTheater,
+            preference,
+            horizView,
+            vertView
         };
     }
     createSwiperContainer(id, pages, isLTR) {
@@ -8364,33 +8390,51 @@ class ViewerHTMLBuilder {
         const ctrlTopEl = this.createDiv();
         ctrlTopEl.className = "mangaViewer_controller_top";
         const theaterBtn = this.createButton();
-        const theaterIcon = this.createSvgUseElement(this.icons.theater.id, "icon_theater");
-        const exitTheaterIcon = this.createSvgUseElement(this.icons.exitTheater.id, "icon_exitTheater");
+        [
+            this.createSvgUseElement(this.icons.theater.id, "icon_theater"),
+            this.createSvgUseElement(this.icons.exitTheater.id, "icon_exitTheater")
+        ].forEach(icon => theaterBtn.appendChild(icon));
         theaterBtn.className = `${this.uiButtonClass} mangaViewer_theater`;
-        theaterBtn.appendChild(theaterIcon);
-        theaterBtn.appendChild(exitTheaterIcon);
-        ctrlTopEl.appendChild(theaterBtn);
+        const directionBtn = this.createButton();
+        directionBtn.className = `${this.uiButtonClass} mangaViewer_direction`;
+        [
+            this.createSvgUseElement(this.icons.vertView.id, "icon_vertView"),
+            this.createSvgUseElement(this.icons.horizView.id, "icon_horizView"),
+        ].forEach(icon => directionBtn.appendChild(icon));
         const fullscreenBtn = this.createButton();
-        const fullscreenIcon = this.createSvgUseElement(this.icons.fullscreen.id, "icon_fullscreen");
-        const exitFullscreenIcon = this.createSvgUseElement(this.icons.exitFullscreen.id, "icon_exitFullscreen");
+        [
+            this.createSvgUseElement(this.icons.fullscreen.id, "icon_fullscreen"),
+            this.createSvgUseElement(this.icons.exitFullscreen.id, "icon_exitFullscreen"),
+        ].forEach(icon => fullscreenBtn.appendChild(icon));
         fullscreenBtn.className = `${this.uiButtonClass} mangaViewer_fullscreen`;
-        fullscreenBtn.appendChild(fullscreenIcon);
-        fullscreenBtn.appendChild(exitFullscreenIcon);
-        ctrlTopEl.appendChild(fullscreenBtn);
+        const preferenceBtn = this.createButton();
+        preferenceBtn.className = `${this.uiButtonClass} mangaViewer_preference`;
+        const preferenceIcon = this.createSvgUseElement(this.icons.preference.id, "icon_preference");
+        preferenceBtn.appendChild(preferenceIcon);
         const closeBtn = this.createButton();
         closeBtn.className = `${this.uiButtonClass} mangaViewer_close`;
         const closeIcon = this.createSvgUseElement(this.icons.close.id, "icon_close");
         closeBtn.appendChild(closeIcon);
-        ctrlTopEl.appendChild(closeBtn);
+        [
+            theaterBtn,
+            directionBtn,
+            fullscreenBtn,
+            preferenceBtn,
+            closeBtn
+        ].forEach(btn => ctrlTopEl.appendChild(btn));
         const uiButtons = {
             close: closeBtn,
             fullscreen: fullscreenBtn,
             theater: theaterBtn,
+            preference: preferenceBtn,
+            direction: directionBtn,
         };
         const ctrlBottomEl = this.createDiv();
         ctrlBottomEl.className = "mangaViewer_controller_bottom";
-        ctrlEl.appendChild(ctrlTopEl);
-        ctrlEl.appendChild(ctrlBottomEl);
+        [
+            ctrlTopEl,
+            ctrlBottomEl,
+        ].forEach(el => ctrlEl.appendChild(el));
         return [ctrlEl, uiButtons];
     }
     createSvgUseElement(linkId, className) {
@@ -8492,34 +8536,65 @@ class MangaViewer {
         // 一旦DOMから外していたroot要素を再度放り込む
         document.body.appendChild(this.el.rootEl);
         // サイズ設定の初期化
-        this.viewUpdate();
-        const spaceBetweenNum = (options && options.spaceBetween)
-            ? options.spaceBetween
+        // this.viewUpdate();
+        const horizViewSlideMargin = (options && options.horizViewSlideMargin)
+            ? options.horizViewSlideMargin
             : 0;
-        this.swiper = new Swiper(this.el.swiperEl, {
+        const vertViewSlideMargin = (options && options.vertViewSlideMargin)
+            ? options.vertViewSlideMargin
+            : 10;
+        const swiperHorizView = {
             direction: "horizontal",
-            loop: false,
-            effect: "slide",
             speed: 200,
             slidesPerView: 2,
             slidesPerGroup: 2,
-            spaceBetween: spaceBetweenNum,
-            centeredSlides: false,
+            spaceBetween: horizViewSlideMargin,
             on: {
                 resize: () => this.viewUpdate(),
                 tap: (e) => this.slideClickHandler(e),
             },
             keyboard: true,
             mousewheel: true,
+            preloadImages: false,
             lazy: {
                 loadPrevNext: true,
                 loadPrevNextAmount: 4,
             },
-        });
+        };
+        const swiperVertView = {
+            direction: "vertical",
+            spaceBetween: vertViewSlideMargin,
+            speed: 200,
+            mousewheel: true,
+            keyboard: true,
+            freeMode: true,
+            on: {},
+            preloadImages: false,
+            lazy: {
+                loadPrevNext: true,
+                loadPrevNextAmount: 4,
+            },
+        };
+        this.conf = {
+            swiperVertView,
+            swiperHorizView,
+        };
+        this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
         this.el.buttons.theater.addEventListener("pointerup", () => {
             this.el.rootEl.classList.toggle("is_theater");
         });
+        this.el.buttons.direction.addEventListener("pointerup", () => {
+            if (!this.state.isVertView) {
+                this.enableVerticalView();
+            }
+            else {
+                this.disableVerticalView();
+            }
+        });
         this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
+        this.el.buttons.preference.addEventListener("pointerup", () => {
+            console.log("preference button click");
+        });
         this.el.buttons.close.addEventListener("pointerup", () => {
             this.close();
         });
@@ -8560,6 +8635,7 @@ class MangaViewer {
                 h: 64
             },
             isLTR: false,
+            isVertView: false,
         };
     }
     open(isFullscreen) {
@@ -8575,6 +8651,9 @@ class MangaViewer {
         if (isFullscreen) {
             this.fullscreenButtonHandler();
         }
+        if (this.swiper.activeIndex === 0) {
+            this.swiper.lazy.load();
+        }
     }
     close() {
         this.hideRootEl();
@@ -8584,6 +8663,26 @@ class MangaViewer {
         }
         // オーバーレイ下要素のスクロール再開
         this.enableBodyScroll();
+    }
+    enableVerticalView() {
+        this.state.isVertView = true;
+        this.el.rootEl.classList.add("is_vertView");
+        // 読み進めたページ数を引き継ぐ
+        const conf = Object.assign(this.conf.swiperVertView, {
+            initialSlide: this.swiper.activeIndex
+        });
+        this.swiper.destroy(true, true);
+        this.swiper = new Swiper(this.el.swiperEl, conf);
+    }
+    disableVerticalView() {
+        this.state.isVertView = false;
+        this.el.rootEl.classList.remove("is_vertView");
+        // 読み進めたページ数を引き継ぐ
+        const conf = Object.assign(this.conf.swiperHorizView, {
+            initialSlide: this.swiper.activeIndex
+        });
+        this.swiper.destroy(true, true);
+        this.swiper = new Swiper(this.el.swiperEl, conf);
     }
     slideClickHandler(e) {
         const { left: l, 

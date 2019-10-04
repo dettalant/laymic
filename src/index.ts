@@ -1,4 +1,4 @@
-import Swiper from "swiper";
+import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
 import { calcGCD, viewerCnt, sleep } from "./utils";
 import { ViewerHTMLBuilder } from "./builder";
@@ -6,11 +6,13 @@ import {
   MangaViewerElements,
   MangaViewerOptions,
   MangaViewerStates,
+  MangaViewerConfigs,
   PageRect
 } from "./interfaces";
 
 export default class MangaViewer {
   el: MangaViewerElements;
+  conf: MangaViewerConfigs;
   state: MangaViewerStates = this.defaultMangaViewerStates;
   swiper: Swiper;
 
@@ -64,39 +66,75 @@ export default class MangaViewer {
     document.body.appendChild(this.el.rootEl);
 
     // サイズ設定の初期化
-    this.viewUpdate();
+    // this.viewUpdate();
 
-    const spaceBetweenNum = (options && options.spaceBetween)
-      ? options.spaceBetween
+    const horizViewSlideMargin = (options && options.horizViewSlideMargin)
+      ? options.horizViewSlideMargin
       : 0;
+    const vertViewSlideMargin = (options && options.vertViewSlideMargin)
+      ? options.vertViewSlideMargin
+      : 10;
 
-    this.swiper = new Swiper(this.el.swiperEl, {
+    const swiperHorizView: SwiperOptions = {
       direction: "horizontal",
-      loop: false,
-      effect: "slide",
       speed: 200,
       slidesPerView: 2,
       slidesPerGroup: 2,
-      spaceBetween: spaceBetweenNum,
-      centeredSlides: false,
+      spaceBetween: horizViewSlideMargin,
 
       on: {
         resize: () => this.viewUpdate(),
         tap: (e) => this.slideClickHandler(e),
       },
+
       keyboard: true,
       mousewheel: true,
+      preloadImages: false,
       lazy: {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
-    });
+    }
+
+    const swiperVertView: SwiperOptions = {
+      direction: "vertical",
+      spaceBetween: vertViewSlideMargin,
+      speed: 200,
+      mousewheel: true,
+      keyboard: true,
+      freeMode: true,
+      on: {},
+      preloadImages: false,
+      lazy: {
+        loadPrevNext: true,
+        loadPrevNextAmount: 4,
+      },
+    }
+
+    this.conf = {
+      swiperVertView,
+      swiperHorizView,
+    }
+
+    this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
 
     this.el.buttons.theater.addEventListener("pointerup", () => {
       this.el.rootEl.classList.toggle("is_theater");
+    });
+
+    this.el.buttons.direction.addEventListener("pointerup", () => {
+      if (!this.state.isVertView) {
+        this.enableVerticalView()
+      } else {
+        this.disableVerticalView()
+      }
     })
 
     this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
+
+    this.el.buttons.preference.addEventListener("pointerup", () => {
+      console.log("preference button click");
+    })
 
     this.el.buttons.close.addEventListener("pointerup", () => {
       this.close();
@@ -152,6 +190,7 @@ export default class MangaViewer {
         h: 64
       },
       isLTR: false,
+      isVertView: false,
     }
   }
 
@@ -172,6 +211,10 @@ export default class MangaViewer {
     if (isFullscreen) {
       this.fullscreenButtonHandler();
     }
+
+    if (this.swiper.activeIndex === 0) {
+      this.swiper.lazy.load();
+    }
   }
 
   public close() {
@@ -184,6 +227,32 @@ export default class MangaViewer {
 
     // オーバーレイ下要素のスクロール再開
     this.enableBodyScroll();
+  }
+
+  private enableVerticalView() {
+    this.state.isVertView = true;
+    this.el.rootEl.classList.add("is_vertView");
+
+    // 読み進めたページ数を引き継ぐ
+    const conf = Object.assign(this.conf.swiperVertView, {
+      initialSlide: this.swiper.activeIndex
+    });
+
+    this.swiper.destroy(true, true);
+    this.swiper = new Swiper(this.el.swiperEl, conf);
+  }
+
+  private disableVerticalView() {
+    this.state.isVertView = false;
+    this.el.rootEl.classList.remove("is_vertView");
+
+    // 読み進めたページ数を引き継ぐ
+    const conf = Object.assign(this.conf.swiperHorizView, {
+      initialSlide: this.swiper.activeIndex
+    })
+    
+    this.swiper.destroy(true, true);
+    this.swiper = new Swiper(this.el.swiperEl, conf);
   }
 
   private slideClickHandler(e: PointerEvent) {
@@ -244,8 +313,10 @@ export default class MangaViewer {
   private cssPageWidthUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
     const h = this.el.rootEl.offsetHeight * this.state.viewerHeightPer;
+
     const pageWidth = Math.round(h * aw / ah);
     const pageHeight = Math.round(pageWidth * ah / aw);
+
     this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
