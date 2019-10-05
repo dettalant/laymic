@@ -1,24 +1,42 @@
 import { MangaViewerIcons, MangaViewerUIButtons, IconData } from "./interfaces"
 
+// svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
+// svg xlink namespace
 const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 
+// mangaViewerで用いるDOMを生成するやつ
 export class ViewerHTMLBuilder {
+  // インスタンスごとに固有のid数字
   private readonly viewerId: number;
+  // 使用するアイコンセット
   private icons: MangaViewerIcons = this.defaultMangaViewerIcons;
+  // uiボタンクラス名
   private readonly uiButtonClass = "mangaViewer_ui_button";
   constructor(viewerId: number, icons?: MangaViewerIcons) {
     this.viewerId = viewerId;
     if (icons) this.icons = Object.assign(this.icons, icons);
   }
+  /**
+   * インスタンスごとに固有のビューワーIDを返す
+   * @return ビューワーID文字列
+   */
   get mangaViewerId(): string {
     return "mangaViewer" + this.viewerId;
   }
 
+  /**
+   * インスタンスごとに固有のビューワーコントローラーIDを返す
+   * @return ビューワーコントローラーID文字列
+   */
   get mangaViewerControllerId(): string {
     return "mangaViewerController" + this.viewerId;
   }
 
+  /**
+   * 初期状態でのアイコンセットを返す
+   * @return アイコンをひとまとめにしたオブジェクト
+   */
   private get defaultMangaViewerIcons(): MangaViewerIcons {
     // material.io: close
     const close = {
@@ -100,6 +118,13 @@ export class ViewerHTMLBuilder {
     }
   }
 
+  /**
+   * swiper-container要素を返す
+   * @param  id    要素のid名となる文字列
+   * @param  pages 要素が内包することになるimg src配列
+   * @param  isLTR 左から右に流れる形式を取るならtrue
+   * @return       swiper-container要素
+   */
   createSwiperContainer(id: string, pages: string[], isLTR: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container";
@@ -125,6 +150,11 @@ export class ViewerHTMLBuilder {
     return swiperEl;
   }
 
+  /**
+   * 漫画ビューワーコントローラー要素を返す
+   * @param  id 要素のid名となる文字列
+   * @return    [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
+   */
   createViewerController(id: string): [HTMLElement, MangaViewerUIButtons] {
     const ctrlEl = this.createDiv();
     ctrlEl.className = "mangaViewer_controller";
@@ -191,6 +221,12 @@ export class ViewerHTMLBuilder {
     return [ctrlEl, uiButtons]
   }
 
+  /**
+   * use要素を内包したSVGElementを返す
+   * @param  linkId    xlink:hrefに指定するid名
+   * @param  className 返す要素に追加するクラス名
+   * @return           SVGElement
+   */
   private createSvgUseElement(linkId: string, className: string): SVGElement {
     const svgEl = document.createElementNS(SVG_NS, "svg");
     svgEl.setAttribute("class", `svg_icon ${className}`);
@@ -204,6 +240,11 @@ export class ViewerHTMLBuilder {
     return svgEl;
   }
 
+  /**
+   * 漫画ビューワーが用いるアイコンを返す
+   * use要素を用いたsvg引用呼び出しを使うための前処理
+   * @return 漫画ビューワーが使うアイコンを詰め込んだsvg要素
+   */
   createSVGIcons(): SVGElement {
     const svgCtn = document.createElementNS(SVG_NS, "svg");
     svgCtn.setAttributeNS(null, "version", "1.1");
@@ -242,16 +283,30 @@ export class ViewerHTMLBuilder {
     return svgCtn;
   }
 
+  /**
+   * 空のdiv要素を返す
+   * @return div要素
+   */
   private createDiv(): HTMLDivElement {
     return document.createElement("div");
   }
 
+  /**
+   * 空のbutton要素を返す
+   * @return button要素
+   */
   private createButton(): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.type = "button";
     return btn;
   }
 
+  /**
+   * IconData形式のオブジェクトであるかを判別する
+   * type guard用の関数
+   * @param  icon 型診断を行う対象
+   * @return      IconDataであるならtrue
+   */
   private isIconData(icon: any): icon is IconData {
     return typeof icon.id === "string"
       && typeof icon.viewBox === "string"

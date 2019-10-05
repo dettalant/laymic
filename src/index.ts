@@ -114,8 +114,6 @@ export default class MangaViewer {
       freeModeMomentumRatio: 0.36,
       freeModeMomentumVelocityRatio: 1,
       freeModeMinimumVelocity: 0.02,
-      // slidesPerView: 2,
-      // centeredSlides: true,
       on: {
         resize: () => this.viewUpdate(),
         tap: (e) => this.slideClickHandler(e),
