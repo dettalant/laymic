@@ -11,9 +11,13 @@ import {
 } from "./interfaces";
 
 export default class MangaViewer {
+  // HTMLElementまとめ
   el: MangaViewerElements;
+  // swiper configまとめ
   conf: MangaViewerConfigs;
+  // mangaViewer内部で用いるステートまとめ
   state: MangaViewerStates = this.defaultMangaViewerStates;
+  // swiper instance
   swiper: Swiper;
 
   constructor(queryStr: string, pages: string[], options?: MangaViewerOptions) {
@@ -23,9 +27,11 @@ export default class MangaViewer {
     if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
     rootEl.style.display = "none";
 
-    const builder = new ViewerHTMLBuilder(this.state.viewerId);
+    const icons = (options && options.icons) ? options.icons : undefined;
+    const builder = new ViewerHTMLBuilder(icons);
+
     if (this.state.viewerId === 0) {
-      // ページにつき一度だけの処理
+      // 一つのページにつき一度だけの処理
       const svgCtn = builder.createSVGIcons();
       document.body.appendChild(svgCtn);
     }
@@ -156,14 +162,26 @@ export default class MangaViewer {
 
   }
 
+  /**
+   * インスタンスごとに固有のビューワーIDを返す
+   * @return ビューワーID文字列
+   */
   private get mangaViewerId(): string {
     return "mangaViewer" + this.state.viewerId;
   }
 
+  /**
+   * インスタンスごとに固有のビューワーコントローラーIDを返す
+   * @return ビューワーコントローラーID文字列
+   */
   private get mangaViewerControllerId(): string {
     return "mangaViewerController" + this.state.viewerId;
   }
 
+  /**
+   * swiper-containerの要素サイズを返す
+   * @return 要素サイズオブジェクト
+   */
   private get swiperElRect(): PageRect {
     const {
       height: h,
@@ -179,6 +197,10 @@ export default class MangaViewer {
     }
   }
 
+  /**
+   * 初期状態のmangaViewerステートオブジェクトを返す
+   * @return this.stateの初期値
+   */
   private get defaultMangaViewerStates(): MangaViewerStates {
     const {
       innerHeight: ih,
@@ -194,6 +216,7 @@ export default class MangaViewer {
         w: iw,
         h: ih,
       },
+      // インスタンスごとに固有のid数字
       viewerId: viewerCnt(),
       pageSize: {
         w: 720,
@@ -208,8 +231,13 @@ export default class MangaViewer {
     }
   }
 
+  /**
+   * オーバーレイ表示を展開させる
+   * @param  isFullscreen trueならば同時に全画面化させる
+   */
   public open(isFullscreen: boolean) {
     // display:none状態の場合にそれを解除する
+    // 主にページ読み込み後一度目の展開でだけ動く部分
     if (this.el.rootEl.style.display === "none") {
       this.el.rootEl.style.display = "";
     }
@@ -217,20 +245,28 @@ export default class MangaViewer {
     // swiper表示更新
     this.viewUpdate();
 
+    // オーバーレイ要素の表示
     this.showRootEl();
 
     // オーバーレイ下要素のスクロール停止
     this.disableBodyScroll();
 
+    // 引数がtrueならば全画面化
     if (isFullscreen) {
       this.fullscreenButtonHandler();
     }
 
+    // swiperのfreeModeには
+    // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
+    // 不具合があるようなので手動で画像読み込み
     if (this.swiper.activeIndex === 0) {
       this.swiper.lazy.load();
     }
   }
 
+  /**
+   * オーバーレイ表示を閉じる
+   */
   public close() {
     this.hideRootEl();
 
@@ -243,6 +279,9 @@ export default class MangaViewer {
     this.enableBodyScroll();
   }
 
+  /**
+   * 縦読み表示へと切り替える
+   */
   private enableVerticalView() {
     this.state.isVertView = true;
     this.el.rootEl.classList.add("is_vertView");
@@ -252,12 +291,16 @@ export default class MangaViewer {
       initialSlide: this.swiper.activeIndex
     });
 
+    // swiperインスタンスを一旦破棄してからre-init
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
 
     this.viewUpdate();
   }
 
+  /**
+   * 横読み表示へと切り替える
+   */
   private disableVerticalView() {
     this.state.isVertView = false;
     this.el.rootEl.classList.remove("is_vertView");
@@ -267,12 +310,22 @@ export default class MangaViewer {
       initialSlide: this.swiper.activeIndex
     })
 
+    // swiperインスタンスを一旦破棄してからre-init
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
 
     this.viewUpdate();
   }
 
+  /**
+   * mangaViewer画面をクリックした際のイベントハンドラ
+   * 横読み時: 左側クリックで進む、右側クリックで戻る
+   * 縦読み時: 下側クリックで進む、上側クリックで戻る
+   *
+   * TODO: LTR設定に対応させる必要あり
+   *
+   * @param  e pointer-up event
+   */
   private slideClickHandler(e: PointerEvent) {
     const {
       left: l,
@@ -315,6 +368,10 @@ export default class MangaViewer {
     }
   }
 
+  /**
+   * mangaViewer表示を更新する
+   * 主にswiperの表示を更新するための関数
+   */
   private viewUpdate() {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
@@ -322,6 +379,12 @@ export default class MangaViewer {
     if (this.swiper) this.swiper.update();
   }
 
+  /**
+   * 全画面化ボタンのイベントハンドラ
+   *
+   * 非全画面状態ならば全画面化させて、
+   * 全画面状態であるならそれを解除する
+   */
   private fullscreenButtonHandler() {
     // フルスクリーン切り替え後に呼び出される関数
     const postToggleFullscreen = () => {
@@ -347,6 +410,11 @@ export default class MangaViewer {
     }
   }
 
+  /**
+   * css変数として各ページ最大サイズを再登録する
+   * cssPageWidthUpdateという関数名だけど
+   * pageHeightの値も更新するのはこれいかに
+   */
   private cssPageWidthUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
@@ -372,26 +440,43 @@ export default class MangaViewer {
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
 
+  /**
+   * mangaViewerと紐付いたrootElを表示する
+   * @return [description]
+   */
   private showRootEl() {
     this.el.rootEl.style.opacity = "1";
     this.el.rootEl.style.visibility = "visible";
   }
 
+  /**
+   * mangaViewerと紐付いたrootElを非表示にする
+   */
   private hideRootEl() {
     this.el.rootEl.style.opacity = "0";
     this.el.rootEl.style.visibility = "hidden";
   }
 
+  /**
+   * body要素のスクロールを停止させる
+   */
   private disableBodyScroll() {
     document.documentElement.style.overflowY = "hidden";
     document.body.style.overflowY = "hidden";
   }
 
+  /**
+   * body要素のスクロールを再開させる
+   */
   private enableBodyScroll() {
     document.documentElement.style.overflowY = "";
     document.body.style.overflowY = "";
   }
 
+  /**
+   * 入力したpathの画像からpageSizeを設定する
+   * @param src 画像path
+   */
   private setPageSizeFromImgPath(src: string) {
     readImage(src).then(img => {
       const {width: w, height: h} = img;

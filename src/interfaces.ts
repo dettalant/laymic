@@ -70,6 +70,7 @@ export interface MangaViewerUIButtons {
 
 // mangaViewer内部で用いるステートまとめ
 export interface MangaViewerStates {
+  // インスタンスごとに固有のid数字
   viewerId: number,
   viewerPadding: number,
   pageSize: PageSize,

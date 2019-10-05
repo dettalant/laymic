@@ -7,30 +7,12 @@ const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 
 // mangaViewerで用いるDOMを生成するやつ
 export class ViewerHTMLBuilder {
-  // インスタンスごとに固有のid数字
-  private readonly viewerId: number;
   // 使用するアイコンセット
   private icons: MangaViewerIcons = this.defaultMangaViewerIcons;
   // uiボタンクラス名
   private readonly uiButtonClass = "mangaViewer_ui_button";
-  constructor(viewerId: number, icons?: MangaViewerIcons) {
-    this.viewerId = viewerId;
+  constructor(icons?: MangaViewerIcons) {
     if (icons) this.icons = Object.assign(this.icons, icons);
-  }
-  /**
-   * インスタンスごとに固有のビューワーIDを返す
-   * @return ビューワーID文字列
-   */
-  get mangaViewerId(): string {
-    return "mangaViewer" + this.viewerId;
-  }
-
-  /**
-   * インスタンスごとに固有のビューワーコントローラーIDを返す
-   * @return ビューワーコントローラーID文字列
-   */
-  get mangaViewerControllerId(): string {
-    return "mangaViewerController" + this.viewerId;
   }
 
   /**
