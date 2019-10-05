@@ -8722,11 +8722,13 @@ var mangaViewer = (function () {
               isPrevClick = x > w * 0.66;
           }
           const uiVisibleClass = "is_ui_visible";
-          if (isNextClick) {
+          if (isNextClick && !this.swiper.isEnd) {
+              // 進めるページがある状態で進む側をクリックした際の処理
               this.swiper.slideNext();
               this.el.rootEl.classList.remove(uiVisibleClass);
           }
-          else if (isPrevClick) {
+          else if (isPrevClick && !this.swiper.isBeginning) {
+              // 戻れるページがある状態で戻る側をクリックした際の処理
               // freeModeでslidePrev()を使うとなんかバグがあるっぽいので
               // 手動計算して動かす
               const idx = (this.swiper.activeIndex !== 0)
