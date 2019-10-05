@@ -319,10 +319,10 @@ export default class MangaViewer {
 
   /**
    * mangaViewer画面をクリックした際のイベントハンドラ
-   * 横読み時: 左側クリックで進む、右側クリックで戻る
-   * 縦読み時: 下側クリックで進む、上側クリックで戻る
    *
-   * TODO: LTR設定に対応させる必要あり
+   * 横読み時   : 左側クリックで進む、右側クリックで戻る
+   * 横読みLTR時: 右側クリックで進む、左側クリックで戻る
+   * 縦読み時   : 下側クリックで進む、上側クリックで戻る
    *
    * @param  e pointer-up event
    */
@@ -339,9 +339,15 @@ export default class MangaViewer {
     let [isNextClick, isPrevClick] = [false, false];
 
     if (this.state.isVertView) {
+      // 縦読み時処理
       isNextClick = y > h * 0.66;
       isPrevClick = y < h * 0.33;
+    } else if (this.state.isLTR) {
+      // 横読みLTR時処理
+      isNextClick = x > w * 0.66;
+      isPrevClick = x < w * 0.33;
     } else {
+      // 通常横読み時処理
       isNextClick = x < w * 0.33;
       isPrevClick = x > w * 0.66;
     }

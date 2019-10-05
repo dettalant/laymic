@@ -8261,8 +8261,13 @@ var mangaViewer = (function () {
   });
   var screenfull_1 = screenfull.isEnabled;
 
-  // 最大公約数を計算する
-  // ユークリッドの互除法を使用
+  /**
+   * 最大公約数を計算する
+   * ユークリッドの互除法を使用
+   * @param  x 最終的に出力される公約数
+   * @param  y 直前の計算での残余。これが0になるまで処理を続ける
+   * @return   計算結果の最大公約数
+   */
   const calcGCD = (x, y) => {
       while (y !== 0) {
           const tx = x;
@@ -8272,10 +8277,25 @@ var mangaViewer = (function () {
       return x;
   };
   let _viewerCntNum = 0;
+  /**
+   * インスタンスで固有のviewerIdを出力するための関数
+   * 呼び出されるたびにインクリメントするだけ
+   * @return  固有のviewerId数値
+   */
   const viewerCnt = () => {
       return _viewerCntNum++;
   };
+  /**
+   * 一定時間ウェイトを取る
+   * @param  ms ウェイト秒数。ミリ秒で指定
+   * @return    Promiseに包まれたsetTimeout戻り値
+   */
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+  /**
+   * 画像をimg要素として読み取る
+   * @param   path 画像path文字列
+   * @return       Promiseに包まれたHTMLImageElement
+   */
   const readImage = (path) => {
       return new Promise((res, rej) => {
           const img = new Image();
@@ -8285,22 +8305,24 @@ var mangaViewer = (function () {
       });
   };
 
+  // svg namespace
   const SVG_NS = "http://www.w3.org/2000/svg";
+  // svg xlink namespace
   const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
+  // mangaViewerで用いるDOMを生成するやつ
   class ViewerHTMLBuilder {
-      constructor(viewerId, icons) {
+      constructor(icons) {
+          // 使用するアイコンセット
           this.icons = this.defaultMangaViewerIcons;
+          // uiボタンクラス名
           this.uiButtonClass = "mangaViewer_ui_button";
-          this.viewerId = viewerId;
           if (icons)
               this.icons = Object.assign(this.icons, icons);
       }
-      get mangaViewerId() {
-          return "mangaViewer" + this.viewerId;
-      }
-      get mangaViewerControllerId() {
-          return "mangaViewerController" + this.viewerId;
-      }
+      /**
+       * 初期状態でのアイコンセットを返す
+       * @return アイコンをひとまとめにしたオブジェクト
+       */
       get defaultMangaViewerIcons() {
           // material.io: close
           const close = {
@@ -8373,6 +8395,13 @@ var mangaViewer = (function () {
               vertView
           };
       }
+      /**
+       * swiper-container要素を返す
+       * @param  id    要素のid名となる文字列
+       * @param  pages 要素が内包することになるimg src配列
+       * @param  isLTR 左から右に流れる形式を取るならtrue
+       * @return       swiper-container要素
+       */
       createSwiperContainer(id, pages, isLTR) {
           const swiperEl = this.createDiv();
           swiperEl.className = "swiper-container";
@@ -8392,6 +8421,11 @@ var mangaViewer = (function () {
           swiperEl.appendChild(wrapperEl);
           return swiperEl;
       }
+      /**
+       * 漫画ビューワーコントローラー要素を返す
+       * @param  id 要素のid名となる文字列
+       * @return    [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
+       */
       createViewerController(id) {
           const ctrlEl = this.createDiv();
           ctrlEl.className = "mangaViewer_controller";
@@ -8446,6 +8480,12 @@ var mangaViewer = (function () {
           ].forEach(el => ctrlEl.appendChild(el));
           return [ctrlEl, uiButtons];
       }
+      /**
+       * use要素を内包したSVGElementを返す
+       * @param  linkId    xlink:hrefに指定するid名
+       * @param  className 返す要素に追加するクラス名
+       * @return           SVGElement
+       */
       createSvgUseElement(linkId, className) {
           const svgEl = document.createElementNS(SVG_NS, "svg");
           svgEl.setAttribute("class", `svg_icon ${className}`);
@@ -8456,6 +8496,11 @@ var mangaViewer = (function () {
           svgEl.appendChild(useEl);
           return svgEl;
       }
+      /**
+       * 漫画ビューワーが用いるアイコンを返す
+       * use要素を用いたsvg引用呼び出しを使うための前処理
+       * @return 漫画ビューワーが使うアイコンを詰め込んだsvg要素
+       */
       createSVGIcons() {
           const svgCtn = document.createElementNS(SVG_NS, "svg");
           svgCtn.setAttributeNS(null, "version", "1.1");
@@ -8485,14 +8530,28 @@ var mangaViewer = (function () {
           svgCtn.style.left = "-9px";
           return svgCtn;
       }
+      /**
+       * 空のdiv要素を返す
+       * @return div要素
+       */
       createDiv() {
           return document.createElement("div");
       }
+      /**
+       * 空のbutton要素を返す
+       * @return button要素
+       */
       createButton() {
           const btn = document.createElement("button");
           btn.type = "button";
           return btn;
       }
+      /**
+       * IconData形式のオブジェクトであるかを判別する
+       * type guard用の関数
+       * @param  icon 型診断を行う対象
+       * @return      IconDataであるならtrue
+       */
       isIconData(icon) {
           return typeof icon.id === "string"
               && typeof icon.viewBox === "string"
@@ -8502,6 +8561,7 @@ var mangaViewer = (function () {
 
   class MangaViewer {
       constructor(queryStr, pages, options) {
+          // mangaViewer内部で用いるステートまとめ
           this.state = this.defaultMangaViewerStates;
           const rootEl = document.querySelector(queryStr);
           if (!(rootEl instanceof HTMLElement))
@@ -8509,9 +8569,10 @@ var mangaViewer = (function () {
           if (rootEl.parentNode)
               rootEl.parentNode.removeChild(rootEl);
           rootEl.style.display = "none";
-          const builder = new ViewerHTMLBuilder(this.state.viewerId);
+          const icons = (options && options.icons) ? options.icons : undefined;
+          const builder = new ViewerHTMLBuilder(icons);
           if (this.state.viewerId === 0) {
-              // ページにつき一度だけの処理
+              // 一つのページにつき一度だけの処理
               const svgCtn = builder.createSVGIcons();
               document.body.appendChild(svgCtn);
           }
@@ -8586,8 +8647,6 @@ var mangaViewer = (function () {
               freeModeMomentumRatio: 0.36,
               freeModeMomentumVelocityRatio: 1,
               freeModeMinimumVelocity: 0.02,
-              // slidesPerView: 2,
-              // centeredSlides: true,
               on: {
                   resize: () => this.viewUpdate(),
                   tap: (e) => this.slideClickHandler(e),
@@ -8622,12 +8681,24 @@ var mangaViewer = (function () {
               this.close();
           });
       }
+      /**
+       * インスタンスごとに固有のビューワーIDを返す
+       * @return ビューワーID文字列
+       */
       get mangaViewerId() {
           return "mangaViewer" + this.state.viewerId;
       }
+      /**
+       * インスタンスごとに固有のビューワーコントローラーIDを返す
+       * @return ビューワーコントローラーID文字列
+       */
       get mangaViewerControllerId() {
           return "mangaViewerController" + this.state.viewerId;
       }
+      /**
+       * swiper-containerの要素サイズを返す
+       * @return 要素サイズオブジェクト
+       */
       get swiperElRect() {
           const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
           return {
@@ -8637,6 +8708,10 @@ var mangaViewer = (function () {
               t
           };
       }
+      /**
+       * 初期状態のmangaViewerステートオブジェクトを返す
+       * @return this.stateの初期値
+       */
       get defaultMangaViewerStates() {
           const { innerHeight: ih, innerWidth: iw, } = window;
           return {
@@ -8648,6 +8723,7 @@ var mangaViewer = (function () {
                   w: iw,
                   h: ih,
               },
+              // インスタンスごとに固有のid数字
               viewerId: viewerCnt(),
               pageSize: {
                   w: 720,
@@ -8661,23 +8737,36 @@ var mangaViewer = (function () {
               isVertView: false,
           };
       }
+      /**
+       * オーバーレイ表示を展開させる
+       * @param  isFullscreen trueならば同時に全画面化させる
+       */
       open(isFullscreen) {
           // display:none状態の場合にそれを解除する
+          // 主にページ読み込み後一度目の展開でだけ動く部分
           if (this.el.rootEl.style.display === "none") {
               this.el.rootEl.style.display = "";
           }
           // swiper表示更新
           this.viewUpdate();
+          // オーバーレイ要素の表示
           this.showRootEl();
           // オーバーレイ下要素のスクロール停止
           this.disableBodyScroll();
+          // 引数がtrueならば全画面化
           if (isFullscreen) {
               this.fullscreenButtonHandler();
           }
+          // swiperのfreeModeには
+          // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
+          // 不具合があるようなので手動で画像読み込み
           if (this.swiper.activeIndex === 0) {
               this.swiper.lazy.load();
           }
       }
+      /**
+       * オーバーレイ表示を閉じる
+       */
       close() {
           this.hideRootEl();
           // フルスクリーン状態にあるならそれを解除
@@ -8687,6 +8776,9 @@ var mangaViewer = (function () {
           // オーバーレイ下要素のスクロール再開
           this.enableBodyScroll();
       }
+      /**
+       * 縦読み表示へと切り替える
+       */
       enableVerticalView() {
           this.state.isVertView = true;
           this.el.rootEl.classList.add("is_vertView");
@@ -8694,10 +8786,14 @@ var mangaViewer = (function () {
           const conf = Object.assign(this.conf.swiperVertView, {
               initialSlide: this.swiper.activeIndex
           });
+          // swiperインスタンスを一旦破棄してからre-init
           this.swiper.destroy(true, true);
           this.swiper = new Swiper(this.el.swiperEl, conf);
           this.viewUpdate();
       }
+      /**
+       * 横読み表示へと切り替える
+       */
       disableVerticalView() {
           this.state.isVertView = false;
           this.el.rootEl.classList.remove("is_vertView");
@@ -8705,17 +8801,33 @@ var mangaViewer = (function () {
           const conf = Object.assign(this.conf.swiperHorizView, {
               initialSlide: this.swiper.activeIndex
           });
+          // swiperインスタンスを一旦破棄してからre-init
           this.swiper.destroy(true, true);
           this.swiper = new Swiper(this.el.swiperEl, conf);
           this.viewUpdate();
       }
+      /**
+       * mangaViewer画面をクリックした際のイベントハンドラ
+       *
+       * 横読み時   : 左側クリックで進む、右側クリックで戻る
+       * 横読みLTR時: 右側クリックで進む、左側クリックで戻る
+       * 縦読み時   : 下側クリックで進む、上側クリックで戻る
+       *
+       * @param  e pointer-up event
+       */
       slideClickHandler(e) {
           const { left: l, top: t, width: w, height: h, } = this.el.swiperEl.getBoundingClientRect();
           const [x, y] = [e.pageX - l, e.pageY - t];
           let [isNextClick, isPrevClick] = [false, false];
           if (this.state.isVertView) {
+              // 縦読み時処理
               isNextClick = y > h * 0.66;
               isPrevClick = y < h * 0.33;
+          }
+          else if (this.state.isLTR) {
+              // 横読みLTR時処理
+              isNextClick = x > w * 0.66;
+              isPrevClick = x < w * 0.33;
           }
           else {
               isNextClick = x < w * 0.33;
@@ -8741,12 +8853,22 @@ var mangaViewer = (function () {
               this.el.rootEl.classList.toggle(uiVisibleClass);
           }
       }
+      /**
+       * mangaViewer表示を更新する
+       * 主にswiperの表示を更新するための関数
+       */
       viewUpdate() {
           this.state.swiperRect = this.swiperElRect;
           this.cssPageWidthUpdate();
           if (this.swiper)
               this.swiper.update();
       }
+      /**
+       * 全画面化ボタンのイベントハンドラ
+       *
+       * 非全画面状態ならば全画面化させて、
+       * 全画面状態であるならそれを解除する
+       */
       fullscreenButtonHandler() {
           // フルスクリーン切り替え後に呼び出される関数
           const postToggleFullscreen = () => {
@@ -8770,6 +8892,11 @@ var mangaViewer = (function () {
                   .then(() => postToggleFullscreen());
           }
       }
+      /**
+       * css変数として各ページ最大サイズを再登録する
+       * cssPageWidthUpdateという関数名だけど
+       * pageHeightの値も更新するのはこれいかに
+       */
       cssPageWidthUpdate() {
           const { w: aw, h: ah } = this.state.pageAspect;
           const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
@@ -8791,22 +8918,39 @@ var mangaViewer = (function () {
           this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
           this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
       }
+      /**
+       * mangaViewerと紐付いたrootElを表示する
+       * @return [description]
+       */
       showRootEl() {
           this.el.rootEl.style.opacity = "1";
           this.el.rootEl.style.visibility = "visible";
       }
+      /**
+       * mangaViewerと紐付いたrootElを非表示にする
+       */
       hideRootEl() {
           this.el.rootEl.style.opacity = "0";
           this.el.rootEl.style.visibility = "hidden";
       }
+      /**
+       * body要素のスクロールを停止させる
+       */
       disableBodyScroll() {
           document.documentElement.style.overflowY = "hidden";
           document.body.style.overflowY = "hidden";
       }
+      /**
+       * body要素のスクロールを再開させる
+       */
       enableBodyScroll() {
           document.documentElement.style.overflowY = "";
           document.body.style.overflowY = "";
       }
+      /**
+       * 入力したpathの画像からpageSizeを設定する
+       * @param src 画像path
+       */
       setPageSizeFromImgPath(src) {
           readImage(src).then(img => {
               const { width: w, height: h } = img;
