@@ -66,7 +66,7 @@ export interface MangaViewerUIButtons {
 
 export interface MangaViewerStates {
   viewerId: number,
-  viewerHeightPer: number,
+  viewerPadding: number,
   pageSize: PageSize,
   pageAspect: PageSize,
   swiperRect: PageRect,

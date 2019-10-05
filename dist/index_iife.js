@@ -8534,20 +8534,7 @@ var mangaViewer = (function () {
               // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
               // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
               const src = pages[0];
-              readImage(src).then(img => {
-                  const { width: w, height: h } = img;
-                  this.state.pageSize = {
-                      w,
-                      h
-                  };
-                  const gcd = calcGCD(w, h);
-                  this.state.pageAspect = {
-                      w: w / gcd,
-                      h: h / gcd,
-                  };
-                  // もしここでエラーが起きても問題ないので握りつぶす
-                  this.viewUpdate();
-              }).catch(e => console.error(e));
+              this.setPageSizeFromImgPath(src);
           }
           rootEl.classList.add("mangaViewer_root", "is_ui_visible");
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
@@ -8568,9 +8555,6 @@ var mangaViewer = (function () {
           const horizPageMargin = (options && options.horizPageMargin)
               ? options.horizPageMargin
               : 0;
-          const vertPageMargin = (options && options.vertPageMargin)
-              ? options.vertPageMargin
-              : 10;
           const swiperHorizView = {
               direction: "horizontal",
               speed: 200,
@@ -8589,6 +8573,9 @@ var mangaViewer = (function () {
                   loadPrevNextAmount: 4,
               },
           };
+          const vertPageMargin = (options && options.vertPageMargin)
+              ? options.vertPageMargin
+              : 10;
           const swiperVertView = {
               direction: "vertical",
               spaceBetween: vertPageMargin,
@@ -8599,7 +8586,10 @@ var mangaViewer = (function () {
               freeModeMomentumRatio: 0.36,
               freeModeMomentumVelocityRatio: 1,
               freeModeMinimumVelocity: 0.02,
+              // slidesPerView: 2,
+              // centeredSlides: true,
               on: {
+                  resize: () => this.viewUpdate(),
                   tap: (e) => this.slideClickHandler(e),
               },
               preloadImages: false,
@@ -8650,7 +8640,7 @@ var mangaViewer = (function () {
       get defaultMangaViewerStates() {
           const { innerHeight: ih, innerWidth: iw, } = window;
           return {
-              viewerHeightPer: 1,
+              viewerPadding: 10,
               // デフォルト値としてウィンドウ幅を指定
               swiperRect: {
                   l: 0,
@@ -8706,6 +8696,7 @@ var mangaViewer = (function () {
           });
           this.swiper.destroy(true, true);
           this.swiper = new Swiper(this.el.swiperEl, conf);
+          this.viewUpdate();
       }
       disableVerticalView() {
           this.state.isVertView = false;
@@ -8716,6 +8707,7 @@ var mangaViewer = (function () {
           });
           this.swiper.destroy(true, true);
           this.swiper = new Swiper(this.el.swiperEl, conf);
+          this.viewUpdate();
       }
       slideClickHandler(e) {
           const { left: l, top: t, width: w, height: h, } = this.el.swiperEl.getBoundingClientRect();
@@ -8735,7 +8727,12 @@ var mangaViewer = (function () {
               this.el.rootEl.classList.remove(uiVisibleClass);
           }
           else if (isPrevClick) {
-              this.swiper.slidePrev();
+              // freeModeでslidePrev()を使うとなんかバグがあるっぽいので
+              // 手動計算して動かす
+              const idx = (this.swiper.activeIndex !== 0)
+                  ? this.swiper.activeIndex - 1
+                  : 0;
+              this.swiper.slideTo(idx);
               this.el.rootEl.classList.remove(uiVisibleClass);
           }
           else {
@@ -8760,6 +8757,7 @@ var mangaViewer = (function () {
                   // 通常時
                   this.el.rootEl.classList.remove("is_fullscreen");
               }
+              this.swiper.slideTo(this.swiper.activeIndex);
               this.viewUpdate();
           };
           if (screenfull.isEnabled) {
@@ -8772,9 +8770,22 @@ var mangaViewer = (function () {
       }
       cssPageWidthUpdate() {
           const { w: aw, h: ah } = this.state.pageAspect;
-          const h = this.el.rootEl.offsetHeight * this.state.viewerHeightPer;
-          const pageWidth = Math.round(h * aw / ah);
-          const pageHeight = Math.round(pageWidth * ah / aw);
+          const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
+          const paddingNum = this.state.viewerPadding * 2;
+          let { w: pageWidth, h: pageHeight } = this.state.pageSize;
+          if (!this.state.isVertView && ow < pageWidth * 2
+              || ow > pageWidth && oh < pageHeight) {
+              // 横読み時のサイズ計算
+              const h = oh - paddingNum;
+              pageWidth = Math.round(h * aw / ah);
+              pageHeight = Math.round(pageWidth * ah / aw);
+          }
+          else if (oh < pageHeight) {
+              // 縦読み時のサイズ計算
+              const w = ow - paddingNum;
+              pageHeight = Math.round(w * ah / aw);
+              pageWidth = Math.round(pageHeight * aw / ah);
+          }
           this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
           this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
       }
@@ -8793,6 +8804,22 @@ var mangaViewer = (function () {
       enableBodyScroll() {
           document.documentElement.style.overflowY = "";
           document.body.style.overflowY = "";
+      }
+      setPageSizeFromImgPath(src) {
+          readImage(src).then(img => {
+              const { width: w, height: h } = img;
+              this.state.pageSize = {
+                  w,
+                  h
+              };
+              const gcd = calcGCD(w, h);
+              this.state.pageAspect = {
+                  w: w / gcd,
+                  h: h / gcd,
+              };
+              // もしここでエラーが起きても問題ないので握りつぶす
+              this.viewUpdate();
+          }).catch(e => console.error(e));
       }
   }
 

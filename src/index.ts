@@ -51,23 +51,7 @@ export default class MangaViewer {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
       // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
       const src = pages[0];
-      readImage(src).then(img => {
-        const {width: w, height: h} = img;
-
-        this.state.pageSize = {
-          w,
-          h
-        };
-
-        const gcd = calcGCD(w, h);
-        this.state.pageAspect = {
-          w: w / gcd,
-          h: h / gcd,
-        }
-
-        // もしここでエラーが起きても問題ないので握りつぶす
-        this.viewUpdate();
-      }).catch(e => console.error(e));
+      this.setPageSizeFromImgPath(src);
     }
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
@@ -94,9 +78,6 @@ export default class MangaViewer {
     const horizPageMargin = (options && options.horizPageMargin)
       ? options.horizPageMargin
       : 0;
-    const vertPageMargin = (options && options.vertPageMargin)
-      ? options.vertPageMargin
-      : 10;
 
     const swiperHorizView: SwiperOptions = {
       direction: "horizontal",
@@ -119,6 +100,10 @@ export default class MangaViewer {
       },
     }
 
+    const vertPageMargin = (options && options.vertPageMargin)
+      ? options.vertPageMargin
+      : 10;
+
     const swiperVertView: SwiperOptions = {
       direction: "vertical",
       spaceBetween: vertPageMargin,
@@ -129,7 +114,10 @@ export default class MangaViewer {
       freeModeMomentumRatio: 0.36,
       freeModeMomentumVelocityRatio: 1,
       freeModeMinimumVelocity: 0.02,
+      // slidesPerView: 2,
+      // centeredSlides: true,
       on: {
+        resize: () => this.viewUpdate(),
         tap: (e) => this.slideClickHandler(e),
       },
       preloadImages: false,
@@ -200,7 +188,7 @@ export default class MangaViewer {
     } = window;
 
     return {
-      viewerHeightPer: 1,
+      viewerPadding: 10,
       // デフォルト値としてウィンドウ幅を指定
       swiperRect: {
         l: 0,
@@ -268,6 +256,8 @@ export default class MangaViewer {
 
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
+
+    this.viewUpdate();
   }
 
   private disableVerticalView() {
@@ -281,6 +271,8 @@ export default class MangaViewer {
 
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
+
+    this.viewUpdate();
   }
 
   private slideClickHandler(e: PointerEvent) {
@@ -309,7 +301,12 @@ export default class MangaViewer {
       this.swiper.slideNext();
       this.el.rootEl.classList.remove(uiVisibleClass);
     } else if (isPrevClick) {
-      this.swiper.slidePrev();
+      // freeModeでslidePrev()を使うとなんかバグがあるっぽいので
+      // 手動計算して動かす
+      const idx = (this.swiper.activeIndex !== 0)
+        ? this.swiper.activeIndex - 1
+        : 0;
+      this.swiper.slideTo(idx);
       this.el.rootEl.classList.remove(uiVisibleClass);
     } else {
       this.el.rootEl.classList.toggle(uiVisibleClass);
@@ -334,6 +331,7 @@ export default class MangaViewer {
         // 通常時
         this.el.rootEl.classList.remove("is_fullscreen");
       }
+      this.swiper.slideTo(this.swiper.activeIndex);
 
       this.viewUpdate();
     }
@@ -349,10 +347,24 @@ export default class MangaViewer {
 
   private cssPageWidthUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
-    const h = this.el.rootEl.offsetHeight * this.state.viewerHeightPer;
+    const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
+    const paddingNum = this.state.viewerPadding * 2;
 
-    const pageWidth = Math.round(h * aw / ah);
-    const pageHeight = Math.round(pageWidth * ah / aw);
+    let {w: pageWidth, h: pageHeight} = this.state.pageSize;
+
+    if (!this.state.isVertView && ow < pageWidth * 2
+      || ow > pageWidth && oh < pageHeight)
+    {
+      // 横読み時のサイズ計算
+      const h = oh - paddingNum;
+      pageWidth = Math.round(h * aw / ah);
+      pageHeight = Math.round(pageWidth * ah / aw);
+    } else if (oh < pageHeight) {
+      // 縦読み時のサイズ計算
+      const w = ow - paddingNum;
+      pageHeight = Math.round(w * ah / aw);
+      pageWidth = Math.round(pageHeight * aw / ah);
+    }
 
     this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
@@ -376,5 +388,25 @@ export default class MangaViewer {
   private enableBodyScroll() {
     document.documentElement.style.overflowY = "";
     document.body.style.overflowY = "";
+  }
+
+  private setPageSizeFromImgPath(src: string) {
+    readImage(src).then(img => {
+      const {width: w, height: h} = img;
+
+      this.state.pageSize = {
+        w,
+        h
+      };
+
+      const gcd = calcGCD(w, h);
+      this.state.pageAspect = {
+        w: w / gcd,
+        h: h / gcd,
+      }
+
+      // もしここでエラーが起きても問題ないので握りつぶす
+      this.viewUpdate();
+    }).catch(e => console.error(e));
   }
 }

@@ -22,4 +22,5 @@ export default class MangaViewer {
     private hideRootEl;
     private disableBodyScroll;
     private enableBodyScroll;
+    private setPageSizeFromImgPath;
 }
