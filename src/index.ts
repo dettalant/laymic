@@ -70,7 +70,7 @@ export default class MangaViewer {
       }).catch(e => console.error(e));
     }
 
-    rootEl.classList.add("mangaViewer_root");
+    rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
     rootEl.appendChild(controllerEl);
@@ -89,7 +89,7 @@ export default class MangaViewer {
     document.body.appendChild(this.el.rootEl);
 
     // サイズ設定の初期化
-    // this.viewUpdate();
+    this.viewUpdate();
 
     const horizPageMargin = (options && options.horizPageMargin)
       ? options.horizPageMargin
@@ -129,7 +129,9 @@ export default class MangaViewer {
       freeModeMomentumRatio: 0.36,
       freeModeMomentumVelocityRatio: 1,
       freeModeMinimumVelocity: 0.02,
-      on: {},
+      on: {
+        tap: (e) => this.slideClickHandler(e),
+      },
       preloadImages: false,
       lazy: {
         loadPrevNext: true,
@@ -198,7 +200,7 @@ export default class MangaViewer {
     } = window;
 
     return {
-      viewerHeightPer: 0.9,
+      viewerHeightPer: 1,
       // デフォルト値としてウィンドウ幅を指定
       swiperRect: {
         l: 0,
@@ -284,24 +286,33 @@ export default class MangaViewer {
   private slideClickHandler(e: PointerEvent) {
     const {
       left: l,
-      // top: t,
+      top: t,
       width: w,
-      // height: h,
+      height: h,
     } = this.el.swiperEl.getBoundingClientRect()
 
-    const x = e.pageX - l;
+    const [x, y] = [e.pageX - l, e.pageY - t]
 
-    const [isLeftAreaClick, isRightAreaClick] = [
-      x < w * 0.33,
-      x > w * 0.66,
-    ]
+    let [isNextClick, isPrevClick] = [false, false];
 
-    if (isLeftAreaClick) {
-      this.swiper.slideNext();
-    } else if (isRightAreaClick) {
-      this.swiper.slidePrev();
+    if (this.state.isVertView) {
+      isNextClick = y > h * 0.66;
+      isPrevClick = y < h * 0.33;
     } else {
-      console.log("中側クリック");
+      isNextClick = x < w * 0.33;
+      isPrevClick = x > w * 0.66;
+    }
+
+    const uiVisibleClass = "is_ui_visible";
+
+    if (isNextClick) {
+      this.swiper.slideNext();
+      this.el.rootEl.classList.remove(uiVisibleClass);
+    } else if (isPrevClick) {
+      this.swiper.slidePrev();
+      this.el.rootEl.classList.remove(uiVisibleClass);
+    } else {
+      this.el.rootEl.classList.toggle(uiVisibleClass);
     }
   }
 
