@@ -38,12 +38,15 @@ export interface MangaViewerElements {
   controllerEl: HTMLElement,
 }
 
+// mangaViewerで用いるアイコンデータ
+// 最低限のsvg生成に必要な内容だけ格納
 export interface IconData {
   id: string,
   viewBox: string,
   pathDs: string[],
 }
 
+// mangaViewerで用いるアイコンまとめ
 export interface MangaViewerIcons {
   close: IconData,
   fullscreen: IconData,
@@ -55,6 +58,7 @@ export interface MangaViewerIcons {
   horizView: IconData,
 }
 
+// mangaViewer UI要素として組み込むボタン要素まとめ
 export interface MangaViewerUIButtons {
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
@@ -64,6 +68,7 @@ export interface MangaViewerUIButtons {
   direction: HTMLButtonElement,
 }
 
+// mangaViewer内部で用いるステートまとめ
 export interface MangaViewerStates {
   viewerId: number,
   viewerPadding: number,
@@ -74,6 +79,7 @@ export interface MangaViewerStates {
   isVertView: boolean,
 }
 
+// swiperのre-initに用いる設定オブジェクトまとめ
 export interface MangaViewerConfigs {
   swiperVertView: SwiperOptions,
   swiperHorizView: SwiperOptions
