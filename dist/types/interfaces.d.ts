@@ -31,8 +31,6 @@ export interface MangaViewerIcons {
     close: IconData;
     fullscreen: IconData;
     exitFullscreen: IconData;
-    theater: IconData;
-    exitTheater: IconData;
     preference: IconData;
     vertView: IconData;
     horizView: IconData;
@@ -40,7 +38,6 @@ export interface MangaViewerIcons {
 export interface MangaViewerUIButtons {
     close: HTMLButtonElement;
     fullscreen: HTMLButtonElement;
-    theater: HTMLButtonElement;
     preference: HTMLButtonElement;
     direction: HTMLButtonElement;
 }

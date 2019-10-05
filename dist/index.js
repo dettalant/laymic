@@ -8347,20 +8347,6 @@ class ViewerHTMLBuilder {
                 "M4 17h3v3h2v-5H4zM7 7H4v2h5V4H7zm8 13h2v-3h3v-2h-5zm2-13V4h-2v5h5V7z"
             ]
         };
-        const theater = {
-            id: "mangaViewer_svgTheater",
-            viewBox: "0 0 24 24",
-            pathDs: [
-                "M4 17.98V6.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v11.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 18h12V6H6z"
-            ]
-        };
-        const exitTheater = {
-            id: "mangaViewer_svgExitTheater",
-            viewBox: "0 0 24 24",
-            pathDs: [
-                "M4 15.98V8.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v7.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 16h12V8H6z"
-            ]
-        };
         // material.io: settings_applications(modified)
         const preference = {
             id: "mangaViewer_svgPreference",
@@ -8387,8 +8373,6 @@ class ViewerHTMLBuilder {
             close,
             fullscreen,
             exitFullscreen,
-            theater,
-            exitTheater,
             preference,
             horizView,
             vertView
@@ -8431,12 +8415,6 @@ class ViewerHTMLBuilder {
         ctrlEl.id = id;
         const ctrlTopEl = this.createDiv();
         ctrlTopEl.className = "mangaViewer_controller_top";
-        const theaterBtn = this.createButton();
-        [
-            this.createSvgUseElement(this.icons.theater.id, "icon_theater"),
-            this.createSvgUseElement(this.icons.exitTheater.id, "icon_exitTheater")
-        ].forEach(icon => theaterBtn.appendChild(icon));
-        theaterBtn.className = `${this.uiButtonClass} mangaViewer_theater`;
         const directionBtn = this.createButton();
         directionBtn.className = `${this.uiButtonClass} mangaViewer_direction`;
         [
@@ -8458,7 +8436,6 @@ class ViewerHTMLBuilder {
         const closeIcon = this.createSvgUseElement(this.icons.close.id, "icon_close");
         closeBtn.appendChild(closeIcon);
         [
-            theaterBtn,
             directionBtn,
             fullscreenBtn,
             preferenceBtn,
@@ -8467,7 +8444,6 @@ class ViewerHTMLBuilder {
         const uiButtons = {
             close: closeBtn,
             fullscreen: fullscreenBtn,
-            theater: theaterBtn,
             preference: preferenceBtn,
             direction: directionBtn,
         };
@@ -8661,9 +8637,6 @@ class MangaViewer {
             swiperHorizView,
         };
         this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
-        this.el.buttons.theater.addEventListener("pointerup", () => {
-            this.el.rootEl.classList.toggle("is_theater");
-        });
         this.el.buttons.direction.addEventListener("pointerup", () => {
             if (!this.state.isVertView) {
                 this.enableVerticalView();
@@ -8829,6 +8802,7 @@ class MangaViewer {
             isPrevClick = x < w * 0.33;
         }
         else {
+            // 通常横読み時処理
             isNextClick = x < w * 0.33;
             isPrevClick = x > w * 0.66;
         }

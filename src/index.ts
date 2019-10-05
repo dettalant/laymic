@@ -137,11 +137,7 @@ export default class MangaViewer {
     }
 
     this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
-
-    this.el.buttons.theater.addEventListener("pointerup", () => {
-      this.el.rootEl.classList.toggle("is_theater");
-    });
-
+    
     this.el.buttons.direction.addEventListener("pointerup", () => {
       if (!this.state.isVertView) {
         this.enableVerticalView()

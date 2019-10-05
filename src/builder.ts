@@ -47,22 +47,6 @@ export class ViewerHTMLBuilder {
       ]
     }
 
-    const theater = {
-      id: "mangaViewer_svgTheater",
-      viewBox: "0 0 24 24",
-      pathDs: [
-        "M4 17.98V6.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v11.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 18h12V6H6z"
-      ]
-    };
-
-    const exitTheater = {
-      id: "mangaViewer_svgExitTheater",
-      viewBox: "0 0 24 24",
-      pathDs: [
-        "M4 15.98V8.01c0-1.1.9-1.98 2-1.98h12c1.1 0 2 .88 2 1.98v7.97c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2zM6 16h12V8H6z"
-      ]
-    }
-
     // material.io: settings_applications(modified)
     const preference = {
       id: "mangaViewer_svgPreference",
@@ -92,8 +76,6 @@ export class ViewerHTMLBuilder {
       close,
       fullscreen,
       exitFullscreen,
-      theater,
-      exitTheater,
       preference,
       horizView,
       vertView
@@ -145,13 +127,6 @@ export class ViewerHTMLBuilder {
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = "mangaViewer_controller_top";
 
-    const theaterBtn = this.createButton();
-    [
-      this.createSvgUseElement(this.icons.theater.id, "icon_theater"),
-      this.createSvgUseElement(this.icons.exitTheater.id, "icon_exitTheater")
-    ].forEach(icon => theaterBtn.appendChild(icon));
-    theaterBtn.className = `${this.uiButtonClass} mangaViewer_theater`;
-
     const directionBtn = this.createButton();
     directionBtn.className = `${this.uiButtonClass} mangaViewer_direction`;
     [
@@ -177,7 +152,6 @@ export class ViewerHTMLBuilder {
     closeBtn.appendChild(closeIcon);
 
     [
-      theaterBtn,
       directionBtn,
       fullscreenBtn,
       preferenceBtn,
@@ -187,7 +161,6 @@ export class ViewerHTMLBuilder {
     const uiButtons: MangaViewerUIButtons = {
       close: closeBtn,
       fullscreen: fullscreenBtn,
-      theater: theaterBtn,
       preference: preferenceBtn,
       direction: directionBtn,
     }
