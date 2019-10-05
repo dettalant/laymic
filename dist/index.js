@@ -8395,10 +8395,15 @@ class ViewerHTMLBuilder {
         for (let p of pages) {
             const divEl = this.createDiv();
             divEl.className = "swiper-slide";
-            const imgEl = new Image();
-            imgEl.dataset.src = p;
-            imgEl.className = "swiper-lazy";
-            divEl.appendChild(imgEl);
+            if (typeof p === "string") {
+                const imgEl = new Image();
+                imgEl.dataset.src = p;
+                imgEl.className = "swiper-lazy";
+                divEl.appendChild(imgEl);
+            }
+            else if (p instanceof HTMLElement) {
+                divEl.appendChild(p);
+            }
             wrapperEl.appendChild(divEl);
         }
         swiperEl.appendChild(wrapperEl);
@@ -8551,6 +8556,16 @@ class MangaViewer {
             const svgCtn = builder.createSVGIcons();
             document.body.appendChild(svgCtn);
         }
+        const parseHtmlElement = (queryStr) => {
+            const baseEl = document.querySelector(queryStr);
+            if (!baseEl)
+                throw new Error("pages引数のquery stringが不正");
+            const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el);
+            return result;
+        };
+        if (typeof pages === "string") {
+            pages = parseHtmlElement(pages);
+        }
         if (options) {
             const [pw, ph] = (options.pageWidth && options.pageHeight)
                 ? [options.pageWidth, options.pageHeight]
@@ -8569,7 +8584,21 @@ class MangaViewer {
         if (!options || !options.pageHeight || !options.pageWidth) {
             // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
             // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
-            const src = pages[0];
+            const getBeginningSrc = (pages) => {
+                let result = "";
+                for (let p of pages) {
+                    if (typeof p === "string") {
+                        result = p;
+                        break;
+                    }
+                    else if (p instanceof HTMLImageElement) {
+                        result = p.dataset.src || p.src;
+                        break;
+                    }
+                }
+                return result;
+            };
+            const src = getBeginningSrc(pages);
             this.setPageSizeFromImgPath(src);
         }
         rootEl.classList.add("mangaViewer_root", "is_ui_visible");

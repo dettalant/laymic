@@ -89,7 +89,7 @@ export class ViewerHTMLBuilder {
    * @param  isLTR 左から右に流れる形式を取るならtrue
    * @return       swiper-container要素
    */
-  createSwiperContainer(id: string, pages: string[], isLTR: boolean): HTMLElement {
+  createSwiperContainer(id: string, pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container";
     swiperEl.id = id;
@@ -102,11 +102,15 @@ export class ViewerHTMLBuilder {
       const divEl = this.createDiv();
       divEl.className = "swiper-slide";
 
-      const imgEl = new Image();
-      imgEl.dataset.src = p;
-      imgEl.className = "swiper-lazy";
+      if (typeof p === "string") {
+        const imgEl = new Image();
+        imgEl.dataset.src = p;
+        imgEl.className = "swiper-lazy";
+        divEl.appendChild(imgEl);
+      } else if (p instanceof HTMLElement) {
+        divEl.appendChild(p);
+      }
 
-      divEl.appendChild(imgEl);
       wrapperEl.appendChild(divEl);
     }
 

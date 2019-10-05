@@ -20,7 +20,7 @@ export default class MangaViewer {
   // swiper instance
   swiper: Swiper;
 
-  constructor(queryStr: string, pages: string[], options?: MangaViewerOptions) {
+  constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options?: MangaViewerOptions) {
     const rootEl = document.querySelector(queryStr);
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
@@ -34,6 +34,18 @@ export default class MangaViewer {
       // 一つのページにつき一度だけの処理
       const svgCtn = builder.createSVGIcons();
       document.body.appendChild(svgCtn);
+    }
+
+    const parseHtmlElement = (queryStr: string): (string | HTMLElement)[] => {
+      const baseEl = document.querySelector(queryStr);
+      if (!baseEl) throw new Error("pages引数のquery stringが不正");
+
+      const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el as HTMLElement);
+      return result;
+    }
+
+    if (typeof pages === "string") {
+      pages = parseHtmlElement(pages);
     }
 
     if (options) {
@@ -56,7 +68,21 @@ export default class MangaViewer {
     if (!options || !options.pageHeight || !options.pageWidth) {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
       // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
-      const src = pages[0];
+      const getBeginningSrc = (pages: (string | HTMLElement)[]): string => {
+        let result = "";
+        for (let p of pages) {
+          if (typeof p === "string") {
+            result = p;
+            break;
+          } else if (p instanceof HTMLImageElement) {
+            result = p.dataset.src || p.src;
+            break;
+          }
+        }
+        return result;
+      }
+
+      const src = getBeginningSrc(pages);
       this.setPageSizeFromImgPath(src);
     }
 
@@ -137,7 +163,7 @@ export default class MangaViewer {
     }
 
     this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
-    
+
     this.el.buttons.direction.addEventListener("pointerup", () => {
       if (!this.state.isVertView) {
         this.enableVerticalView()

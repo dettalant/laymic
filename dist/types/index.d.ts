@@ -5,7 +5,7 @@ export default class MangaViewer {
     conf: MangaViewerConfigs;
     state: MangaViewerStates;
     swiper: Swiper;
-    constructor(queryStr: string, pages: string[], options?: MangaViewerOptions);
+    constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options?: MangaViewerOptions);
     /**
      * インスタンスごとに固有のビューワーIDを返す
      * @return ビューワーID文字列
