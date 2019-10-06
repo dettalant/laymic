@@ -3,7 +3,7 @@ export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
     isLTR?: boolean;
-    isLightbox?: boolean;
+    isDisableThumbs?: boolean;
     icons?: MangaViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
@@ -19,6 +19,7 @@ export interface PageRect extends PageSize {
 export interface MangaViewerElements {
     rootEl: HTMLElement;
     swiperEl: HTMLElement;
+    thumbsEl: HTMLElement;
     buttons: MangaViewerUIButtons;
     controllerEl: HTMLElement;
 }
@@ -32,6 +33,8 @@ export interface MangaViewerIcons {
     fullscreen: IconData;
     exitFullscreen: IconData;
     preference: IconData;
+    showThumbs: IconData;
+    hideThumbs: IconData;
     vertView: IconData;
     horizView: IconData;
 }
@@ -39,6 +42,7 @@ export interface MangaViewerUIButtons {
     close: HTMLButtonElement;
     fullscreen: HTMLButtonElement;
     preference: HTMLButtonElement;
+    thumbs: HTMLButtonElement;
     direction: HTMLButtonElement;
 }
 export interface MangaViewerStates {
@@ -49,6 +53,7 @@ export interface MangaViewerStates {
     swiperRect: PageRect;
     isLTR: boolean;
     isVertView: boolean;
+    thumbsViewLength: number;
 }
 export interface MangaViewerConfigs {
     swiperVertView: SwiperOptions;

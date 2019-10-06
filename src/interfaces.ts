@@ -7,10 +7,13 @@ export interface MangaViewerOptions {
   pageHeight?: number,
   // 左から右へと流れる形式で初期化する
   isLTR?: boolean,
-  // ライトボックスとして初期化する
-  isLightbox?: boolean,
+  // サムネイル機能を無効にする
+  isDisableThumbs?: boolean,
+  // アイコンを別のものに変更する
   icons?: MangaViewerIcons,
+  // 縦読み時のページ間余白ピクセル数値
   vertPageMargin?: number,
+  // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
 }
 
@@ -34,6 +37,7 @@ export interface PageRect extends PageSize {
 export interface MangaViewerElements {
   rootEl: HTMLElement,
   swiperEl: HTMLElement,
+  thumbsEl: HTMLElement,
   buttons: MangaViewerUIButtons,
   controllerEl: HTMLElement,
 }
@@ -52,6 +56,8 @@ export interface MangaViewerIcons {
   fullscreen: IconData,
   exitFullscreen: IconData,
   preference: IconData,
+  showThumbs: IconData,
+  hideThumbs: IconData,
   vertView: IconData,
   horizView: IconData,
 }
@@ -61,6 +67,8 @@ export interface MangaViewerUIButtons {
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
   preference: HTMLButtonElement,
+  // show thumbs button
+  thumbs: HTMLButtonElement,
   // direction change button
   direction: HTMLButtonElement,
 }
@@ -75,6 +83,7 @@ export interface MangaViewerStates {
   swiperRect: PageRect,
   isLTR: boolean,
   isVertView: boolean,
+  thumbsViewLength: number,
 }
 
 // swiperのre-initに用いる設定オブジェクトまとめ

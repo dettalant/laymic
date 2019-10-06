@@ -47,6 +47,22 @@ export class ViewerDOMBuilder {
       ]
     }
 
+    const showThumbs = {
+      id: "mangaViewer_svgThumbs",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm1 3v6h4V9H5zm5 0v6h4V9h-4zm5 0v6h4V9h-4z",
+      ]
+    };
+
+    const hideThumbs = {
+      id: "mangaViewer_svgExitThumbs",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M2.81 2.807L1.397 4.22l.844.843C2.091 5.344 2 5.66 2 6v12c0 1.108.892 2 2 2h13.176l2.605 2.605 1.414-1.414-1.193-1.193L18.004 18 14 13.996l-4-4L6.004 6l-2-2L2.81 2.807zM6.833 4l2 2H20v11.168l1.658 1.658c.135-.27.342-.503.342-.826V6c0-1.108-.892-2-2-2H6.832zM4 6.824L6.176 9H5v6h4v-3.176l1 1V15h2.176l3 3H4V6.824zM11.832 9L14 11.168V9h-2.168zM15 9v3.168L17.832 15H19V9h-4z",
+      ]
+    }
+
     // material.io: settings_applications(modified)
     const preference = {
       id: "mangaViewer_svgPreference",
@@ -76,6 +92,8 @@ export class ViewerDOMBuilder {
       close,
       fullscreen,
       exitFullscreen,
+      showThumbs,
+      hideThumbs,
       preference,
       horizView,
       vertView
@@ -84,14 +102,15 @@ export class ViewerDOMBuilder {
 
   /**
    * swiper-container要素を返す
-   * @param  id    要素のid名となる文字列
-   * @param  pages 要素が内包することになるimg src配列
-   * @param  isLTR 左から右に流れる形式を取るならtrue
-   * @return       swiper-container要素
+   * @param  id        要素のid名となる文字列
+   * @param  className 要素のclass名として付記される文字列
+   * @param  pages     要素が内包することになるimg src配列
+   * @param  isLTR     左から右に流れる形式を取るならtrue
+   * @return           swiper-container要素
    */
-  createSwiperContainer(id: string, pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement {
+  createSwiperContainer(id: string, className: string,  pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement {
     const swiperEl = this.createDiv();
-    swiperEl.className = "swiper-container";
+    swiperEl.className = "swiper-container " + className;
     swiperEl.id = id;
     swiperEl.dir = (isLTR) ? "" : "rtl";
 
@@ -132,7 +151,7 @@ export class ViewerDOMBuilder {
     ctrlTopEl.className = "mangaViewer_controller_top";
 
     const directionBtn = this.createButton();
-    directionBtn.className = `${this.uiButtonClass} mangaViewer_direction`;
+    directionBtn.classList.add("mangaViewer_direction");
     [
       this.createSvgUseElement(this.icons.vertView.id, "icon_vertView"),
       this.createSvgUseElement(this.icons.horizView.id, "icon_horizView"),
@@ -143,20 +162,28 @@ export class ViewerDOMBuilder {
       this.createSvgUseElement(this.icons.fullscreen.id, "icon_fullscreen"),
       this.createSvgUseElement(this.icons.exitFullscreen.id, "icon_exitFullscreen"),
     ].forEach(icon => fullscreenBtn.appendChild(icon));
-    fullscreenBtn.className = `${this.uiButtonClass} mangaViewer_fullscreen`;
+    fullscreenBtn.classList.add("mangaViewer_fullscreen");
+
+    const thumbsBtn = this.createButton();
+    [
+      this.createSvgUseElement(this.icons.showThumbs.id, "icon_showThumbs"),
+      this.createSvgUseElement(this.icons.hideThumbs.id, "icon_hideThumbs"),
+    ].forEach(icon => thumbsBtn.appendChild(icon));
+    thumbsBtn.classList.add("mangaViewer_showThumbs");
 
     const preferenceBtn = this.createButton();
-    preferenceBtn.className = `${this.uiButtonClass} mangaViewer_preference`;
+    preferenceBtn.classList.add("mangaViewer_preference");
     const preferenceIcon = this.createSvgUseElement(this.icons.preference.id, "icon_preference");
     preferenceBtn.appendChild(preferenceIcon);
 
     const closeBtn = this.createButton();
-    closeBtn.className = `${this.uiButtonClass} mangaViewer_close`;
+    closeBtn.classList.add("mangaViewer_close");
     const closeIcon = this.createSvgUseElement(this.icons.close.id, "icon_close");
     closeBtn.appendChild(closeIcon);
 
     [
       directionBtn,
+      thumbsBtn,
       fullscreenBtn,
       preferenceBtn,
       closeBtn
@@ -164,6 +191,7 @@ export class ViewerDOMBuilder {
 
     const uiButtons: MangaViewerUIButtons = {
       close: closeBtn,
+      thumbs: thumbsBtn,
       fullscreen: fullscreenBtn,
       preference: preferenceBtn,
       direction: directionBtn,
@@ -257,6 +285,7 @@ export class ViewerDOMBuilder {
   private createButton(): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.type = "button";
+    btn.className = this.uiButtonClass;
     return btn;
   }
 

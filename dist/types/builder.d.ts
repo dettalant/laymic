@@ -10,12 +10,13 @@ export declare class ViewerDOMBuilder {
     private readonly defaultMangaViewerIcons;
     /**
      * swiper-container要素を返す
-     * @param  id    要素のid名となる文字列
-     * @param  pages 要素が内包することになるimg src配列
-     * @param  isLTR 左から右に流れる形式を取るならtrue
-     * @return       swiper-container要素
+     * @param  id        要素のid名となる文字列
+     * @param  className 要素のclass名として付記される文字列
+     * @param  pages     要素が内包することになるimg src配列
+     * @param  isLTR     左から右に流れる形式を取るならtrue
+     * @return           swiper-container要素
      */
-    createSwiperContainer(id: string, pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement;
+    createSwiperContainer(id: string, className: string, pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement;
     /**
      * 漫画ビューワーコントローラー要素を返す
      * @param  id 要素のid名となる文字列

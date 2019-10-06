@@ -19,6 +19,8 @@ export default class MangaViewer {
   state: MangaViewerStates = this.defaultMangaViewerStates;
   // swiper instance
   swiper: Swiper;
+  // thumbnail swiper instance
+  thumbs: Swiper;
 
   constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options: MangaViewerOptions = {}) {
     const rootEl = document.querySelector(queryStr);
@@ -82,13 +84,19 @@ export default class MangaViewer {
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
-    const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
-    rootEl.appendChild(controllerEl);
-    rootEl.appendChild(swiperEl);
+    const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery",  pages, this.state.isLTR);
+    const thumbsEl = builder.createSwiperContainer("mangaViewerThumbs", "mangaViewer_thumbsGallery", pages, this.state.isLTR);
+
+    [
+      controllerEl,
+      swiperEl,
+      thumbsEl
+    ].forEach(el => rootEl.appendChild(el));
 
     this.el = {
       rootEl,
       swiperEl,
+      thumbsEl,
       controllerEl,
       buttons: uiButtons,
     }
@@ -100,6 +108,18 @@ export default class MangaViewer {
 
     // サイズ設定の初期化
     this.viewUpdate();
+
+    const swiperThumbs: SwiperOptions = {
+      spaceBetween: 10,
+      slidesPerView: this.state.thumbsViewLength,
+      preloadImages: false,
+      lazy: {
+        loadPrevNext: true,
+        loadPrevNextAmount: 2,
+      }
+    }
+
+    this.thumbs = new Swiper(thumbsEl, swiperThumbs);
 
     const horizPageMargin = (options.horizPageMargin)
       ? options.horizPageMargin
@@ -123,6 +143,9 @@ export default class MangaViewer {
       lazy: {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
+      },
+      thumbs: {
+        swiper: this.thumbs
       },
     }
 
@@ -149,6 +172,9 @@ export default class MangaViewer {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
+      thumbs: {
+        swiper: this.thumbs
+      },
     }
 
     this.conf = {
@@ -164,6 +190,11 @@ export default class MangaViewer {
       } else {
         this.disableVerticalView()
       }
+    });
+
+    this.el.buttons.thumbs.addEventListener("pointerup", () => {
+      this.el.rootEl.classList.toggle("is_showThumbs");
+      this.viewUpdate();
     })
 
     this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
@@ -244,6 +275,7 @@ export default class MangaViewer {
       },
       isLTR: false,
       isVertView: false,
+      thumbsViewLength: 6,
     }
   }
 
@@ -399,6 +431,7 @@ export default class MangaViewer {
     this.cssPageWidthUpdate();
 
     if (this.swiper) this.swiper.update();
+    if (this.thumbs) this.thumbs.update();
   }
 
   /**
