@@ -56,6 +56,7 @@ export default class MangaViewer {
      * @param  e pointer-up event
      */
     private slideClickHandler;
+    private hideViewerUI;
     /**
      * mangaViewer表示を更新する
      * 主にswiperの表示を更新するための関数

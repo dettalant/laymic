@@ -8745,6 +8745,7 @@ var mangaViewer = (function () {
               spaceBetween: this.state.horizPageMargin,
               on: {
                   resize: () => this.viewUpdate(),
+                  sliderMove: () => this.hideViewerUI(),
                   tap: (e) => this.slideClickHandler(e),
               },
               keyboard: true,
@@ -8772,6 +8773,7 @@ var mangaViewer = (function () {
               freeModeMinimumVelocity: 0.02,
               on: {
                   resize: () => this.viewUpdate(),
+                  sliderMove: () => this.hideViewerUI(),
                   tap: (e) => this.slideClickHandler(e),
               },
               preloadImages: false,
@@ -8790,6 +8792,9 @@ var mangaViewer = (function () {
               slidesPerView: this.state.thumbsViewLength,
               preloadImages: false,
               centeredSlides: false,
+              on: {
+                  sliderMove: () => this.hideViewerUI(),
+              },
               lazy: {
                   loadPrevNext: true,
                   loadPrevNextAmount: 2,
@@ -8912,6 +8917,9 @@ var mangaViewer = (function () {
           else {
               this.el.rootEl.classList.toggle(uiVisibleClass);
           }
+      }
+      hideViewerUI() {
+          this.el.rootEl.classList.remove("is_ui_visible");
       }
       /**
        * mangaViewer表示を更新する

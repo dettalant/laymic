@@ -221,6 +221,7 @@ export default class MangaViewer {
 
       on: {
         resize: () => this.viewUpdate(),
+        sliderMove: () => this.hideViewerUI(),
         tap: (e) => this.slideClickHandler(e),
       },
 
@@ -250,6 +251,7 @@ export default class MangaViewer {
       freeModeMinimumVelocity: 0.02,
       on: {
         resize: () => this.viewUpdate(),
+        sliderMove: () => this.hideViewerUI(),
         tap: (e) => this.slideClickHandler(e),
       },
       preloadImages: false,
@@ -269,6 +271,9 @@ export default class MangaViewer {
       slidesPerView: this.state.thumbsViewLength,
       preloadImages: false,
       centeredSlides: false,
+      on: {
+        sliderMove: () => this.hideViewerUI(),
+      },
       lazy: {
         loadPrevNext: true,
         loadPrevNextAmount: 2,
@@ -417,6 +422,10 @@ export default class MangaViewer {
     } else {
       this.el.rootEl.classList.toggle(uiVisibleClass);
     }
+  }
+
+  private hideViewerUI() {
+    this.el.rootEl.classList.remove("is_ui_visible");
   }
 
   /**
