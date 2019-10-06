@@ -7,6 +7,7 @@ export interface MangaViewerOptions {
     icons?: MangaViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
+    thumbsPageMargin?: number;
 }
 export interface PageSize {
     w: number;
@@ -54,8 +55,12 @@ export interface MangaViewerStates {
     isLTR: boolean;
     isVertView: boolean;
     thumbsViewLength: number;
+    horizPageMargin: number;
+    vertPageMargin: number;
+    thumbsPageMargin: number;
 }
-export interface MangaViewerConfigs {
-    swiperVertView: SwiperOptions;
-    swiperHorizView: SwiperOptions;
+export interface SwiperConfigs {
+    mainVertView: SwiperOptions;
+    mainHorizView: SwiperOptions;
+    thumbsHorizView: SwiperOptions;
 }

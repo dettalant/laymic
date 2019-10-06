@@ -6,15 +6,12 @@ import {
   MangaViewerElements,
   MangaViewerOptions,
   MangaViewerStates,
-  MangaViewerConfigs,
   PageRect
 } from "./interfaces";
 
 export default class MangaViewer {
   // HTMLElementまとめ
   el: MangaViewerElements;
-  // swiper configまとめ
-  conf: MangaViewerConfigs;
   // mangaViewer内部で用いるステートまとめ
   state: MangaViewerStates = this.defaultMangaViewerStates;
   // swiper instance
@@ -80,7 +77,10 @@ export default class MangaViewer {
       const src = getBeginningSrc(pages);
       this.setPageSizeFromImgPath(src);
     }
-    this.state.isLTR = (options.isLTR) ? options.isLTR : false;
+    if (options.isLTR) this.state.isLTR = options.isLTR;
+    if (options.vertPageMargin) this.state.vertPageMargin = options.vertPageMargin;
+    if (options.horizPageMargin) this.state.horizPageMargin = options.horizPageMargin;
+    if (options.thumbsPageMargin) this.state.thumbsPageMargin = options.thumbsPageMargin;
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
@@ -109,80 +109,10 @@ export default class MangaViewer {
     // サイズ設定の初期化
     this.viewUpdate();
 
-    const swiperThumbs: SwiperOptions = {
-      spaceBetween: 10,
-      slidesPerView: this.state.thumbsViewLength,
-      preloadImages: false,
-      lazy: {
-        loadPrevNext: true,
-        loadPrevNextAmount: 2,
-      }
-    }
-
-    this.thumbs = new Swiper(thumbsEl, swiperThumbs);
-
-    const horizPageMargin = (options.horizPageMargin)
-      ? options.horizPageMargin
-      : 0;
-
-    const swiperHorizView: SwiperOptions = {
-      direction: "horizontal",
-      speed: 200,
-      slidesPerView: 2,
-      slidesPerGroup: 2,
-      spaceBetween: horizPageMargin,
-
-      on: {
-        resize: () => this.viewUpdate(),
-        tap: (e) => this.slideClickHandler(e),
-      },
-
-      keyboard: true,
-      mousewheel: true,
-      preloadImages: false,
-      lazy: {
-        loadPrevNext: true,
-        loadPrevNextAmount: 4,
-      },
-      thumbs: {
-        swiper: this.thumbs
-      },
-    }
-
-    const vertPageMargin = (options.vertPageMargin)
-      ? options.vertPageMargin
-      : 10;
-
-    const swiperVertView: SwiperOptions = {
-      direction: "vertical",
-      spaceBetween: vertPageMargin,
-      speed: 200,
-      mousewheel: true,
-      keyboard: true,
-      freeMode: true,
-      freeModeMomentumRatio: 0.36,
-      freeModeMomentumVelocityRatio: 1,
-      freeModeMinimumVelocity: 0.02,
-      on: {
-        resize: () => this.viewUpdate(),
-        tap: (e) => this.slideClickHandler(e),
-      },
-      preloadImages: false,
-      lazy: {
-        loadPrevNext: true,
-        loadPrevNextAmount: 4,
-      },
-      thumbs: {
-        swiper: this.thumbs
-      },
-    }
-
-    this.conf = {
-      swiperVertView,
-      swiperHorizView,
-    }
-
-    this.swiper = new Swiper(this.el.swiperEl, this.conf.swiperHorizView);
+    // NOTE: サムネイルギャラリーインスタンスを先に生成しなければ
+    //     : メインギャラリーとの紐付けが上手く行かない
+    this.thumbs = new Swiper(this.el.thumbsEl, this.thumbsSwiperHorizViewConf);
+    this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
     this.el.buttons.direction.addEventListener("pointerup", () => {
       if (!this.state.isVertView) {
@@ -276,6 +206,73 @@ export default class MangaViewer {
       isLTR: false,
       isVertView: false,
       thumbsViewLength: 6,
+      vertPageMargin: 10,
+      horizPageMargin: 0,
+      thumbsPageMargin: 10,
+    }
+  }
+  private get mainSwiperHorizViewConf(): SwiperOptions {
+    return {
+      direction: "horizontal",
+      speed: 200,
+      slidesPerView: 2,
+      slidesPerGroup: 2,
+      spaceBetween: this.state.horizPageMargin,
+
+      on: {
+        resize: () => this.viewUpdate(),
+        tap: (e) => this.slideClickHandler(e),
+      },
+
+      keyboard: true,
+      mousewheel: true,
+      preloadImages: false,
+      lazy: {
+        loadPrevNext: true,
+        loadPrevNextAmount: 4,
+      },
+      thumbs: {
+        swiper: this.thumbs
+      },
+    }
+  }
+
+  private get mainSwiperVertViewConf(): SwiperOptions {
+    return {
+      direction: "vertical",
+      spaceBetween: this.state.vertPageMargin,
+      speed: 200,
+      mousewheel: true,
+      keyboard: true,
+      freeMode: true,
+      freeModeMomentumRatio: 0.36,
+      freeModeMomentumVelocityRatio: 1,
+      freeModeMinimumVelocity: 0.02,
+      on: {
+        resize: () => this.viewUpdate(),
+        tap: (e) => this.slideClickHandler(e),
+      },
+      preloadImages: false,
+      lazy: {
+        loadPrevNext: true,
+        loadPrevNextAmount: 4,
+      },
+      thumbs: {
+        swiper: this.thumbs
+      },
+    }
+  }
+
+  private get thumbsSwiperHorizViewConf(): SwiperOptions {
+    return {
+      spaceBetween: this.state.thumbsPageMargin,
+      slidesPerView: this.state.thumbsViewLength,
+      preloadImages: false,
+      centeredSlides: false,
+      lazy: {
+        loadPrevNext: true,
+        loadPrevNextAmount: 2,
+      }
     }
   }
 
@@ -335,7 +332,7 @@ export default class MangaViewer {
     this.el.rootEl.classList.add("is_vertView");
 
     // 読み進めたページ数を引き継ぐ
-    const conf = Object.assign(this.conf.swiperVertView, {
+    const conf = Object.assign(this.mainSwiperVertViewConf, {
       initialSlide: this.swiper.activeIndex
     });
 
@@ -354,7 +351,7 @@ export default class MangaViewer {
     this.el.rootEl.classList.remove("is_vertView");
 
     // 読み進めたページ数を引き継ぐ
-    const conf = Object.assign(this.conf.swiperHorizView, {
+    const conf = Object.assign(this.mainSwiperHorizViewConf, {
       initialSlide: this.swiper.activeIndex
     })
 

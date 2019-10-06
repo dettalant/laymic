@@ -1,8 +1,7 @@
 import Swiper from "swiper";
-import { MangaViewerElements, MangaViewerOptions, MangaViewerStates, MangaViewerConfigs } from "./interfaces";
+import { MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
 export default class MangaViewer {
     el: MangaViewerElements;
-    conf: MangaViewerConfigs;
     state: MangaViewerStates;
     swiper: Swiper;
     thumbs: Swiper;
@@ -27,6 +26,9 @@ export default class MangaViewer {
      * @return this.stateの初期値
      */
     private readonly defaultMangaViewerStates;
+    private readonly mainSwiperHorizViewConf;
+    private readonly mainSwiperVertViewConf;
+    private readonly thumbsSwiperHorizViewConf;
     /**
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる

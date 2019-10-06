@@ -15,6 +15,8 @@ export interface MangaViewerOptions {
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
+  // サムネイル表示で絶対に確保されるサムネイル間余白ピクセル数値
+  thumbsPageMargin?: number,
 }
 
 export interface PageSize {
@@ -84,10 +86,14 @@ export interface MangaViewerStates {
   isLTR: boolean,
   isVertView: boolean,
   thumbsViewLength: number,
+  horizPageMargin: number,
+  vertPageMargin: number,
+  thumbsPageMargin: number,
 }
 
 // swiperのre-initに用いる設定オブジェクトまとめ
-export interface MangaViewerConfigs {
-  swiperVertView: SwiperOptions,
-  swiperHorizView: SwiperOptions
+export interface SwiperConfigs {
+  mainVertView: SwiperOptions,
+  mainHorizView: SwiperOptions,
+  thumbsHorizView: SwiperOptions,
 }
