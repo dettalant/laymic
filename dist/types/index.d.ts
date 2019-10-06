@@ -64,7 +64,7 @@ export default class MangaViewer {
      * 非全画面状態ならば全画面化させて、
      * 全画面状態であるならそれを解除する
      */
-    private fullscreenButtonHandler;
+    private fullscreenHandler;
     /**
      * css変数として各ページ最大サイズを再登録する
      * cssPageWidthUpdateという関数名だけど

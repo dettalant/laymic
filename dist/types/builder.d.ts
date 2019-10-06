@@ -1,5 +1,5 @@
 import { MangaViewerIcons, MangaViewerUIButtons } from "./interfaces";
-export declare class ViewerHTMLBuilder {
+export declare class ViewerDOMBuilder {
     private icons;
     private readonly uiButtonClass;
     constructor(icons?: MangaViewerIcons);

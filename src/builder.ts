@@ -6,7 +6,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 
 // mangaViewerで用いるDOMを生成するやつ
-export class ViewerHTMLBuilder {
+export class ViewerDOMBuilder {
   // 使用するアイコンセット
   private icons: MangaViewerIcons = this.defaultMangaViewerIcons;
   // uiボタンクラス名

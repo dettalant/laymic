@@ -1,7 +1,7 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
 import { calcGCD, viewerCnt, sleep, readImage } from "./utils";
-import { ViewerHTMLBuilder } from "./builder";
+import { ViewerDOMBuilder } from "./builder";
 import {
   MangaViewerElements,
   MangaViewerOptions,
@@ -20,15 +20,14 @@ export default class MangaViewer {
   // swiper instance
   swiper: Swiper;
 
-  constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options?: MangaViewerOptions) {
+  constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options: MangaViewerOptions = {}) {
     const rootEl = document.querySelector(queryStr);
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
     if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
     rootEl.style.display = "none";
 
-    const icons = (options && options.icons) ? options.icons : undefined;
-    const builder = new ViewerHTMLBuilder(icons);
+    const builder = new ViewerDOMBuilder(options.icons);
 
     if (this.state.viewerId === 0) {
       // 一つのページにつき一度だけの処理
@@ -48,10 +47,8 @@ export default class MangaViewer {
       pages = parseHtmlElement(pages);
     }
 
-    if (options) {
-      const [pw, ph] = (options.pageWidth && options.pageHeight)
-        ? [options.pageWidth, options.pageHeight]
-        : [720, 1024];
+    if (options.pageWidth && options.pageHeight) {
+      const [pw, ph] = [options.pageWidth, options.pageHeight]
       const gcd = calcGCD(pw, ph);
 
       this.state.pageSize = {
@@ -62,12 +59,8 @@ export default class MangaViewer {
         w: pw / gcd,
         h: ph / gcd,
       }
-      this.state.isLTR = (options.isLTR) ? options.isLTR : false;
-    }
-
-    if (!options || !options.pageHeight || !options.pageWidth) {
+    } else {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-      // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
       const getBeginningSrc = (pages: (string | HTMLElement)[]): string => {
         let result = "";
         for (let p of pages) {
@@ -85,6 +78,7 @@ export default class MangaViewer {
       const src = getBeginningSrc(pages);
       this.setPageSizeFromImgPath(src);
     }
+    this.state.isLTR = (options.isLTR) ? options.isLTR : false;
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
@@ -107,7 +101,7 @@ export default class MangaViewer {
     // サイズ設定の初期化
     this.viewUpdate();
 
-    const horizPageMargin = (options && options.horizPageMargin)
+    const horizPageMargin = (options.horizPageMargin)
       ? options.horizPageMargin
       : 0;
 
@@ -132,7 +126,7 @@ export default class MangaViewer {
       },
     }
 
-    const vertPageMargin = (options && options.vertPageMargin)
+    const vertPageMargin = (options.vertPageMargin)
       ? options.vertPageMargin
       : 10;
 
@@ -172,7 +166,7 @@ export default class MangaViewer {
       }
     })
 
-    this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
+    this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
 
     this.el.buttons.preference.addEventListener("pointerup", () => {
       console.log("preference button click");
@@ -275,7 +269,7 @@ export default class MangaViewer {
 
     // 引数がtrueならば全画面化
     if (isFullscreen) {
-      this.fullscreenButtonHandler();
+      this.fullscreenHandler();
     }
 
     // swiperのfreeModeには
@@ -294,7 +288,7 @@ export default class MangaViewer {
 
     // フルスクリーン状態にあるならそれを解除
     if (document.fullscreenElement) {
-      this.fullscreenButtonHandler();
+      this.fullscreenHandler();
     }
 
     // オーバーレイ下要素のスクロール再開
@@ -413,7 +407,7 @@ export default class MangaViewer {
    * 非全画面状態ならば全画面化させて、
    * 全画面状態であるならそれを解除する
    */
-  private fullscreenButtonHandler() {
+  private fullscreenHandler() {
     // フルスクリーン切り替え後に呼び出される関数
     const postToggleFullscreen = () => {
       const isFullscreen = document.fullscreenElement;

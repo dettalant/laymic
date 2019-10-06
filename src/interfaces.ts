@@ -10,8 +10,8 @@ export interface MangaViewerOptions {
   // ライトボックスとして初期化する
   isLightbox?: boolean,
   icons?: MangaViewerIcons,
-  vertPageMargin: number,
-  horizPageMargin: number,
+  vertPageMargin?: number,
+  horizPageMargin?: number,
 }
 
 export interface PageSize {

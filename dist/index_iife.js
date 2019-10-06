@@ -8310,7 +8310,7 @@ var mangaViewer = (function () {
   // svg xlink namespace
   const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
   // mangaViewerで用いるDOMを生成するやつ
-  class ViewerHTMLBuilder {
+  class ViewerDOMBuilder {
       constructor(icons) {
           // 使用するアイコンセット
           this.icons = this.defaultMangaViewerIcons;
@@ -8541,7 +8541,7 @@ var mangaViewer = (function () {
   }
 
   class MangaViewer {
-      constructor(queryStr, pages, options) {
+      constructor(queryStr, pages, options = {}) {
           // mangaViewer内部で用いるステートまとめ
           this.state = this.defaultMangaViewerStates;
           const rootEl = document.querySelector(queryStr);
@@ -8550,8 +8550,7 @@ var mangaViewer = (function () {
           if (rootEl.parentNode)
               rootEl.parentNode.removeChild(rootEl);
           rootEl.style.display = "none";
-          const icons = (options && options.icons) ? options.icons : undefined;
-          const builder = new ViewerHTMLBuilder(icons);
+          const builder = new ViewerDOMBuilder(options.icons);
           if (this.state.viewerId === 0) {
               // 一つのページにつき一度だけの処理
               const svgCtn = builder.createSVGIcons();
@@ -8567,10 +8566,8 @@ var mangaViewer = (function () {
           if (typeof pages === "string") {
               pages = parseHtmlElement(pages);
           }
-          if (options) {
-              const [pw, ph] = (options.pageWidth && options.pageHeight)
-                  ? [options.pageWidth, options.pageHeight]
-                  : [720, 1024];
+          if (options.pageWidth && options.pageHeight) {
+              const [pw, ph] = [options.pageWidth, options.pageHeight];
               const gcd = calcGCD(pw, ph);
               this.state.pageSize = {
                   w: pw,
@@ -8580,11 +8577,9 @@ var mangaViewer = (function () {
                   w: pw / gcd,
                   h: ph / gcd,
               };
-              this.state.isLTR = (options.isLTR) ? options.isLTR : false;
           }
-          if (!options || !options.pageHeight || !options.pageWidth) {
+          else {
               // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-              // TODO: しっかりとimg要素に用いられるsrc判別をまた行う
               const getBeginningSrc = (pages) => {
                   let result = "";
                   for (let p of pages) {
@@ -8602,6 +8597,7 @@ var mangaViewer = (function () {
               const src = getBeginningSrc(pages);
               this.setPageSizeFromImgPath(src);
           }
+          this.state.isLTR = (options.isLTR) ? options.isLTR : false;
           rootEl.classList.add("mangaViewer_root", "is_ui_visible");
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
           const swiperEl = builder.createSwiperContainer(this.mangaViewerId, pages, this.state.isLTR);
@@ -8618,7 +8614,7 @@ var mangaViewer = (function () {
           document.body.appendChild(this.el.rootEl);
           // サイズ設定の初期化
           this.viewUpdate();
-          const horizPageMargin = (options && options.horizPageMargin)
+          const horizPageMargin = (options.horizPageMargin)
               ? options.horizPageMargin
               : 0;
           const swiperHorizView = {
@@ -8639,7 +8635,7 @@ var mangaViewer = (function () {
                   loadPrevNextAmount: 4,
               },
           };
-          const vertPageMargin = (options && options.vertPageMargin)
+          const vertPageMargin = (options.vertPageMargin)
               ? options.vertPageMargin
               : 10;
           const swiperVertView = {
@@ -8675,7 +8671,7 @@ var mangaViewer = (function () {
                   this.disableVerticalView();
               }
           });
-          this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenButtonHandler());
+          this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
           this.el.buttons.preference.addEventListener("pointerup", () => {
               console.log("preference button click");
           });
@@ -8757,7 +8753,7 @@ var mangaViewer = (function () {
           this.disableBodyScroll();
           // 引数がtrueならば全画面化
           if (isFullscreen) {
-              this.fullscreenButtonHandler();
+              this.fullscreenHandler();
           }
           // swiperのfreeModeには
           // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
@@ -8773,7 +8769,7 @@ var mangaViewer = (function () {
           this.hideRootEl();
           // フルスクリーン状態にあるならそれを解除
           if (document.fullscreenElement) {
-              this.fullscreenButtonHandler();
+              this.fullscreenHandler();
           }
           // オーバーレイ下要素のスクロール再開
           this.enableBodyScroll();
@@ -8872,7 +8868,7 @@ var mangaViewer = (function () {
        * 非全画面状態ならば全画面化させて、
        * 全画面状態であるならそれを解除する
        */
-      fullscreenButtonHandler() {
+      fullscreenHandler() {
           // フルスクリーン切り替え後に呼び出される関数
           const postToggleFullscreen = () => {
               const isFullscreen = document.fullscreenElement;
