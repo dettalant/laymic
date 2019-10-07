@@ -55,14 +55,6 @@ export class ViewerDOMBuilder {
       ]
     };
 
-    const hideThumbs = {
-      id: "mangaViewer_svgExitThumbs",
-      viewBox: "0 0 24 24",
-      pathDs: [
-        "M2.81 2.807L1.397 4.22l.844.843C2.091 5.344 2 5.66 2 6v12c0 1.108.892 2 2 2h13.176l2.605 2.605 1.414-1.414-1.193-1.193L18.004 18 14 13.996l-4-4L6.004 6l-2-2L2.81 2.807zM6.833 4l2 2H20v11.168l1.658 1.658c.135-.27.342-.503.342-.826V6c0-1.108-.892-2-2-2H6.832zM4 6.824L6.176 9H5v6h4v-3.176l1 1V15h2.176l3 3H4V6.824zM11.832 9L14 11.168V9h-2.168zM15 9v3.168L17.832 15H19V9h-4z",
-      ]
-    }
-
     // material.io: settings_applications(modified)
     const preference = {
       id: "mangaViewer_svgPreference",
@@ -93,7 +85,6 @@ export class ViewerDOMBuilder {
       fullscreen,
       exitFullscreen,
       showThumbs,
-      hideThumbs,
       preference,
       horizView,
       vertView
@@ -121,13 +112,13 @@ export class ViewerDOMBuilder {
       const divEl = this.createDiv();
       divEl.className = "swiper-slide";
 
-      if (typeof p === "string") {
+      if (p instanceof HTMLElement) {
+        divEl.appendChild(p);
+      } else {
         const imgEl = new Image();
         imgEl.dataset.src = p;
         imgEl.className = "swiper-lazy";
         divEl.appendChild(imgEl);
-      } else if (p instanceof HTMLElement) {
-        divEl.appendChild(p);
       }
 
       wrapperEl.appendChild(divEl);
@@ -167,7 +158,6 @@ export class ViewerDOMBuilder {
     const thumbsBtn = this.createButton();
     [
       this.createSvgUseElement(this.icons.showThumbs.id, "icon_showThumbs"),
-      this.createSvgUseElement(this.icons.hideThumbs.id, "icon_hideThumbs"),
     ].forEach(icon => thumbsBtn.appendChild(icon));
     thumbsBtn.classList.add("mangaViewer_showThumbs");
 
@@ -206,6 +196,41 @@ export class ViewerDOMBuilder {
     ].forEach(el => ctrlEl.appendChild(el));
 
     return [ctrlEl, uiButtons]
+  }
+
+  /**
+   * サムネイル表示要素を生成して返す
+   * @param  className 要素に付記するクラス名
+   * @param  pages     要素に内包させるページ配列
+   * @return           生成されたサムネイル表示要素
+   */
+  createThumbnailsEl(className: string, pages: (string | HTMLElement)[]): [HTMLElement, HTMLElement] {
+    const thumbsEl = this.createDiv();
+    thumbsEl.className = className;
+    // 初期状態では表示しないようにしておく
+    thumbsEl.style.display = "none";
+
+    const wrapperEl = this.createDiv();
+    wrapperEl.className = "mangaViewer_thumbsWrapper";
+
+    for (let p of pages) {
+      let el: HTMLElement;
+      if (p instanceof HTMLElement) {
+        p.classList.add("mangaViewer_slideThumb")
+        el = p;
+      } else {
+        const img = new Image();
+        img.dataset.src = p;
+        img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
+        el = img;
+      }
+
+      el.classList.add("mangaViewer_thumbItem");
+      wrapperEl.appendChild(el);
+    }
+
+    thumbsEl.appendChild(wrapperEl);
+    return [thumbsEl, wrapperEl];
   }
 
   /**

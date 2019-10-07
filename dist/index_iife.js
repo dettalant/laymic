@@ -8355,13 +8355,6 @@ var mangaViewer = (function () {
                   "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm1 3v6h4V9H5zm5 0v6h4V9h-4zm5 0v6h4V9h-4z",
               ]
           };
-          const hideThumbs = {
-              id: "mangaViewer_svgExitThumbs",
-              viewBox: "0 0 24 24",
-              pathDs: [
-                  "M2.81 2.807L1.397 4.22l.844.843C2.091 5.344 2 5.66 2 6v12c0 1.108.892 2 2 2h13.176l2.605 2.605 1.414-1.414-1.193-1.193L18.004 18 14 13.996l-4-4L6.004 6l-2-2L2.81 2.807zM6.833 4l2 2H20v11.168l1.658 1.658c.135-.27.342-.503.342-.826V6c0-1.108-.892-2-2-2H6.832zM4 6.824L6.176 9H5v6h4v-3.176l1 1V15h2.176l3 3H4V6.824zM11.832 9L14 11.168V9h-2.168zM15 9v3.168L17.832 15H19V9h-4z",
-              ]
-          };
           // material.io: settings_applications(modified)
           const preference = {
               id: "mangaViewer_svgPreference",
@@ -8389,7 +8382,6 @@ var mangaViewer = (function () {
               fullscreen,
               exitFullscreen,
               showThumbs,
-              hideThumbs,
               preference,
               horizView,
               vertView
@@ -8413,14 +8405,14 @@ var mangaViewer = (function () {
           for (let p of pages) {
               const divEl = this.createDiv();
               divEl.className = "swiper-slide";
-              if (typeof p === "string") {
+              if (p instanceof HTMLElement) {
+                  divEl.appendChild(p);
+              }
+              else {
                   const imgEl = new Image();
                   imgEl.dataset.src = p;
                   imgEl.className = "swiper-lazy";
                   divEl.appendChild(imgEl);
-              }
-              else if (p instanceof HTMLElement) {
-                  divEl.appendChild(p);
               }
               wrapperEl.appendChild(divEl);
           }
@@ -8453,7 +8445,6 @@ var mangaViewer = (function () {
           const thumbsBtn = this.createButton();
           [
               this.createSvgUseElement(this.icons.showThumbs.id, "icon_showThumbs"),
-              this.createSvgUseElement(this.icons.hideThumbs.id, "icon_hideThumbs"),
           ].forEach(icon => thumbsBtn.appendChild(icon));
           thumbsBtn.classList.add("mangaViewer_showThumbs");
           const preferenceBtn = this.createButton();
@@ -8485,6 +8476,37 @@ var mangaViewer = (function () {
               ctrlBottomEl,
           ].forEach(el => ctrlEl.appendChild(el));
           return [ctrlEl, uiButtons];
+      }
+      /**
+       * サムネイル表示要素を生成して返す
+       * @param  className 要素に付記するクラス名
+       * @param  pages     要素に内包させるページ配列
+       * @return           生成されたサムネイル表示要素
+       */
+      createThumbnailsEl(className, pages) {
+          const thumbsEl = this.createDiv();
+          thumbsEl.className = className;
+          // 初期状態では表示しないようにしておく
+          thumbsEl.style.display = "none";
+          const wrapperEl = this.createDiv();
+          wrapperEl.className = "mangaViewer_thumbsWrapper";
+          for (let p of pages) {
+              let el;
+              if (p instanceof HTMLElement) {
+                  p.classList.add("mangaViewer_slideThumb");
+                  el = p;
+              }
+              else {
+                  const img = new Image();
+                  img.dataset.src = p;
+                  img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
+                  el = img;
+              }
+              el.classList.add("mangaViewer_thumbItem");
+              wrapperEl.appendChild(el);
+          }
+          thumbsEl.appendChild(wrapperEl);
+          return [thumbsEl, wrapperEl];
       }
       /**
        * use要素を内包したSVGElementを返す
@@ -8629,12 +8651,11 @@ var mangaViewer = (function () {
               this.state.vertPageMargin = options.vertPageMargin;
           if (options.horizPageMargin)
               this.state.horizPageMargin = options.horizPageMargin;
-          if (options.thumbsPageMargin)
-              this.state.thumbsPageMargin = options.thumbsPageMargin;
           rootEl.classList.add("mangaViewer_root", "is_ui_visible");
+          rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
           const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR);
-          const thumbsEl = builder.createSwiperContainer("mangaViewerThumbs", "mangaViewer_thumbsGallery", pages, this.state.isLTR);
+          const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
           [
               controllerEl,
               swiperEl,
@@ -8644,6 +8665,7 @@ var mangaViewer = (function () {
               rootEl,
               swiperEl,
               thumbsEl,
+              thumbsWrapperEl,
               controllerEl,
               buttons: uiButtons,
           };
@@ -8652,9 +8674,6 @@ var mangaViewer = (function () {
           document.body.appendChild(this.el.rootEl);
           // サイズ設定の初期化
           this.viewUpdate();
-          // NOTE: サムネイルギャラリーインスタンスを先に生成しなければ
-          //     : メインギャラリーとの紐付けが上手く行かない
-          this.thumbs = new Swiper(this.el.thumbsEl, this.thumbsSwiperHorizViewConf);
           this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
           this.el.buttons.direction.addEventListener("pointerup", () => {
               if (!this.state.isVertView) {
@@ -8665,9 +8684,46 @@ var mangaViewer = (function () {
               }
           });
           this.el.buttons.thumbs.addEventListener("pointerup", () => {
-              this.el.rootEl.classList.toggle("is_showThumbs");
-              this.viewUpdate();
+              const revealImgs = (el) => {
+                  const imgs = el.getElementsByClassName("mangaViewer_lazyload");
+                  Array.from(imgs).forEach(el => {
+                      if (!(el instanceof HTMLImageElement)) {
+                          return;
+                      }
+                      const s = el.dataset.src;
+                      if (s) {
+                          el.classList.remove("mangaViewer_lazyload");
+                          el.classList.add("mangaViewer_lazyloading");
+                          el.addEventListener("load", () => {
+                              el.classList.remove("mangaViewer_lazyloading");
+                              el.classList.add("mangaViewer_lazyloaded");
+                          });
+                          el.src = s;
+                      }
+                  });
+              };
+              if (this.el.thumbsEl.style.display === "none") {
+                  // ページ読み込み後一度だけ動作する
+                  this.el.thumbsEl.style.display = "";
+                  revealImgs(this.el.thumbsEl);
+              }
+              this.el.rootEl.classList.add("is_showThumbs");
+              this.hideViewerUI();
           });
+          // サムネイル表示中オーバーレイ要素でのクリックイベント
+          this.el.thumbsEl.addEventListener("pointerup", () => {
+              this.el.rootEl.classList.remove("is_showThumbs");
+          });
+          this.el.thumbsWrapperEl.addEventListener("pointerup", (e) => {
+              // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
+              // 何も起きないようにする
+              e.stopPropagation();
+          });
+          // 各サムネイルとswiper各スライドとを紐づける
+          Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener("pointerup", () => {
+              this.swiper.slideTo(i);
+              this.el.rootEl.classList.remove("is_showThumbs");
+          }));
           this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
           this.el.buttons.preference.addEventListener("pointerup", () => {
               console.log("preference button click");
@@ -8730,10 +8786,8 @@ var mangaViewer = (function () {
               },
               isLTR: false,
               isVertView: false,
-              thumbsViewLength: 6,
               vertPageMargin: 10,
               horizPageMargin: 0,
-              thumbsPageMargin: 10,
           };
       }
       get mainSwiperHorizViewConf() {
@@ -8754,9 +8808,6 @@ var mangaViewer = (function () {
               lazy: {
                   loadPrevNext: true,
                   loadPrevNextAmount: 4,
-              },
-              thumbs: {
-                  swiper: this.thumbs
               },
           };
       }
@@ -8781,24 +8832,6 @@ var mangaViewer = (function () {
                   loadPrevNext: true,
                   loadPrevNextAmount: 4,
               },
-              thumbs: {
-                  swiper: this.thumbs
-              },
-          };
-      }
-      get thumbsSwiperHorizViewConf() {
-          return {
-              spaceBetween: this.state.thumbsPageMargin,
-              slidesPerView: this.state.thumbsViewLength,
-              preloadImages: false,
-              centeredSlides: false,
-              on: {
-                  sliderMove: () => this.hideViewerUI(),
-              },
-              lazy: {
-                  loadPrevNext: true,
-                  loadPrevNextAmount: 2,
-              }
           };
       }
       /**
@@ -8930,8 +8963,6 @@ var mangaViewer = (function () {
           this.cssPageWidthUpdate();
           if (this.swiper)
               this.swiper.update();
-          if (this.thumbs)
-              this.thumbs.update();
       }
       /**
        * 全画面化ボタンのイベントハンドラ

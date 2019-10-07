@@ -1,4 +1,4 @@
-import { SwiperOptions } from "swiper";
+export declare type MangaViewerPages = (string | HTMLElement)[];
 export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
@@ -7,7 +7,6 @@ export interface MangaViewerOptions {
     icons?: MangaViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
-    thumbsPageMargin?: number;
 }
 export interface PageSize {
     w: number;
@@ -21,6 +20,7 @@ export interface MangaViewerElements {
     rootEl: HTMLElement;
     swiperEl: HTMLElement;
     thumbsEl: HTMLElement;
+    thumbsWrapperEl: HTMLElement;
     buttons: MangaViewerUIButtons;
     controllerEl: HTMLElement;
 }
@@ -35,7 +35,6 @@ export interface MangaViewerIcons {
     exitFullscreen: IconData;
     preference: IconData;
     showThumbs: IconData;
-    hideThumbs: IconData;
     vertView: IconData;
     horizView: IconData;
 }
@@ -54,13 +53,6 @@ export interface MangaViewerStates {
     swiperRect: PageRect;
     isLTR: boolean;
     isVertView: boolean;
-    thumbsViewLength: number;
     horizPageMargin: number;
     vertPageMargin: number;
-    thumbsPageMargin: number;
-}
-export interface SwiperConfigs {
-    mainVertView: SwiperOptions;
-    mainHorizView: SwiperOptions;
-    thumbsHorizView: SwiperOptions;
 }

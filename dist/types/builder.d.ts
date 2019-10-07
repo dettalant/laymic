@@ -24,6 +24,13 @@ export declare class ViewerDOMBuilder {
      */
     createViewerController(id: string): [HTMLElement, MangaViewerUIButtons];
     /**
+     * サムネイル表示要素を生成して返す
+     * @param  className 要素に付記するクラス名
+     * @param  pages     要素に内包させるページ配列
+     * @return           生成されたサムネイル表示要素
+     */
+    createThumbnailsEl(className: string, pages: (string | HTMLElement)[]): [HTMLElement, HTMLElement];
+    /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名
      * @param  className 返す要素に追加するクラス名

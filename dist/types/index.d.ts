@@ -1,11 +1,10 @@
 import Swiper from "swiper";
-import { MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
+import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
 export default class MangaViewer {
     el: MangaViewerElements;
     state: MangaViewerStates;
     swiper: Swiper;
-    thumbs: Swiper;
-    constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options?: MangaViewerOptions);
+    constructor(queryStr: string, pages: MangaViewerPages | string, options?: MangaViewerOptions);
     /**
      * インスタンスごとに固有のビューワーIDを返す
      * @return ビューワーID文字列
@@ -28,7 +27,6 @@ export default class MangaViewer {
     private readonly defaultMangaViewerStates;
     private readonly mainSwiperHorizViewConf;
     private readonly mainSwiperVertViewConf;
-    private readonly thumbsSwiperHorizViewConf;
     /**
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる

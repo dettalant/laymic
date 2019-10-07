@@ -3,6 +3,7 @@ import screenfull from "screenfull";
 import { calcGCD, viewerCnt, sleep, readImage } from "./utils";
 import { ViewerDOMBuilder } from "./builder";
 import {
+  MangaViewerPages,
   MangaViewerElements,
   MangaViewerOptions,
   MangaViewerStates,
@@ -16,10 +17,8 @@ export default class MangaViewer {
   state: MangaViewerStates = this.defaultMangaViewerStates;
   // swiper instance
   swiper: Swiper;
-  // thumbnail swiper instance
-  thumbs: Swiper;
 
-  constructor(queryStr: string, pages: (string | HTMLElement)[] | string, options: MangaViewerOptions = {}) {
+  constructor(queryStr: string, pages: MangaViewerPages | string, options: MangaViewerOptions = {}) {
     const rootEl = document.querySelector(queryStr);
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
@@ -80,12 +79,13 @@ export default class MangaViewer {
     if (options.isLTR) this.state.isLTR = options.isLTR;
     if (options.vertPageMargin) this.state.vertPageMargin = options.vertPageMargin;
     if (options.horizPageMargin) this.state.horizPageMargin = options.horizPageMargin;
-    if (options.thumbsPageMargin) this.state.thumbsPageMargin = options.thumbsPageMargin;
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
+    rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery",  pages, this.state.isLTR);
-    const thumbsEl = builder.createSwiperContainer("mangaViewerThumbs", "mangaViewer_thumbsGallery", pages, this.state.isLTR);
+    const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
 
     [
       controllerEl,
@@ -97,6 +97,7 @@ export default class MangaViewer {
       rootEl,
       swiperEl,
       thumbsEl,
+      thumbsWrapperEl,
       controllerEl,
       buttons: uiButtons,
     }
@@ -109,9 +110,6 @@ export default class MangaViewer {
     // サイズ設定の初期化
     this.viewUpdate();
 
-    // NOTE: サムネイルギャラリーインスタンスを先に生成しなければ
-    //     : メインギャラリーとの紐付けが上手く行かない
-    this.thumbs = new Swiper(this.el.thumbsEl, this.thumbsSwiperHorizViewConf);
     this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
     this.el.buttons.direction.addEventListener("pointerup", () => {
@@ -123,9 +121,54 @@ export default class MangaViewer {
     });
 
     this.el.buttons.thumbs.addEventListener("pointerup", () => {
-      this.el.rootEl.classList.toggle("is_showThumbs");
-      this.viewUpdate();
+      const revealImgs = (el: HTMLElement) => {
+        const imgs = el.getElementsByClassName("mangaViewer_lazyload");
+        Array.from(imgs).forEach(el => {
+
+          if (!(el instanceof HTMLImageElement)) {
+            return;
+          }
+
+          const s = el.dataset.src;
+          if (s) {
+            el.classList.remove("mangaViewer_lazyload");
+            el.classList.add("mangaViewer_lazyloading");
+            el.addEventListener("load", () => {
+              el.classList.remove("mangaViewer_lazyloading");
+              el.classList.add("mangaViewer_lazyloaded");
+            })
+
+            el.src = s;
+          }
+        })
+      }
+
+      if (this.el.thumbsEl.style.display === "none") {
+        // ページ読み込み後一度だけ動作する
+        this.el.thumbsEl.style.display = "";
+        revealImgs(this.el.thumbsEl);
+      }
+      this.el.rootEl.classList.add("is_showThumbs");
+
+      this.hideViewerUI();
     })
+
+    // サムネイル表示中オーバーレイ要素でのクリックイベント
+    this.el.thumbsEl.addEventListener("pointerup", () => {
+      this.el.rootEl.classList.remove("is_showThumbs");
+    })
+
+    this.el.thumbsWrapperEl.addEventListener("pointerup", (e) => {
+      // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
+      // 何も起きないようにする
+      e.stopPropagation();
+    });
+
+    // 各サムネイルとswiper各スライドとを紐づける
+    Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener("pointerup", () => {
+      this.swiper.slideTo(i);
+      this.el.rootEl.classList.remove("is_showThumbs");
+    }));
 
     this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
 
@@ -205,10 +248,8 @@ export default class MangaViewer {
       },
       isLTR: false,
       isVertView: false,
-      thumbsViewLength: 6,
       vertPageMargin: 10,
       horizPageMargin: 0,
-      thumbsPageMargin: 10,
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
@@ -231,9 +272,6 @@ export default class MangaViewer {
       lazy: {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
-      },
-      thumbs: {
-        swiper: this.thumbs
       },
     }
   }
@@ -259,25 +297,6 @@ export default class MangaViewer {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
-      thumbs: {
-        swiper: this.thumbs
-      },
-    }
-  }
-
-  private get thumbsSwiperHorizViewConf(): SwiperOptions {
-    return {
-      spaceBetween: this.state.thumbsPageMargin,
-      slidesPerView: this.state.thumbsViewLength,
-      preloadImages: false,
-      centeredSlides: false,
-      on: {
-        sliderMove: () => this.hideViewerUI(),
-      },
-      lazy: {
-        loadPrevNext: true,
-        loadPrevNextAmount: 2,
-      }
     }
   }
 
@@ -437,7 +456,6 @@ export default class MangaViewer {
     this.cssPageWidthUpdate();
 
     if (this.swiper) this.swiper.update();
-    if (this.thumbs) this.thumbs.update();
   }
 
   /**

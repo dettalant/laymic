@@ -1,4 +1,4 @@
-import { SwiperOptions } from "swiper";
+export type MangaViewerPages = (string | HTMLElement)[];
 
 export interface MangaViewerOptions {
   // ページ横幅
@@ -15,8 +15,6 @@ export interface MangaViewerOptions {
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
-  // サムネイル表示で絶対に確保されるサムネイル間余白ピクセル数値
-  thumbsPageMargin?: number,
 }
 
 export interface PageSize {
@@ -40,6 +38,7 @@ export interface MangaViewerElements {
   rootEl: HTMLElement,
   swiperEl: HTMLElement,
   thumbsEl: HTMLElement,
+  thumbsWrapperEl: HTMLElement,
   buttons: MangaViewerUIButtons,
   controllerEl: HTMLElement,
 }
@@ -59,7 +58,6 @@ export interface MangaViewerIcons {
   exitFullscreen: IconData,
   preference: IconData,
   showThumbs: IconData,
-  hideThumbs: IconData,
   vertView: IconData,
   horizView: IconData,
 }
@@ -85,15 +83,6 @@ export interface MangaViewerStates {
   swiperRect: PageRect,
   isLTR: boolean,
   isVertView: boolean,
-  thumbsViewLength: number,
   horizPageMargin: number,
   vertPageMargin: number,
-  thumbsPageMargin: number,
-}
-
-// swiperのre-initに用いる設定オブジェクトまとめ
-export interface SwiperConfigs {
-  mainVertView: SwiperOptions,
-  mainHorizView: SwiperOptions,
-  thumbsHorizView: SwiperOptions,
 }
