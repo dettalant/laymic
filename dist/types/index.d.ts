@@ -73,6 +73,7 @@ export default class MangaViewer {
      * pageHeightの値も更新するのはこれいかに
      */
     private cssPageWidthUpdate;
+    private cssThumbsWrapperWidthUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
      * @return [description]

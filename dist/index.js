@@ -8671,9 +8671,15 @@ class MangaViewer {
         this.close();
         // 一旦DOMから外していたroot要素を再度放り込む
         document.body.appendChild(this.el.rootEl);
+        if (this.el.thumbsWrapperEl.children[0] instanceof HTMLElement) {
+            const thumbItem = this.el.thumbsWrapperEl.children[0];
+            this.state.thumbItemWidth = thumbItem.offsetWidth;
+        }
         // サイズ設定の初期化
         this.viewUpdate();
         this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
+        this.el.controllerEl.addEventListener("pointerup", (e) => this.slideClickHandler(e));
+        Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("pointerup", (e) => e.stopPropagation()));
         this.el.buttons.direction.addEventListener("pointerup", () => {
             if (!this.state.isVertView) {
                 this.enableVerticalView();
@@ -8787,6 +8793,7 @@ class MangaViewer {
             isVertView: false,
             vertPageMargin: 10,
             horizPageMargin: 0,
+            thumbItemWidth: 0,
         };
     }
     get mainSwiperHorizViewConf() {
@@ -8917,18 +8924,18 @@ class MangaViewer {
         let [isNextClick, isPrevClick] = [false, false];
         if (this.state.isVertView) {
             // 縦読み時処理
-            isNextClick = y > h * 0.66;
-            isPrevClick = y < h * 0.33;
+            isNextClick = y > h * 0.80;
+            isPrevClick = y < h * 0.20;
         }
         else if (this.state.isLTR) {
             // 横読みLTR時処理
-            isNextClick = x > w * 0.66;
-            isPrevClick = x < w * 0.33;
+            isNextClick = x > w * 0.80;
+            isPrevClick = x < w * 0.20;
         }
         else {
             // 通常横読み時処理
-            isNextClick = x < w * 0.33;
-            isPrevClick = x > w * 0.66;
+            isNextClick = x < w * 0.20;
+            isPrevClick = x > w * 0.80;
         }
         const uiVisibleClass = "is_ui_visible";
         if (isNextClick && !this.swiper.isEnd) {
@@ -8960,6 +8967,7 @@ class MangaViewer {
     viewUpdate() {
         this.state.swiperRect = this.swiperElRect;
         this.cssPageWidthUpdate();
+        this.cssThumbsWrapperWidthUpdate();
         if (this.swiper)
             this.swiper.update();
     }
@@ -9017,6 +9025,18 @@ class MangaViewer {
         }
         this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
         this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+    }
+    cssThumbsWrapperWidthUpdate() {
+        const { offsetWidth: ow } = this.el.rootEl;
+        const tw = 96;
+        const tLen = this.el.thumbsWrapperEl.children.length;
+        const tGap = 16;
+        const tWPadding = 16 * 2;
+        const thumbsWrapperWidth = tw * tLen + tGap * (tLen - 1) + tWPadding;
+        console.log(thumbsWrapperWidth);
+        if (ow * 0.9 > thumbsWrapperWidth) {
+            this.el.thumbsWrapperEl.style.width = thumbsWrapperWidth + "px";
+        }
     }
     /**
      * mangaViewerと紐付いたrootElを表示する

@@ -55,4 +55,5 @@ export interface MangaViewerStates {
     isVertView: boolean;
     horizPageMargin: number;
     vertPageMargin: number;
+    thumbItemWidth: number;
 }
