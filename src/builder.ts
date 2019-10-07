@@ -51,7 +51,7 @@ export class ViewerDOMBuilder {
       id: "mangaViewer_svgThumbs",
       viewBox: "0 0 24 24",
       pathDs: [
-        "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm1 3v6h4V9H5zm5 0v6h4V9h-4zm5 0v6h4V9h-4z",
+        "M4 4c-1.108 0-2 .892-2 2v12c0 1.108.892 2 2 2h16c1.108 0 2-.892 2-2V6c0-1.108-.892-2-2-2H4zm0 2h16v12H4V6zm1 1v4h4V7H5zm5 0v4h4V7h-4zm5 0v4h4V7h-4zM5 13v4h4v-4H5zm5 0v4h4v-4h-4zm5 0v4h4v-4h-4z",
       ]
     };
 
