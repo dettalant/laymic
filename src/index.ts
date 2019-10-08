@@ -76,7 +76,7 @@ export default class MangaViewer {
       const src = getBeginningSrc(pages);
       this.setPageSizeFromImgPath(src);
     }
-    
+
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
     if (options.isLTR !== void 0) this.state.isLTR = options.isLTR;
@@ -100,10 +100,13 @@ export default class MangaViewer {
     thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
     thumbsWrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
 
+    const [preferenceEl, preferenceWrapperEl] = builder.createPreferenceEl("mangaViewer_preference");
+
     [
       controllerEl,
       swiperEl,
-      thumbsEl
+      thumbsEl,
+      preferenceEl
     ].forEach(el => rootEl.appendChild(el));
 
     this.el = {
@@ -111,6 +114,8 @@ export default class MangaViewer {
       swiperEl,
       thumbsEl,
       thumbsWrapperEl,
+      preferenceEl,
+      preferenceWrapperEl,
       controllerEl,
       buttons: uiButtons,
     }
@@ -198,12 +203,18 @@ export default class MangaViewer {
       this.el.rootEl.classList.remove("is_showThumbs");
     }));
 
+    this.el.preferenceEl.addEventListener(this.deviceClickEvent, () => {
+      this.el.rootEl.classList.remove("is_showPreference");
+    })
+
     // 全画面化ボタンのクリックイベント
     this.el.buttons.fullscreen.addEventListener(this.deviceClickEvent, () => this.fullscreenHandler());
 
     // 設定ボタンのクリックイベント
     this.el.buttons.preference.addEventListener(this.deviceClickEvent, () => {
-      console.log("preference button click");
+      this.el.rootEl.classList.toggle("is_showPreference");
+      // NOTE: 暫定でUIを閉じておく
+      this.hideViewerUI();
     })
 
     // オーバーレイ終了ボタンのクリックイベント

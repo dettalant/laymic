@@ -30,6 +30,7 @@ export declare class ViewerDOMBuilder {
      * @return           生成されたサムネイル表示要素
      */
     createThumbnailsEl(className: string, pages: (string | HTMLElement)[]): [HTMLElement, HTMLElement];
+    createPreferenceEl(className: string): [HTMLElement, HTMLElement];
     /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名

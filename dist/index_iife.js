@@ -8461,7 +8461,7 @@ var mangaViewer = (function () {
           ].forEach(icon => thumbsBtn.appendChild(icon));
           thumbsBtn.classList.add("mangaViewer_showThumbs");
           const preferenceBtn = this.createButton();
-          preferenceBtn.classList.add("mangaViewer_preference");
+          preferenceBtn.classList.add("mangaViewer_showPreference");
           const preferenceIcon = this.createSvgUseElement(this.icons.preference.id, "icon_preference");
           preferenceBtn.appendChild(preferenceIcon);
           const closeBtn = this.createButton();
@@ -8520,6 +8520,17 @@ var mangaViewer = (function () {
           }
           thumbsEl.appendChild(wrapperEl);
           return [thumbsEl, wrapperEl];
+      }
+      createPreferenceEl(className) {
+          const preferenceEl = this.createDiv();
+          preferenceEl.className = className;
+          const preferenceWrapperEl = this.createDiv();
+          preferenceWrapperEl.className = "mangaViewer_preferenceWrapper";
+          const testTextEl = document.createElement("span");
+          testTextEl.textContent = "設定部分はまだ未制作です！";
+          preferenceWrapperEl.appendChild(testTextEl);
+          preferenceEl.appendChild(preferenceWrapperEl);
+          return [preferenceEl, preferenceWrapperEl];
       }
       /**
        * use要素を内包したSVGElementを返す
@@ -8658,6 +8669,8 @@ var mangaViewer = (function () {
               const src = getBeginningSrc(pages);
               this.setPageSizeFromImgPath(src);
           }
+          // 省略表記だとバグが起きそうなので
+          // undefinedでないかだけ確認する
           if (options.isLTR !== void 0)
               this.state.isLTR = options.isLTR;
           if (options.vertPageMargin !== void 0)
@@ -8674,16 +8687,20 @@ var mangaViewer = (function () {
           thumbsWrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
           thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
           thumbsWrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+          const [preferenceEl, preferenceWrapperEl] = builder.createPreferenceEl("mangaViewer_preference");
           [
               controllerEl,
               swiperEl,
-              thumbsEl
+              thumbsEl,
+              preferenceEl
           ].forEach(el => rootEl.appendChild(el));
           this.el = {
               rootEl,
               swiperEl,
               thumbsEl,
               thumbsWrapperEl,
+              preferenceEl,
+              preferenceWrapperEl,
               controllerEl,
               buttons: uiButtons,
           };
@@ -8754,11 +8771,16 @@ var mangaViewer = (function () {
               this.swiper.slideTo(i);
               this.el.rootEl.classList.remove("is_showThumbs");
           }));
+          this.el.preferenceEl.addEventListener(this.deviceClickEvent, () => {
+              this.el.rootEl.classList.remove("is_showPreference");
+          });
           // 全画面化ボタンのクリックイベント
           this.el.buttons.fullscreen.addEventListener(this.deviceClickEvent, () => this.fullscreenHandler());
           // 設定ボタンのクリックイベント
           this.el.buttons.preference.addEventListener(this.deviceClickEvent, () => {
-              console.log("preference button click");
+              this.el.rootEl.classList.toggle("is_showPreference");
+              // NOTE: 暫定でUIを閉じておく
+              this.hideViewerUI();
           });
           // オーバーレイ終了ボタンのクリックイベント
           this.el.buttons.close.addEventListener(this.deviceClickEvent, () => {

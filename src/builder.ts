@@ -170,7 +170,7 @@ export class ViewerDOMBuilder {
     thumbsBtn.classList.add("mangaViewer_showThumbs");
 
     const preferenceBtn = this.createButton();
-    preferenceBtn.classList.add("mangaViewer_preference");
+    preferenceBtn.classList.add("mangaViewer_showPreference");
     const preferenceIcon = this.createSvgUseElement(this.icons.preference.id, "icon_preference");
     preferenceBtn.appendChild(preferenceIcon);
 
@@ -239,6 +239,21 @@ export class ViewerDOMBuilder {
 
     thumbsEl.appendChild(wrapperEl);
     return [thumbsEl, wrapperEl];
+  }
+
+  createPreferenceEl(className: string): [HTMLElement, HTMLElement] {
+    const preferenceEl = this.createDiv();
+    preferenceEl.className = className;
+
+    const preferenceWrapperEl = this.createDiv();
+    preferenceWrapperEl.className = "mangaViewer_preferenceWrapper";
+
+    const testTextEl = document.createElement("span");
+    testTextEl.textContent = "設定部分はまだ未制作です！";
+    preferenceWrapperEl.appendChild(testTextEl);
+
+    preferenceEl.appendChild(preferenceWrapperEl);
+    return [preferenceEl, preferenceWrapperEl];
   }
 
   /**

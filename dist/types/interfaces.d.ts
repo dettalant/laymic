@@ -22,6 +22,8 @@ export interface MangaViewerElements {
     swiperEl: HTMLElement;
     thumbsEl: HTMLElement;
     thumbsWrapperEl: HTMLElement;
+    preferenceEl: HTMLElement;
+    preferenceWrapperEl: HTMLElement;
     buttons: MangaViewerUIButtons;
     controllerEl: HTMLElement;
 }
