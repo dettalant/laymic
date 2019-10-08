@@ -1,6 +1,6 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
-import { calcGCD, viewerCnt, sleep, readImage } from "./utils";
+import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent } from "./utils";
 import { ViewerDOMBuilder } from "./builder";
 import {
   MangaViewerPages,
@@ -117,11 +117,19 @@ export default class MangaViewer {
 
     this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
-    this.el.controllerEl.addEventListener("pointerup", (e) => this.slideClickHandler(e));
+    // 各種イベント登録
 
-    Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("pointerup", (e) => e.stopPropagation()));
+    // タッチ操作可能なデバイスではスキップする処理
+    if (!this.state.isTouchEvent) {
+      // 画面端のswiperElでない余白部分にもクリック判定をつける
+      this.el.controllerEl.addEventListener(this.deviceClickEvent, (e) => this.slideClickHandler(e));
 
-    this.el.buttons.direction.addEventListener("pointerup", () => {
+      // UIクリック時にcontrollerElへとクリックイベントが伝播しないようにする
+      Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, (e) => e.stopPropagation()));
+    }
+
+    // 縦読み/横読み切り替えボタン
+    this.el.buttons.direction.addEventListener(this.deviceClickEvent, () => {
       if (!this.state.isVertView) {
         this.enableVerticalView()
       } else {
@@ -129,7 +137,8 @@ export default class MangaViewer {
       }
     });
 
-    this.el.buttons.thumbs.addEventListener("pointerup", () => {
+    // サムネイル表示ボタン
+    this.el.buttons.thumbs.addEventListener(this.deviceClickEvent, () => {
       const revealImgs = (el: HTMLElement) => {
         const imgs = el.getElementsByClassName("mangaViewer_lazyload");
         Array.from(imgs).forEach(el => {
@@ -163,29 +172,34 @@ export default class MangaViewer {
     })
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
-    this.el.thumbsEl.addEventListener("pointerup", () => {
+    this.el.thumbsEl.addEventListener(this.deviceClickEvent, () => {
       this.el.rootEl.classList.remove("is_showThumbs");
     })
 
-    this.el.thumbsWrapperEl.addEventListener("pointerup", (e) => {
+    // サムネイル表示中のサムネイル格納コンテナのクリックイベント
+    this.el.thumbsWrapperEl.addEventListener(this.deviceClickEvent, (e) => {
       // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
       // 何も起きないようにする
       e.stopPropagation();
     });
 
+    // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
-    Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener("pointerup", () => {
+    Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
       this.swiper.slideTo(i);
       this.el.rootEl.classList.remove("is_showThumbs");
     }));
 
-    this.el.buttons.fullscreen.addEventListener("pointerup", () => this.fullscreenHandler());
+    // 全画面化ボタンのクリックイベント
+    this.el.buttons.fullscreen.addEventListener(this.deviceClickEvent, () => this.fullscreenHandler());
 
-    this.el.buttons.preference.addEventListener("pointerup", () => {
+    // 設定ボタンのクリックイベント
+    this.el.buttons.preference.addEventListener(this.deviceClickEvent, () => {
       console.log("preference button click");
     })
 
-    this.el.buttons.close.addEventListener("pointerup", () => {
+    // オーバーレイ終了ボタンのクリックイベント
+    this.el.buttons.close.addEventListener(this.deviceClickEvent, () => {
       this.close();
     });
 
@@ -260,6 +274,8 @@ export default class MangaViewer {
       vertPageMargin: 10,
       horizPageMargin: 0,
       thumbItemWidth: 0,
+      isTouchEvent: isExistTouchEvent(),
+      isPointerEvent: isExistPointerEvent(),
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
@@ -273,7 +289,7 @@ export default class MangaViewer {
       on: {
         resize: () => this.viewUpdate(),
         sliderMove: () => this.hideViewerUI(),
-        tap: (e) => this.slideClickHandler(e),
+        tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
 
       keyboard: true,
@@ -300,7 +316,7 @@ export default class MangaViewer {
       on: {
         resize: () => this.viewUpdate(),
         sliderMove: () => this.hideViewerUI(),
-        tap: (e) => this.slideClickHandler(e),
+        tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
       preloadImages: false,
       lazy: {
@@ -308,6 +324,10 @@ export default class MangaViewer {
         loadPrevNextAmount: 4,
       },
     }
+  }
+
+  private get deviceClickEvent(): "pointerup" | "click" {
+    return (this.state.isPointerEvent) ? "pointerup" : "click"
   }
 
   /**
@@ -405,7 +425,7 @@ export default class MangaViewer {
    *
    * @param  e pointer-up event
    */
-  private slideClickHandler(e: PointerEvent) {
+  private slideClickHandler(e: PointerEvent | MouseEvent) {
     const {
       left: l,
       top: t,
@@ -530,23 +550,32 @@ export default class MangaViewer {
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
 
+  /**
+   * thumbsWrapperElのwidthを計算し、
+   * 折り返しが発生しないようなら横幅の値を書き換える
+   *
+   * TODO: 今はいろいろと数値設定を直書きにしてるので、これらを変数から活用できるようにしたい
+   */
   private cssThumbsWrapperWidthUpdate() {
     const {offsetWidth: ow} = this.el.rootEl;
+    // thumb item offset width
     const tw = 96;
+    // thumbs length
     const tLen = this.el.thumbsWrapperEl.children.length;
+    // thumbs grid gap
     const tGap = 16;
+    // thumbs wrapper padding
     const tWPadding = 16 * 2;
 
     const thumbsWrapperWidth = tw * tLen + tGap * (tLen - 1) + tWPadding;
-    console.log(thumbsWrapperWidth);
-    if (ow * 0.9 > thumbsWrapperWidth) {
-      this.el.thumbsWrapperEl.style.width = thumbsWrapperWidth + "px";
-    }
+    const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
+      ? thumbsWrapperWidth + "px"
+      : "";
+    this.el.thumbsWrapperEl.style.width = widthStyleStr;
   }
 
   /**
    * mangaViewerと紐付いたrootElを表示する
-   * @return [description]
    */
   private showRootEl() {
     this.el.rootEl.style.opacity = "1";

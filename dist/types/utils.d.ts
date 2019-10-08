@@ -24,3 +24,6 @@ export declare const sleep: (ms: number) => Promise<Function>;
  * @return       Promiseに包まれたHTMLImageElement
  */
 export declare const readImage: (path: string) => Promise<HTMLImageElement>;
+export declare const isMobile: () => boolean;
+export declare const isExistTouchEvent: () => boolean;
+export declare const isExistPointerEvent: () => boolean;

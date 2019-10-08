@@ -27,6 +27,7 @@ export default class MangaViewer {
     private readonly defaultMangaViewerStates;
     private readonly mainSwiperHorizViewConf;
     private readonly mainSwiperVertViewConf;
+    private readonly deviceClickEvent;
     /**
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる
@@ -73,10 +74,15 @@ export default class MangaViewer {
      * pageHeightの値も更新するのはこれいかに
      */
     private cssPageWidthUpdate;
+    /**
+     * thumbsWrapperElのwidthを計算し、
+     * 折り返しが発生しないようなら横幅の値を書き換える
+     *
+     * TODO: 今はいろいろと数値設定を直書きにしてるので、これらを変数から活用できるようにしたい
+     */
     private cssThumbsWrapperWidthUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
-     * @return [description]
      */
     private showRootEl;
     /**

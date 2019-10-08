@@ -44,3 +44,16 @@ export const readImage = (path: string): Promise<HTMLImageElement> => {
     img.src = path;
   })
 }
+
+export const isMobile = (): boolean => {
+  const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return regex.test(window.navigator.userAgent);
+}
+
+export const isExistTouchEvent = (): boolean => {
+  return "ontouchmove" in window;
+}
+
+export const isExistPointerEvent = (): boolean => {
+  return "onpointerup" in window;
+}
