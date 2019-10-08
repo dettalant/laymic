@@ -15,6 +15,7 @@ export interface MangaViewerOptions {
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
+  isFirstSlideEmpty?: boolean,
 }
 
 export interface PageSize {
@@ -83,6 +84,7 @@ export interface MangaViewerStates {
   swiperRect: PageRect,
   isLTR: boolean,
   isVertView: boolean,
+  isFirstSlideEmpty: boolean,
   horizPageMargin: number,
   vertPageMargin: number,
   thumbItemWidth: number,

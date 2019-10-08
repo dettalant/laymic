@@ -8401,13 +8401,20 @@ var mangaViewer = (function () {
        * @param  isLTR     左から右に流れる形式を取るならtrue
        * @return           swiper-container要素
        */
-      createSwiperContainer(id, className, pages, isLTR) {
+      createSwiperContainer(id, className, pages, isLTR, isFirstSlideEmpty) {
           const swiperEl = this.createDiv();
           swiperEl.className = "swiper-container " + className;
           swiperEl.id = id;
           swiperEl.dir = (isLTR) ? "" : "rtl";
           const wrapperEl = this.createDiv();
           wrapperEl.className = "swiper-wrapper";
+          // isFirstSlideEmpty引数がtrueならば
+          // 空の要素を一番目に入れる
+          if (isFirstSlideEmpty) {
+              const emptyEl = this.createDiv();
+              emptyEl.className = "swiper-slide mangaViewer_emptySlide";
+              wrapperEl.appendChild(emptyEl);
+          }
           for (let p of pages) {
               const divEl = this.createDiv();
               divEl.className = "swiper-slide";
@@ -8651,16 +8658,18 @@ var mangaViewer = (function () {
               const src = getBeginningSrc(pages);
               this.setPageSizeFromImgPath(src);
           }
-          if (options.isLTR)
+          if (options.isLTR !== void 0)
               this.state.isLTR = options.isLTR;
-          if (options.vertPageMargin)
+          if (options.vertPageMargin !== void 0)
               this.state.vertPageMargin = options.vertPageMargin;
-          if (options.horizPageMargin)
+          if (options.horizPageMargin !== void 0)
               this.state.horizPageMargin = options.horizPageMargin;
+          if (options.isFirstSlideEmpty !== void 0)
+              this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
           rootEl.classList.add("mangaViewer_root", "is_ui_visible");
           rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
-          const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR);
+          const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
           const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
           thumbsWrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
           thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
@@ -8810,6 +8819,7 @@ var mangaViewer = (function () {
               },
               isLTR: false,
               isVertView: false,
+              isFirstSlideEmpty: false,
               vertPageMargin: 10,
               horizPageMargin: 0,
               thumbItemWidth: 96,
@@ -8911,9 +8921,14 @@ var mangaViewer = (function () {
       enableVerticalView() {
           this.state.isVertView = true;
           this.el.rootEl.classList.add("is_vertView");
+          // 一番目に空要素を入れる設定の場合はindex数値を1増やす
+          const activeIdx = this.swiper.activeIndex;
+          const idx = (this.state.isFirstSlideEmpty && activeIdx !== 0)
+              ? activeIdx - 1
+              : activeIdx;
           // 読み進めたページ数を引き継ぐ
           const conf = Object.assign(this.mainSwiperVertViewConf, {
-              initialSlide: this.swiper.activeIndex
+              initialSlide: idx
           });
           // swiperインスタンスを一旦破棄してからre-init
           this.swiper.destroy(true, true);
@@ -8926,9 +8941,14 @@ var mangaViewer = (function () {
       disableVerticalView() {
           this.state.isVertView = false;
           this.el.rootEl.classList.remove("is_vertView");
+          // 一番目に空要素を入れる設定の場合はindex数値を1増やす
+          const activeIdx = this.swiper.activeIndex;
+          const idx = (this.state.isFirstSlideEmpty)
+              ? activeIdx + 1
+              : activeIdx;
           // 読み進めたページ数を引き継ぐ
           const conf = Object.assign(this.mainSwiperHorizViewConf, {
-              initialSlide: this.swiper.activeIndex
+              initialSlide: idx
           });
           // swiperインスタンスを一旦破棄してからre-init
           this.swiper.destroy(true, true);

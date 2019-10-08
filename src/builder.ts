@@ -99,7 +99,7 @@ export class ViewerDOMBuilder {
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(id: string, className: string,  pages: (string | HTMLElement)[], isLTR: boolean): HTMLElement {
+  createSwiperContainer(id: string, className: string,  pages: (string | HTMLElement)[], isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container " + className;
     swiperEl.id = id;
@@ -107,6 +107,14 @@ export class ViewerDOMBuilder {
 
     const wrapperEl = this.createDiv();
     wrapperEl.className = "swiper-wrapper";
+
+    // isFirstSlideEmpty引数がtrueならば
+    // 空の要素を一番目に入れる
+    if (isFirstSlideEmpty) {
+      const emptyEl = this.createDiv();
+      emptyEl.className = "swiper-slide mangaViewer_emptySlide";
+      wrapperEl.appendChild(emptyEl);
+    }
 
     for (let p of pages) {
       const divEl = this.createDiv();
