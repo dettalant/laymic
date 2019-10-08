@@ -86,6 +86,9 @@ export default class MangaViewer {
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery",  pages, this.state.isLTR);
     const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
+    thumbsWrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
+    thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
+    thumbsWrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
 
     [
       controllerEl,
@@ -106,11 +109,6 @@ export default class MangaViewer {
 
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
-
-    if (this.el.thumbsWrapperEl.children[0] instanceof HTMLElement) {
-      const thumbItem = this.el.thumbsWrapperEl.children[0];
-      this.state.thumbItemWidth = thumbItem.offsetWidth;
-    }
 
     // サイズ設定の初期化
     this.viewUpdate();
@@ -273,7 +271,9 @@ export default class MangaViewer {
       isVertView: false,
       vertPageMargin: 10,
       horizPageMargin: 0,
-      thumbItemWidth: 0,
+      thumbItemWidth: 96,
+      thumbItemGap: 16,
+      thumbsWrapperPadding: 16,
       isTouchEvent: isExistTouchEvent(),
       isPointerEvent: isExistPointerEvent(),
     }
@@ -559,15 +559,15 @@ export default class MangaViewer {
   private cssThumbsWrapperWidthUpdate() {
     const {offsetWidth: ow} = this.el.rootEl;
     // thumb item offset width
-    const tw = 96;
+    const tW = this.state.thumbItemWidth;
     // thumbs length
     const tLen = this.el.thumbsWrapperEl.children.length;
     // thumbs grid gap
-    const tGap = 16;
+    const tGaps = this.state.thumbItemGap * (tLen - 1);
     // thumbs wrapper padding
-    const tWPadding = 16 * 2;
+    const tWPadding = this.state.thumbsWrapperPadding * 2;
 
-    const thumbsWrapperWidth = tw * tLen + tGap * (tLen - 1) + tWPadding;
+    const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
     const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
       ? thumbsWrapperWidth + "px"
       : "";

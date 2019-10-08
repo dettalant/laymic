@@ -56,6 +56,8 @@ export interface MangaViewerStates {
     horizPageMargin: number;
     vertPageMargin: number;
     thumbItemWidth: number;
+    thumbItemGap: number;
+    thumbsWrapperPadding: number;
     isTouchEvent: boolean;
     isPointerEvent: boolean;
 }
