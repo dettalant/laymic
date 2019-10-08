@@ -17,6 +17,7 @@ const plugins = [
   resolve(),
   commonjs(),
   typescript({
+    tsconfig: "tsconfig-build.json",
     useTsconfigDeclarationDir: true
   }),
 ];
