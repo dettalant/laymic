@@ -4,10 +4,12 @@ export interface MangaViewerOptions {
     pageHeight?: number;
     isLTR?: boolean;
     isDisableThumbs?: boolean;
+    isFirstSlideEmpty?: boolean;
     icons?: MangaViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
-    isFirstSlideEmpty?: boolean;
+    viewerPadding?: number;
+    progressBarWidth?: number;
 }
 export interface PageSize {
     w: number;
@@ -55,6 +57,7 @@ export interface MangaViewerStates {
     isFirstSlideEmpty: boolean;
     horizPageMargin: number;
     vertPageMargin: number;
+    progressBarWidth: number;
     thumbItemWidth: number;
     thumbItemGap: number;
     thumbsWrapperPadding: number;

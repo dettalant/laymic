@@ -21,6 +21,7 @@ export interface MangaViewerOptions {
   horizPageMargin?: number,
   // swiper-container周囲の余白ピクセル数値
   viewerPadding?: number,
+  progressBarWidth?: number,
 }
 
 export interface PageSize {
@@ -90,6 +91,7 @@ export interface MangaViewerStates {
   isFirstSlideEmpty: boolean,
   horizPageMargin: number,
   vertPageMargin: number,
+  progressBarWidth: number,
   thumbItemWidth: number,
   thumbItemGap: number,
   thumbsWrapperPadding: number,

@@ -8741,10 +8741,15 @@ class MangaViewer {
             this.state.horizPageMargin = options.horizPageMargin;
         if (options.isFirstSlideEmpty !== void 0)
             this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
+        if (options.viewerPadding !== void 0)
+            this.state.viewerPadding = options.viewerPadding;
+        if (options.progressBarWidth !== void 0)
+            this.state.progressBarWidth = options.progressBarWidth;
         rootEl.classList.add("mangaViewer_root", "is_ui_visible");
         if (this.state.isLTR)
             rootEl.classList.add("is_ltr");
         rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+        rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
         const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
         const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
         this.preference = new MangaViewerPreference(builder);
@@ -8860,7 +8865,7 @@ class MangaViewer {
     get defaultMangaViewerStates() {
         const { innerHeight: ih, innerWidth: iw, } = window;
         return {
-            viewerPadding: 0,
+            viewerPadding: 10,
             // デフォルト値としてウィンドウ幅を指定
             swiperRect: {
                 l: 0,
@@ -8883,6 +8888,7 @@ class MangaViewer {
             isFirstSlideEmpty: false,
             vertPageMargin: 10,
             horizPageMargin: 0,
+            progressBarWidth: 6,
             thumbItemWidth: 96,
             thumbItemGap: 16,
             thumbsWrapperPadding: 16,
@@ -9123,18 +9129,25 @@ class MangaViewer {
     cssPageWidthUpdate() {
         const { w: aw, h: ah } = this.state.pageAspect;
         const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
+        // deduct progressbar size from rootElSize
+        const [dw, dh] = [
+            ow - this.state.progressBarWidth,
+            oh - this.state.progressBarWidth
+        ];
         const paddingNum = this.state.viewerPadding * 2;
         let { w: pageWidth, h: pageHeight } = this.state.pageSize;
+        // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
+        // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
         if (!this.state.isVertView && ow < pageWidth * 2
-            || ow > pageWidth && oh < pageHeight) {
-            // 横読み時のサイズ計算
-            const h = oh - paddingNum;
+            || dw > pageWidth && oh < pageHeight) {
+            // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
+            const h = dh - paddingNum;
             pageWidth = Math.round(h * aw / ah);
             pageHeight = Math.round(pageWidth * ah / aw);
         }
         else if (oh < pageHeight) {
-            // 縦読み時のサイズ計算
-            const w = ow - paddingNum;
+            // 縦読み時で縦幅が狭い場合のサイズ計算
+            const w = dw - paddingNum;
             pageHeight = Math.round(w * ah / aw);
             pageWidth = Math.round(pageHeight * aw / ah);
         }
