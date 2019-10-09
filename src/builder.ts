@@ -146,6 +146,9 @@ export class ViewerDOMBuilder {
     ctrlEl.className = "mangaViewer_controller";
     ctrlEl.id = id;
 
+    const progressEl = this.createDiv();
+    progressEl.className = "swiper-pagination mangaViewer_progressbar";
+
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = "mangaViewer_controller_top";
 
@@ -201,6 +204,7 @@ export class ViewerDOMBuilder {
     [
       ctrlTopEl,
       ctrlBottomEl,
+      progressEl,
     ].forEach(el => ctrlEl.appendChild(el));
 
     return [ctrlEl, uiButtons]

@@ -89,6 +89,7 @@ export default class MangaViewer {
     if (options.isFirstSlideEmpty !== void 0) this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
+    if (this.state.isLTR) rootEl.classList.add("is_ltr");
     rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
 
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
@@ -289,7 +290,10 @@ export default class MangaViewer {
         sliderMove: () => this.hideViewerUI(),
         tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
-
+      pagination: {
+        el: ".swiper-pagination",
+        type: "progressbar",
+      },
       keyboard: true,
       mousewheel: true,
       preloadImages: false,
@@ -315,6 +319,10 @@ export default class MangaViewer {
         resize: () => this.viewUpdate(),
         sliderMove: () => this.hideViewerUI(),
         tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
+      },
+      pagination: {
+        el: ".swiper-pagination",
+        type: "progressbar",
       },
       preloadImages: false,
       lazy: {

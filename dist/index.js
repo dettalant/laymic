@@ -8440,6 +8440,8 @@ class ViewerDOMBuilder {
         const ctrlEl = this.createDiv();
         ctrlEl.className = "mangaViewer_controller";
         ctrlEl.id = id;
+        const progressEl = this.createDiv();
+        progressEl.className = "swiper-pagination mangaViewer_progressbar";
         const ctrlTopEl = this.createDiv();
         ctrlTopEl.className = "mangaViewer_controller_top";
         const directionBtn = this.createButton();
@@ -8486,6 +8488,7 @@ class ViewerDOMBuilder {
         [
             ctrlTopEl,
             ctrlBottomEl,
+            progressEl,
         ].forEach(el => ctrlEl.appendChild(el));
         return [ctrlEl, uiButtons];
     }
@@ -8739,6 +8742,8 @@ class MangaViewer {
         if (options.isFirstSlideEmpty !== void 0)
             this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
         rootEl.classList.add("mangaViewer_root", "is_ui_visible");
+        if (this.state.isLTR)
+            rootEl.classList.add("is_ltr");
         rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
         const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
         const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
@@ -8897,6 +8902,10 @@ class MangaViewer {
                 sliderMove: () => this.hideViewerUI(),
                 tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
             },
+            pagination: {
+                el: ".swiper-pagination",
+                type: "progressbar",
+            },
             keyboard: true,
             mousewheel: true,
             preloadImages: false,
@@ -8921,6 +8930,10 @@ class MangaViewer {
                 resize: () => this.viewUpdate(),
                 sliderMove: () => this.hideViewerUI(),
                 tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
+            },
+            pagination: {
+                el: ".swiper-pagination",
+                type: "progressbar",
             },
             preloadImages: false,
             lazy: {
