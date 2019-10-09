@@ -8490,48 +8490,6 @@ class ViewerDOMBuilder {
         return [ctrlEl, uiButtons];
     }
     /**
-     * サムネイル表示要素を生成して返す
-     * @param  className 要素に付記するクラス名
-     * @param  pages     要素に内包させるページ配列
-     * @return           生成されたサムネイル表示要素
-     */
-    createThumbnailsEl(className, pages) {
-        const thumbsEl = this.createDiv();
-        thumbsEl.className = className;
-        // 初期状態では表示しないようにしておく
-        thumbsEl.style.display = "none";
-        const wrapperEl = this.createDiv();
-        wrapperEl.className = "mangaViewer_thumbsWrapper";
-        for (let p of pages) {
-            let el;
-            if (p instanceof HTMLElement) {
-                p.classList.add("mangaViewer_slideThumb");
-                el = p;
-            }
-            else {
-                const img = new Image();
-                img.dataset.src = p;
-                img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
-                el = img;
-            }
-            el.classList.add("mangaViewer_thumbItem");
-            wrapperEl.appendChild(el);
-        }
-        thumbsEl.appendChild(wrapperEl);
-        return [thumbsEl, wrapperEl];
-    }
-    createPreferenceEl(className) {
-        const preferenceEl = this.createDiv();
-        preferenceEl.className = className;
-        const preferenceWrapperEl = this.createDiv();
-        preferenceWrapperEl.className = "mangaViewer_preferenceWrapper";
-        const testTextEl = document.createElement("span");
-        testTextEl.textContent = "設定部分はまだ未制作です！";
-        preferenceWrapperEl.appendChild(testTextEl);
-        preferenceEl.appendChild(preferenceWrapperEl);
-        return [preferenceEl, preferenceWrapperEl];
-    }
-    /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名
      * @param  className 返す要素に追加するクラス名
@@ -8611,6 +8569,108 @@ class ViewerDOMBuilder {
     }
 }
 
+class MangaViewerPreference {
+    constructor(builder, className) {
+        // preference save data
+        this.data = this.loadPreferenceData();
+        const containerEl = builder.createDiv();
+        containerEl.className = (className) ? className : "mangaViewer_preference";
+        const wrapperEl = builder.createDiv();
+        wrapperEl.className = "mangaViewer_preferenceWrapper";
+        const testTextEl = builder.createDiv();
+        testTextEl.textContent = "設定部分制作中";
+        wrapperEl.appendChild(testTextEl);
+        containerEl.appendChild(wrapperEl);
+        this.el = containerEl;
+        this.wrapperEl = wrapperEl;
+    }
+    /**
+     * localStorageから設定データを読み込む
+     */
+    loadPreferenceData() {
+        return {};
+    }
+}
+
+class MangaViewerThumbnails {
+    constructor(builder, pages, state, className) {
+        const thumbsEl = builder.createDiv();
+        thumbsEl.className = (className) ? className : "mangaViewer_thumbs";
+        // 初期状態では表示しないようにしておく
+        thumbsEl.style.display = "none";
+        const wrapperEl = builder.createDiv();
+        wrapperEl.className = "mangaViewer_thumbsWrapper";
+        const thumbEls = [];
+        for (let p of pages) {
+            let el;
+            if (p instanceof HTMLElement) {
+                p.classList.add("mangaViewer_slideThumb");
+                el = p;
+            }
+            else {
+                const img = new Image();
+                img.dataset.src = p;
+                img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
+                el = img;
+            }
+            el.classList.add("mangaViewer_thumbItem");
+            thumbEls.push(el);
+            wrapperEl.appendChild(el);
+        }
+        thumbsEl.appendChild(wrapperEl);
+        this.el = thumbsEl;
+        this.wrapperEl = wrapperEl;
+        this.thumbEls = thumbEls;
+        this.state = state;
+        this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
+        this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
+        this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+    }
+    /**
+     * 読み込み待ち状態のimg elementを全て読み込む
+     * いわゆるlazyload処理
+     */
+    revealImgs() {
+        this.thumbEls.forEach(el => {
+            if (!(el instanceof HTMLImageElement)) {
+                return;
+            }
+            const s = el.dataset.src;
+            if (s) {
+                // 読み込み中はクラス名を変更
+                el.classList.remove("mangaViewer_lazyload");
+                el.classList.add("mangaViewer_lazyloading");
+                // 読み込みが終わるとクラス名を再変更
+                el.addEventListener("load", () => {
+                    el.classList.remove("mangaViewer_lazyloading");
+                    el.classList.add("mangaViewer_lazyloaded");
+                });
+                el.src = s;
+            }
+        });
+    }
+    /**
+     * thumbsWrapperElのwidthを計算し、
+     * 折り返しが発生しないようなら横幅の値を書き換える
+     */
+    cssThumbsWrapperWidthUpdate(rootEl) {
+        const { offsetWidth: ow } = rootEl;
+        // thumb item offset width
+        const tW = this.state.thumbItemWidth;
+        // thumbs length
+        const tLen = this.wrapperEl.children.length;
+        // thumbs grid gap
+        const tGaps = this.state.thumbItemGap * (tLen - 1);
+        // thumbs wrapper padding
+        const tWPadding = this.state.thumbsWrapperPadding * 2;
+        const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
+        const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
+            ? thumbsWrapperWidth + "px"
+            : "";
+        this.wrapperEl.style.width = widthStyleStr;
+    }
+}
+
 class MangaViewer {
     constructor(queryStr, pages, options = {}) {
         // mangaViewer内部で用いるステートまとめ
@@ -8682,24 +8742,17 @@ class MangaViewer {
         rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
         const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
         const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
-        const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
-        thumbsWrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
-        thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
-        thumbsWrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
-        const [preferenceEl, preferenceWrapperEl] = builder.createPreferenceEl("mangaViewer_preference");
+        this.preference = new MangaViewerPreference(builder);
+        this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
         [
             controllerEl,
             swiperEl,
-            thumbsEl,
-            preferenceEl
+            this.thumbs.el,
+            this.preference.el
         ].forEach(el => rootEl.appendChild(el));
         this.el = {
             rootEl,
             swiperEl,
-            thumbsEl,
-            thumbsWrapperEl,
-            preferenceEl,
-            preferenceWrapperEl,
             controllerEl,
             buttons: uiButtons,
         };
@@ -8728,49 +8781,31 @@ class MangaViewer {
         });
         // サムネイル表示ボタン
         this.el.buttons.thumbs.addEventListener(this.deviceClickEvent, () => {
-            const revealImgs = (el) => {
-                const imgs = el.getElementsByClassName("mangaViewer_lazyload");
-                Array.from(imgs).forEach(el => {
-                    if (!(el instanceof HTMLImageElement)) {
-                        return;
-                    }
-                    const s = el.dataset.src;
-                    if (s) {
-                        el.classList.remove("mangaViewer_lazyload");
-                        el.classList.add("mangaViewer_lazyloading");
-                        el.addEventListener("load", () => {
-                            el.classList.remove("mangaViewer_lazyloading");
-                            el.classList.add("mangaViewer_lazyloaded");
-                        });
-                        el.src = s;
-                    }
-                });
-            };
-            if (this.el.thumbsEl.style.display === "none") {
+            if (this.thumbs.el.style.display === "none") {
                 // ページ読み込み後一度だけ動作する
-                this.el.thumbsEl.style.display = "";
-                revealImgs(this.el.thumbsEl);
+                this.thumbs.el.style.display = "";
+                this.thumbs.revealImgs();
             }
             this.el.rootEl.classList.add("is_showThumbs");
             this.hideViewerUI();
         });
         // サムネイル表示中オーバーレイ要素でのクリックイベント
-        this.el.thumbsEl.addEventListener(this.deviceClickEvent, () => {
+        this.thumbs.el.addEventListener(this.deviceClickEvent, () => {
             this.el.rootEl.classList.remove("is_showThumbs");
         });
         // サムネイル表示中のサムネイル格納コンテナのクリックイベント
-        this.el.thumbsWrapperEl.addEventListener(this.deviceClickEvent, (e) => {
+        this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, (e) => {
             // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
             // 何も起きないようにする
             e.stopPropagation();
         });
         // サムネイルのクリックイベント
         // 各サムネイルとswiper各スライドとを紐づける
-        Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
+        this.thumbs.thumbEls.forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
             this.swiper.slideTo(i);
             this.el.rootEl.classList.remove("is_showThumbs");
         }));
-        this.el.preferenceEl.addEventListener(this.deviceClickEvent, () => {
+        this.preference.el.addEventListener(this.deviceClickEvent, () => {
             this.el.rootEl.classList.remove("is_showPreference");
         });
         // 全画面化ボタンのクリックイベント
@@ -9034,7 +9069,7 @@ class MangaViewer {
     viewUpdate() {
         this.state.swiperRect = this.swiperElRect;
         this.cssPageWidthUpdate();
-        this.cssThumbsWrapperWidthUpdate();
+        this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
         if (this.swiper)
             this.swiper.update();
     }
@@ -9092,28 +9127,6 @@ class MangaViewer {
         }
         this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
         this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
-    }
-    /**
-     * thumbsWrapperElのwidthを計算し、
-     * 折り返しが発生しないようなら横幅の値を書き換える
-     *
-     * TODO: 今はいろいろと数値設定を直書きにしてるので、これらを変数から活用できるようにしたい
-     */
-    cssThumbsWrapperWidthUpdate() {
-        const { offsetWidth: ow } = this.el.rootEl;
-        // thumb item offset width
-        const tW = this.state.thumbItemWidth;
-        // thumbs length
-        const tLen = this.el.thumbsWrapperEl.children.length;
-        // thumbs grid gap
-        const tGaps = this.state.thumbItemGap * (tLen - 1);
-        // thumbs wrapper padding
-        const tWPadding = this.state.thumbsWrapperPadding * 2;
-        const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
-        const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
-            ? thumbsWrapperWidth + "px"
-            : "";
-        this.el.thumbsWrapperEl.style.width = widthStyleStr;
     }
     /**
      * mangaViewerと紐付いたrootElを表示する

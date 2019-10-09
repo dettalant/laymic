@@ -1,7 +1,9 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
-import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent } from "./utils";
-import { ViewerDOMBuilder } from "./builder";
+import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent } from "#/utils";
+import { ViewerDOMBuilder } from "#/builder";
+import { MangaViewerPreference } from "#/preference";
+import { MangaViewerThumbnails } from "#/thumbs";
 import {
   MangaViewerPages,
   MangaViewerElements,
@@ -15,6 +17,8 @@ export default class MangaViewer {
   el: MangaViewerElements;
   // mangaViewer内部で用いるステートまとめ
   state: MangaViewerStates = this.defaultMangaViewerStates;
+  preference: MangaViewerPreference;
+  thumbs: MangaViewerThumbnails;
   // swiper instance
   swiper: Swiper;
 
@@ -95,27 +99,19 @@ export default class MangaViewer {
       this.state.isLTR,
       this.state.isFirstSlideEmpty
     );
-    const [thumbsEl, thumbsWrapperEl] = builder.createThumbnailsEl("mangaViewer_thumbs", pages);
-    thumbsWrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
-    thumbsWrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
-    thumbsWrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
 
-    const [preferenceEl, preferenceWrapperEl] = builder.createPreferenceEl("mangaViewer_preference");
-
+    this.preference = new MangaViewerPreference(builder);
+    this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
     [
       controllerEl,
       swiperEl,
-      thumbsEl,
-      preferenceEl
+      this.thumbs.el,
+      this.preference.el
     ].forEach(el => rootEl.appendChild(el));
 
     this.el = {
       rootEl,
       swiperEl,
-      thumbsEl,
-      thumbsWrapperEl,
-      preferenceEl,
-      preferenceWrapperEl,
       controllerEl,
       buttons: uiButtons,
     }
@@ -152,32 +148,11 @@ export default class MangaViewer {
 
     // サムネイル表示ボタン
     this.el.buttons.thumbs.addEventListener(this.deviceClickEvent, () => {
-      const revealImgs = (el: HTMLElement) => {
-        const imgs = el.getElementsByClassName("mangaViewer_lazyload");
-        Array.from(imgs).forEach(el => {
 
-          if (!(el instanceof HTMLImageElement)) {
-            return;
-          }
-
-          const s = el.dataset.src;
-          if (s) {
-            el.classList.remove("mangaViewer_lazyload");
-            el.classList.add("mangaViewer_lazyloading");
-            el.addEventListener("load", () => {
-              el.classList.remove("mangaViewer_lazyloading");
-              el.classList.add("mangaViewer_lazyloaded");
-            })
-
-            el.src = s;
-          }
-        })
-      }
-
-      if (this.el.thumbsEl.style.display === "none") {
+      if (this.thumbs.el.style.display === "none") {
         // ページ読み込み後一度だけ動作する
-        this.el.thumbsEl.style.display = "";
-        revealImgs(this.el.thumbsEl);
+        this.thumbs.el.style.display = "";
+        this.thumbs.revealImgs();
       }
       this.el.rootEl.classList.add("is_showThumbs");
 
@@ -185,12 +160,13 @@ export default class MangaViewer {
     })
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
-    this.el.thumbsEl.addEventListener(this.deviceClickEvent, () => {
+    this.thumbs.el.addEventListener(this.deviceClickEvent, () => {
       this.el.rootEl.classList.remove("is_showThumbs");
     })
 
+
     // サムネイル表示中のサムネイル格納コンテナのクリックイベント
-    this.el.thumbsWrapperEl.addEventListener(this.deviceClickEvent, (e) => {
+    this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, (e) => {
       // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
       // 何も起きないようにする
       e.stopPropagation();
@@ -198,12 +174,12 @@ export default class MangaViewer {
 
     // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
-    Array.from(this.el.thumbsWrapperEl.children).forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
+    this.thumbs.thumbEls.forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
       this.swiper.slideTo(i);
       this.el.rootEl.classList.remove("is_showThumbs");
     }));
 
-    this.el.preferenceEl.addEventListener(this.deviceClickEvent, () => {
+    this.preference.el.addEventListener(this.deviceClickEvent, () => {
       this.el.rootEl.classList.remove("is_showPreference");
     })
 
@@ -518,7 +494,7 @@ export default class MangaViewer {
   private viewUpdate() {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
-    this.cssThumbsWrapperWidthUpdate();
+    this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
 
     if (this.swiper) this.swiper.update();
   }
@@ -584,29 +560,7 @@ export default class MangaViewer {
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
 
-  /**
-   * thumbsWrapperElのwidthを計算し、
-   * 折り返しが発生しないようなら横幅の値を書き換える
-   *
-   * TODO: 今はいろいろと数値設定を直書きにしてるので、これらを変数から活用できるようにしたい
-   */
-  private cssThumbsWrapperWidthUpdate() {
-    const {offsetWidth: ow} = this.el.rootEl;
-    // thumb item offset width
-    const tW = this.state.thumbItemWidth;
-    // thumbs length
-    const tLen = this.el.thumbsWrapperEl.children.length;
-    // thumbs grid gap
-    const tGaps = this.state.thumbItemGap * (tLen - 1);
-    // thumbs wrapper padding
-    const tWPadding = this.state.thumbsWrapperPadding * 2;
 
-    const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
-    const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
-      ? thumbsWrapperWidth + "px"
-      : "";
-    this.el.thumbsWrapperEl.style.width = widthStyleStr;
-  }
 
   /**
    * mangaViewerと紐付いたrootElを表示する

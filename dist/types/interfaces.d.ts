@@ -20,10 +20,6 @@ export interface PageRect extends PageSize {
 export interface MangaViewerElements {
     rootEl: HTMLElement;
     swiperEl: HTMLElement;
-    thumbsEl: HTMLElement;
-    thumbsWrapperEl: HTMLElement;
-    preferenceEl: HTMLElement;
-    preferenceWrapperEl: HTMLElement;
     buttons: MangaViewerUIButtons;
     controllerEl: HTMLElement;
 }

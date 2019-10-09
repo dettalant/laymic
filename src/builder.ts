@@ -1,4 +1,4 @@
-import { MangaViewerIcons, MangaViewerUIButtons, IconData } from "./interfaces"
+import { MangaViewerIcons, MangaViewerUIButtons, IconData } from "#/interfaces"
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -207,56 +207,6 @@ export class ViewerDOMBuilder {
   }
 
   /**
-   * サムネイル表示要素を生成して返す
-   * @param  className 要素に付記するクラス名
-   * @param  pages     要素に内包させるページ配列
-   * @return           生成されたサムネイル表示要素
-   */
-  createThumbnailsEl(className: string, pages: (string | HTMLElement)[]): [HTMLElement, HTMLElement] {
-    const thumbsEl = this.createDiv();
-    thumbsEl.className = className;
-    // 初期状態では表示しないようにしておく
-    thumbsEl.style.display = "none";
-
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = "mangaViewer_thumbsWrapper";
-
-    for (let p of pages) {
-      let el: HTMLElement;
-      if (p instanceof HTMLElement) {
-        p.classList.add("mangaViewer_slideThumb")
-        el = p;
-      } else {
-        const img = new Image();
-        img.dataset.src = p;
-        img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
-        el = img;
-      }
-
-      el.classList.add("mangaViewer_thumbItem");
-      wrapperEl.appendChild(el);
-    }
-
-    thumbsEl.appendChild(wrapperEl);
-    return [thumbsEl, wrapperEl];
-  }
-
-  createPreferenceEl(className: string): [HTMLElement, HTMLElement] {
-    const preferenceEl = this.createDiv();
-    preferenceEl.className = className;
-
-    const preferenceWrapperEl = this.createDiv();
-    preferenceWrapperEl.className = "mangaViewer_preferenceWrapper";
-
-    const testTextEl = document.createElement("span");
-    testTextEl.textContent = "設定部分はまだ未制作です！";
-    preferenceWrapperEl.appendChild(testTextEl);
-
-    preferenceEl.appendChild(preferenceWrapperEl);
-    return [preferenceEl, preferenceWrapperEl];
-  }
-
-  /**
    * use要素を内包したSVGElementを返す
    * @param  linkId    xlink:hrefに指定するid名
    * @param  className 返す要素に追加するクラス名
@@ -322,7 +272,7 @@ export class ViewerDOMBuilder {
    * 空のdiv要素を返す
    * @return div要素
    */
-  private createDiv(): HTMLDivElement {
+  createDiv(): HTMLDivElement {
     return document.createElement("div");
   }
 

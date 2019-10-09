@@ -1,8 +1,12 @@
 import Swiper from "swiper";
+import { MangaViewerPreference } from "#/preference";
+import { MangaViewerThumbnails } from "#/thumbs";
 import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
 export default class MangaViewer {
     el: MangaViewerElements;
     state: MangaViewerStates;
+    preference: MangaViewerPreference;
+    thumbs: MangaViewerThumbnails;
     swiper: Swiper;
     constructor(queryStr: string, pages: MangaViewerPages | string, options?: MangaViewerOptions);
     /**
@@ -74,13 +78,6 @@ export default class MangaViewer {
      * pageHeightの値も更新するのはこれいかに
      */
     private cssPageWidthUpdate;
-    /**
-     * thumbsWrapperElのwidthを計算し、
-     * 折り返しが発生しないようなら横幅の値を書き換える
-     *
-     * TODO: 今はいろいろと数値設定を直書きにしてるので、これらを変数から活用できるようにしたい
-     */
-    private cssThumbsWrapperWidthUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */
