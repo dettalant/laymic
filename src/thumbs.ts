@@ -57,13 +57,11 @@ export class MangaViewerThumbnails {
       const s = el.dataset.src;
       if (s) {
         // 読み込み中はクラス名を変更
-        el.classList.remove("mangaViewer_lazyload");
-        el.classList.add("mangaViewer_lazyloading");
+        el.classList.replace("mangaViewer_lazyload", "mangaViewer_lazyloading");
 
         // 読み込みが終わるとクラス名を再変更
         el.addEventListener("load", () => {
-          el.classList.remove("mangaViewer_lazyloading");
-          el.classList.add("mangaViewer_lazyloaded");
+          el.classList.replace("mangaViewer_lazyloading", "mangaViewer_lazyloaded");
         })
 
         el.src = s;

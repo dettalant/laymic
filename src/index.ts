@@ -291,7 +291,7 @@ export default class MangaViewer {
 
       on: {
         resize: () => this.viewUpdate(),
-        sliderMove: () => this.hideViewerUI(),
+        slideChange: () => this.hideViewerUI(),
         tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
       pagination: {
@@ -321,7 +321,7 @@ export default class MangaViewer {
       freeModeMinimumVelocity: 0.02,
       on: {
         resize: () => this.viewUpdate(),
-        sliderMove: () => this.hideViewerUI(),
+        slideChange: () => this.hideViewerUI(),
         tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
       pagination: {
@@ -496,7 +496,10 @@ export default class MangaViewer {
   }
 
   private hideViewerUI() {
-    this.el.rootEl.classList.remove("is_ui_visible");
+    const stateName = "is_ui_visible";
+    if (this.el.rootEl.classList.contains(stateName)) {
+      this.el.rootEl.classList.remove(stateName);
+    }
   }
 
   /**

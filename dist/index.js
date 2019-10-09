@@ -8641,12 +8641,10 @@ class MangaViewerThumbnails {
             const s = el.dataset.src;
             if (s) {
                 // 読み込み中はクラス名を変更
-                el.classList.remove("mangaViewer_lazyload");
-                el.classList.add("mangaViewer_lazyloading");
+                el.classList.replace("mangaViewer_lazyload", "mangaViewer_lazyloading");
                 // 読み込みが終わるとクラス名を再変更
                 el.addEventListener("load", () => {
-                    el.classList.remove("mangaViewer_lazyloading");
-                    el.classList.add("mangaViewer_lazyloaded");
+                    el.classList.replace("mangaViewer_lazyloading", "mangaViewer_lazyloaded");
                 });
                 el.src = s;
             }
@@ -8905,7 +8903,7 @@ class MangaViewer {
             spaceBetween: this.state.horizPageMargin,
             on: {
                 resize: () => this.viewUpdate(),
-                sliderMove: () => this.hideViewerUI(),
+                slideChange: () => this.hideViewerUI(),
                 tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
             },
             pagination: {
@@ -8934,7 +8932,7 @@ class MangaViewer {
             freeModeMinimumVelocity: 0.02,
             on: {
                 resize: () => this.viewUpdate(),
-                sliderMove: () => this.hideViewerUI(),
+                slideChange: () => this.hideViewerUI(),
                 tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
             },
             pagination: {
@@ -9079,7 +9077,10 @@ class MangaViewer {
         }
     }
     hideViewerUI() {
-        this.el.rootEl.classList.remove("is_ui_visible");
+        const stateName = "is_ui_visible";
+        if (this.el.rootEl.classList.contains(stateName)) {
+            this.el.rootEl.classList.remove(stateName);
+        }
     }
     /**
      * mangaViewer表示を更新する
