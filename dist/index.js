@@ -8860,7 +8860,7 @@ class MangaViewer {
     get defaultMangaViewerStates() {
         const { innerHeight: ih, innerWidth: iw, } = window;
         return {
-            viewerPadding: 10,
+            viewerPadding: 0,
             // デフォルト値としてウィンドウ幅を指定
             swiperRect: {
                 l: 0,

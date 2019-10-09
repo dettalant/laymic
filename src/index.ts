@@ -87,6 +87,7 @@ export default class MangaViewer {
     if (options.vertPageMargin !== void 0) this.state.vertPageMargin = options.vertPageMargin;
     if (options.horizPageMargin !== void 0) this.state.horizPageMargin = options.horizPageMargin;
     if (options.isFirstSlideEmpty !== void 0) this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
+    if (options.viewerPadding !== void 0) this.state.viewerPadding = options.viewerPadding;
 
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     if (this.state.isLTR) rootEl.classList.add("is_ltr");
@@ -247,7 +248,7 @@ export default class MangaViewer {
     } = window;
 
     return {
-      viewerPadding: 10,
+      viewerPadding: 0,
       // デフォルト値としてウィンドウ幅を指定
       swiperRect: {
         l: 0,

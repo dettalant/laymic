@@ -8,14 +8,19 @@ export interface MangaViewerOptions {
   // 左から右へと流れる形式で初期化する
   isLTR?: boolean,
   // サムネイル機能を無効にする
+  // NOTE: 現在未使用
   isDisableThumbs?: boolean,
+  // 横読み時一ページ目を空白として空ける
+  // 表紙ページを単独表示することを想定
+  isFirstSlideEmpty?: boolean,
   // アイコンを別のものに変更する
   icons?: MangaViewerIcons,
   // 縦読み時のページ間余白ピクセル数値
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
-  isFirstSlideEmpty?: boolean,
+  // swiper-container周囲の余白ピクセル数値
+  viewerPadding?: number,
 }
 
 export interface PageSize {
