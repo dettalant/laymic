@@ -57,3 +57,31 @@ export const isExistTouchEvent = (): boolean => {
 export const isExistPointerEvent = (): boolean => {
   return "onpointerup" in window;
 }
+
+/**
+ * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
+ * addEventListener第二引数に用いられることを想定。
+ *
+ * 使用例
+ * ```javascript
+ *  el.addEventListener("mousemove", rafThrottle((e) => {
+ *    console.log(e);
+ *  }))
+ * ```
+ *
+ * @param  callback 頻度を下げて呼び出されるコールバック関数
+ * @return          イベントデータを受け取る関数
+ */
+export const rafThrottle = function<T extends Element, E extends Event>(callback: (ev: E) => void) {
+  let requestId = 0;
+  return function(this: T, ev: E) {
+    if (requestId) {
+      console.log("throttled");
+      return;
+    };
+    requestId = requestAnimationFrame(() => {
+      requestId = 0;
+      callback.call(this, ev);
+    });
+  }
+}
