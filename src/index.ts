@@ -27,7 +27,6 @@ export default class MangaViewer {
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
     if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);
-    rootEl.style.display = "none";
 
     const builder = new ViewerDOMBuilder(options.icons);
 
@@ -90,6 +89,7 @@ export default class MangaViewer {
     if (options.viewerPadding !== void 0) this.state.viewerPadding = options.viewerPadding;
     if (options.progressBarWidth !== void 0) this.state.progressBarWidth = options.progressBarWidth;
 
+    rootEl.style.display = "none";
     rootEl.classList.add("mangaViewer_root", "is_ui_visible");
     if (this.state.isLTR) rootEl.classList.add("is_ltr");
     rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
@@ -120,21 +120,19 @@ export default class MangaViewer {
       buttons: uiButtons,
     }
 
-    this.close(false);
-
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
 
-    // サイズ設定の初期化
-    this.viewUpdate();
-
     this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
-    // 各種イベント登録
+    if (options.defaultDirection === "vertical") this.enableVerticalView();
 
+    // location.hashにmangaViewerIdと同値が指定されている場合は
+    // 即座に開く
     if (location.hash === "#" + this.mangaViewerId) {
       this.open(false);
     }
+    // 各種イベント登録
 
     // タッチ操作可能なデバイスではスキップする処理
     if (!this.state.isTouchEvent) {
@@ -491,12 +489,7 @@ export default class MangaViewer {
    * @param  e pointer-up event
    */
   private slideClickHandler(e: PointerEvent | MouseEvent) {
-    const {
-      left: l,
-      top: t,
-      width: w,
-      height: h,
-    } = this.el.swiperEl.getBoundingClientRect()
+    const {l, t, w, h} = this.state.swiperRect;
 
     const [x, y] = [e.pageX - l, e.pageY - t]
 
@@ -639,8 +632,8 @@ export default class MangaViewer {
    * mangaViewerと紐付いたrootElを非表示にする
    */
   private hideRootEl() {
-    this.el.rootEl.style.opacity = "0";
-    this.el.rootEl.style.visibility = "hidden";
+    this.el.rootEl.style.opacity = "";
+    this.el.rootEl.style.visibility = "";
   }
 
   /**

@@ -8709,7 +8709,6 @@ var mangaViewer = (function () {
               throw new Error("rootElの取得に失敗");
           if (rootEl.parentNode)
               rootEl.parentNode.removeChild(rootEl);
-          rootEl.style.display = "none";
           const builder = new ViewerDOMBuilder(options.icons);
           if (this.state.viewerId === 0) {
               // 一つのページにつき一度だけの処理
@@ -8771,6 +8770,7 @@ var mangaViewer = (function () {
               this.state.viewerPadding = options.viewerPadding;
           if (options.progressBarWidth !== void 0)
               this.state.progressBarWidth = options.progressBarWidth;
+          rootEl.style.display = "none";
           rootEl.classList.add("mangaViewer_root", "is_ui_visible");
           if (this.state.isLTR)
               rootEl.classList.add("is_ltr");
@@ -8792,16 +8792,17 @@ var mangaViewer = (function () {
               controllerEl,
               buttons: uiButtons,
           };
-          this.close(false);
           // 一旦DOMから外していたroot要素を再度放り込む
           document.body.appendChild(this.el.rootEl);
-          // サイズ設定の初期化
-          this.viewUpdate();
           this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
-          // 各種イベント登録
+          if (options.defaultDirection === "vertical")
+              this.enableVerticalView();
+          // location.hashにmangaViewerIdと同値が指定されている場合は
+          // 即座に開く
           if (location.hash === "#" + this.mangaViewerId) {
               this.open(false);
           }
+          // 各種イベント登録
           // タッチ操作可能なデバイスではスキップする処理
           if (!this.state.isTouchEvent) {
               // 画面端のswiperElでない余白部分にもクリック判定をつける
@@ -8859,10 +8860,14 @@ var mangaViewer = (function () {
           this.el.buttons.close.addEventListener(this.deviceClickEvent, () => {
               this.close();
           });
+          // 横読み時のマウスホイール処理
+          // swiper純正のマウスホイール処理は動作がすっとろいので自作
           [
               this.el.swiperEl,
               this.el.controllerEl
           ].forEach(el => el.addEventListener("wheel", rafThrottle((e) => {
+              // NOTE: LV3さんに「縦読み時のホイール処理は通常スクロールか一ページごとのスクロールかどちらが良いか」を聞いてからどうするか決める
+              // 縦読み時は無効化する場合は下コメントアウト部分を復帰させること
               // if (this.state.isVertView) {
               //   return;
               // }
@@ -8884,33 +8889,6 @@ var mangaViewer = (function () {
                   this.swiper.slidePrev();
               }
           })));
-          // [
-          //   this.el.swiperEl,
-          //   this.el.controllerEl
-          // ].forEach(el => el.addEventListener("wheel", () => take(() => {
-          //   console.log("test");
-          //   // if (this.state.isVertView) {
-          //   //   return;
-          //   // }
-          //
-          //   // 上下ホイール判定
-          //   // || RTL時の左右ホイール判定
-          //   // || LTR時の左右ホイール判定
-          //   // const isNext = e.deltaY > 0
-          //   // || !this.state.isLTR && e.deltaX < 0
-          //   // || this.state.isLTR && e.deltaX > 0;
-          //   // const isPrev = e.deltaY < 0
-          //   // || !this.state.isLTR && e.deltaX > 0
-          //   // || this.state.isLTR && e.deltaX < 0;
-          //   //
-          //   // if (isNext) {
-          //   //   // 進む
-          //   //   this.swiper.slideNext();
-          //   // } else if (isPrev) {
-          //   //   // 戻る
-          //   //   this.swiper.slidePrev();
-          //   // }
-          // })));
       }
       /**
        * インスタンスごとに固有のビューワーIDを返す
@@ -9128,7 +9106,7 @@ var mangaViewer = (function () {
        * @param  e pointer-up event
        */
       slideClickHandler(e) {
-          const { left: l, top: t, width: w, height: h, } = this.el.swiperEl.getBoundingClientRect();
+          const { l, t, w, h } = this.state.swiperRect;
           const [x, y] = [e.pageX - l, e.pageY - t];
           let [isNextClick, isPrevClick] = [false, false];
           if (this.state.isVertView) {
@@ -9256,8 +9234,8 @@ var mangaViewer = (function () {
        * mangaViewerと紐付いたrootElを非表示にする
        */
       hideRootEl() {
-          this.el.rootEl.style.opacity = "0";
-          this.el.rootEl.style.visibility = "hidden";
+          this.el.rootEl.style.opacity = "";
+          this.el.rootEl.style.visibility = "";
       }
       /**
        * body要素のスクロールを停止させる

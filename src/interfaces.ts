@@ -22,6 +22,7 @@ export interface MangaViewerOptions {
   // swiper-container周囲の余白ピクセル数値
   viewerPadding?: number,
   progressBarWidth?: number,
+  defaultDirection?: "horizontal" | "vertical",
 }
 
 export interface PageSize {

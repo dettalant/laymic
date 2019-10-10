@@ -10,6 +10,7 @@ export interface MangaViewerOptions {
     horizPageMargin?: number;
     viewerPadding?: number;
     progressBarWidth?: number;
+    defaultDirection?: "horizontal" | "vertical";
 }
 export interface PageSize {
     w: number;
