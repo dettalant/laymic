@@ -36,11 +36,11 @@ export default class MangaViewer {
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる
      */
-    open(isFullscreen: boolean): void;
+    open(isFullscreen?: boolean): void;
     /**
      * オーバーレイ表示を閉じる
      */
-    close(): void;
+    close(isHashChange?: boolean): void;
     /**
      * 縦読み表示へと切り替える
      */

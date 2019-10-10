@@ -8310,6 +8310,33 @@ var mangaViewer = (function () {
   const isExistPointerEvent = () => {
       return "onpointerup" in window;
   };
+  /**
+   * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
+   * addEventListener第二引数に用いられることを想定。
+   *
+   * 使用例
+   * ```javascript
+   *  el.addEventListener("mousemove", rafThrottle((e) => {
+   *    console.log(e);
+   *  }))
+   * ```
+   *
+   * @param  callback 頻度を下げて呼び出されるコールバック関数
+   * @return          イベントデータを受け取る関数
+   */
+  const rafThrottle = function (callback) {
+      let requestId = 0;
+      return function (ev) {
+          if (requestId) {
+              console.log("throttled");
+              return;
+          }
+          requestId = requestAnimationFrame(() => {
+              requestId = 0;
+              callback.call(this, ev);
+          });
+      };
+  };
 
   // svg namespace
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -8765,19 +8792,22 @@ var mangaViewer = (function () {
               controllerEl,
               buttons: uiButtons,
           };
-          this.close();
+          this.close(false);
           // 一旦DOMから外していたroot要素を再度放り込む
           document.body.appendChild(this.el.rootEl);
           // サイズ設定の初期化
           this.viewUpdate();
           this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
           // 各種イベント登録
+          if (location.hash === "#" + this.mangaViewerId) {
+              this.open(false);
+          }
           // タッチ操作可能なデバイスではスキップする処理
           if (!this.state.isTouchEvent) {
               // 画面端のswiperElでない余白部分にもクリック判定をつける
-              this.el.controllerEl.addEventListener(this.deviceClickEvent, (e) => this.slideClickHandler(e));
+              this.el.controllerEl.addEventListener(this.deviceClickEvent, e => this.slideClickHandler(e));
               // UIクリック時にcontrollerElへとクリックイベントが伝播しないようにする
-              Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, (e) => e.stopPropagation()));
+              Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, e => e.stopPropagation()));
           }
           // 縦読み/横読み切り替えボタン
           this.el.buttons.direction.addEventListener(this.deviceClickEvent, () => {
@@ -8803,7 +8833,7 @@ var mangaViewer = (function () {
               this.el.rootEl.classList.remove("is_showThumbs");
           });
           // サムネイル表示中のサムネイル格納コンテナのクリックイベント
-          this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, (e) => {
+          this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, e => {
               // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
               // 何も起きないようにする
               e.stopPropagation();
@@ -8829,6 +8859,58 @@ var mangaViewer = (function () {
           this.el.buttons.close.addEventListener(this.deviceClickEvent, () => {
               this.close();
           });
+          [
+              this.el.swiperEl,
+              this.el.controllerEl
+          ].forEach(el => el.addEventListener("wheel", rafThrottle((e) => {
+              // if (this.state.isVertView) {
+              //   return;
+              // }
+              // 上下ホイール判定
+              // || RTL時の左右ホイール判定
+              // || LTR時の左右ホイール判定
+              const isNext = e.deltaY > 0
+                  || !this.state.isLTR && e.deltaX < 0
+                  || this.state.isLTR && e.deltaX > 0;
+              const isPrev = e.deltaY < 0
+                  || !this.state.isLTR && e.deltaX > 0
+                  || this.state.isLTR && e.deltaX < 0;
+              if (isNext) {
+                  // 進む
+                  this.swiper.slideNext();
+              }
+              else if (isPrev) {
+                  // 戻る
+                  this.swiper.slidePrev();
+              }
+          })));
+          // [
+          //   this.el.swiperEl,
+          //   this.el.controllerEl
+          // ].forEach(el => el.addEventListener("wheel", () => take(() => {
+          //   console.log("test");
+          //   // if (this.state.isVertView) {
+          //   //   return;
+          //   // }
+          //
+          //   // 上下ホイール判定
+          //   // || RTL時の左右ホイール判定
+          //   // || LTR時の左右ホイール判定
+          //   // const isNext = e.deltaY > 0
+          //   // || !this.state.isLTR && e.deltaX < 0
+          //   // || this.state.isLTR && e.deltaX > 0;
+          //   // const isPrev = e.deltaY < 0
+          //   // || !this.state.isLTR && e.deltaX > 0
+          //   // || this.state.isLTR && e.deltaX < 0;
+          //   //
+          //   // if (isNext) {
+          //   //   // 進む
+          //   //   this.swiper.slideNext();
+          //   // } else if (isPrev) {
+          //   //   // 戻る
+          //   //   this.swiper.slidePrev();
+          //   // }
+          // })));
       }
       /**
        * インスタンスごとに固有のビューワーIDを返す
@@ -8912,7 +8994,7 @@ var mangaViewer = (function () {
                   type: "progressbar",
               },
               keyboard: true,
-              mousewheel: true,
+              // mousewheel: true,
               preloadImages: false,
               lazy: {
                   loadPrevNext: true,
@@ -8925,7 +9007,7 @@ var mangaViewer = (function () {
               direction: "vertical",
               spaceBetween: this.state.vertPageMargin,
               speed: 200,
-              mousewheel: true,
+              // mousewheel: true,
               keyboard: true,
               freeMode: true,
               freeModeMomentumRatio: 0.36,
@@ -8976,11 +9058,14 @@ var mangaViewer = (function () {
           if (this.swiper.activeIndex === 0) {
               this.swiper.lazy.load();
           }
+          // 履歴を追加せずにhash値を書き換える
+          const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
+          location.replace(newUrl);
       }
       /**
        * オーバーレイ表示を閉じる
        */
-      close() {
+      close(isHashChange = true) {
           this.hideRootEl();
           // フルスクリーン状態にあるならそれを解除
           if (document.fullscreenElement) {
@@ -8988,6 +9073,10 @@ var mangaViewer = (function () {
           }
           // オーバーレイ下要素のスクロール再開
           this.enableBodyScroll();
+          if (location.hash && isHashChange) {
+              // 履歴を残さずhashを削除する
+              location.replace(location.href.split("#")[0]);
+          }
       }
       /**
        * 縦読み表示へと切り替える

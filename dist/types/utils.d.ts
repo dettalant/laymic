@@ -27,3 +27,18 @@ export declare const readImage: (path: string) => Promise<HTMLImageElement>;
 export declare const isMobile: () => boolean;
 export declare const isExistTouchEvent: () => boolean;
 export declare const isExistPointerEvent: () => boolean;
+/**
+ * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
+ * addEventListener第二引数に用いられることを想定。
+ *
+ * 使用例
+ * ```javascript
+ *  el.addEventListener("mousemove", rafThrottle((e) => {
+ *    console.log(e);
+ *  }))
+ * ```
+ *
+ * @param  callback 頻度を下げて呼び出されるコールバック関数
+ * @return          イベントデータを受け取る関数
+ */
+export declare const rafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => (this: T, ev: E) => void;

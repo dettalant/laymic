@@ -1,6 +1,6 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
-import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent } from "#/utils";
+import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent, rafThrottle} from "#/utils";
 import { ViewerDOMBuilder } from "#/builder";
 import { MangaViewerPreference } from "#/preference";
 import { MangaViewerThumbnails } from "#/thumbs";
@@ -120,7 +120,7 @@ export default class MangaViewer {
       buttons: uiButtons,
     }
 
-    this.close();
+    this.close(false);
 
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
@@ -132,13 +132,17 @@ export default class MangaViewer {
 
     // 各種イベント登録
 
+    if (location.hash === "#" + this.mangaViewerId) {
+      this.open(false);
+    }
+
     // タッチ操作可能なデバイスではスキップする処理
     if (!this.state.isTouchEvent) {
       // 画面端のswiperElでない余白部分にもクリック判定をつける
-      this.el.controllerEl.addEventListener(this.deviceClickEvent, (e) => this.slideClickHandler(e));
+      this.el.controllerEl.addEventListener(this.deviceClickEvent, e => this.slideClickHandler(e));
 
       // UIクリック時にcontrollerElへとクリックイベントが伝播しないようにする
-      Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, (e) => e.stopPropagation()));
+      Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, e => e.stopPropagation()));
     }
 
     // 縦読み/横読み切り替えボタン
@@ -170,7 +174,7 @@ export default class MangaViewer {
 
 
     // サムネイル表示中のサムネイル格納コンテナのクリックイベント
-    this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, (e) => {
+    this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, e => {
       // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
       // 何も起きないようにする
       e.stopPropagation();
@@ -202,6 +206,36 @@ export default class MangaViewer {
       this.close();
     });
 
+    // 横読み時のマウスホイール処理
+    // swiper純正のマウスホイール処理は動作がすっとろいので自作
+    [
+      this.el.swiperEl,
+      this.el.controllerEl
+    ].forEach(el => el.addEventListener("wheel", rafThrottle((e) => {
+      // NOTE: LV3さんに「縦読み時のホイール処理は通常スクロールか一ページごとのスクロールかどちらが良いか」を聞いてからどうするか決める
+      // 縦読み時は無効化する場合は下コメントアウト部分を復帰させること
+      // if (this.state.isVertView) {
+      //   return;
+      // }
+
+      // 上下ホイール判定
+      // || RTL時の左右ホイール判定
+      // || LTR時の左右ホイール判定
+      const isNext = e.deltaY > 0
+      || !this.state.isLTR && e.deltaX < 0
+      || this.state.isLTR && e.deltaX > 0;
+      const isPrev = e.deltaY < 0
+      || !this.state.isLTR && e.deltaX > 0
+      || this.state.isLTR && e.deltaX < 0;
+
+      if (isNext) {
+        // 進む
+        this.swiper.slideNext();
+      } else if (isPrev) {
+        // 戻る
+        this.swiper.slidePrev();
+      }
+    })));
   }
 
   /**
@@ -299,7 +333,7 @@ export default class MangaViewer {
         type: "progressbar",
       },
       keyboard: true,
-      mousewheel: true,
+      // mousewheel: true,
       preloadImages: false,
       lazy: {
         loadPrevNext: true,
@@ -313,7 +347,7 @@ export default class MangaViewer {
       direction: "vertical",
       spaceBetween: this.state.vertPageMargin,
       speed: 200,
-      mousewheel: true,
+      // mousewheel: true,
       keyboard: true,
       freeMode: true,
       freeModeMomentumRatio: 0.36,
@@ -344,7 +378,7 @@ export default class MangaViewer {
    * オーバーレイ表示を展開させる
    * @param  isFullscreen trueならば同時に全画面化させる
    */
-  public open(isFullscreen: boolean) {
+  public open(isFullscreen?: boolean) {
     // display:none状態の場合にそれを解除する
     // 主にページ読み込み後一度目の展開でだけ動く部分
     if (this.el.rootEl.style.display === "none") {
@@ -371,12 +405,16 @@ export default class MangaViewer {
     if (this.swiper.activeIndex === 0) {
       this.swiper.lazy.load();
     }
+
+    // 履歴を追加せずにhash値を書き換える
+    const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
+    location.replace(newUrl);
   }
 
   /**
    * オーバーレイ表示を閉じる
    */
-  public close() {
+  public close(isHashChange: boolean = true) {
     this.hideRootEl();
 
     // フルスクリーン状態にあるならそれを解除
@@ -386,6 +424,11 @@ export default class MangaViewer {
 
     // オーバーレイ下要素のスクロール再開
     this.enableBodyScroll();
+
+    if (location.hash && isHashChange) {
+      // 履歴を残さずhashを削除する
+      location.replace(location.href.split("#")[0]);
+    }
   }
 
   /**
