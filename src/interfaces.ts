@@ -99,3 +99,11 @@ export interface MangaViewerStates {
   isTouchEvent: boolean,
   isPointerEvent: boolean,
 }
+
+export type ViewerDirection = "auto" | "vertical" | "horizontal";
+
+export interface PreferenceData {
+  isAutoFullscreen: boolean,
+  viewerDirection: ViewerDirection,
+  isEnableTapSlidePage: boolean,
+}

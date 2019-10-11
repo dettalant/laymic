@@ -1,8 +1,7 @@
-import {ViewerDOMBuilder} from "#/builder";
+import { ViewerDOMBuilder } from "#/builder";
+import { PreferenceData, ViewerDirection } from "#/interfaces";
 
-interface PreferenceData {
-
-}
+const PREFERENCE_KEY = "mangaViewer_preferenceData";
 
 export class MangaViewerPreference {
   // preference el
@@ -28,12 +27,49 @@ export class MangaViewerPreference {
     this.wrapperEl = wrapperEl;
   }
 
+  get isAutoFullscreen(): boolean {
+    return this.data.isAutoFullscreen;
+  }
+
+  set isAutoFullscreen(bool: boolean) {
+    this.data.isAutoFullscreen = bool;
+    this.savePreferenceData();
+  }
+
+  get isEnableTapSlidePage(): boolean {
+    return this.data.isEnableTapSlidePage;
+  }
+
+  set isEnableTapSlidePage(bool: boolean) {
+    this.data.isEnableTapSlidePage = bool;
+    this.savePreferenceData();
+  }
+
+  get viewerDirection(): ViewerDirection {
+    return this.data.viewerDirection;
+  }
+
+  set viewerDirection(direction: ViewerDirection) {
+    this.data.viewerDirection = direction;
+    this.savePreferenceData();
+  }
+
+  private savePreferenceData() {
+    localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
+  }
+
   /**
    * localStorageから設定データを読み込む
    */
   private loadPreferenceData(): PreferenceData {
-    return {
-
-    }
+    const dataStr = localStorage.getItem(PREFERENCE_KEY);
+    const data = (dataStr)
+      ? JSON.parse(dataStr)
+      : {
+        isAutoFullscreen: false,
+        isEnableTapSlidePage: false,
+        viewerDirection: "auto",
+      };
+    return data;
   }
 }
