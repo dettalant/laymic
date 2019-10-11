@@ -26,7 +26,6 @@ export declare const sleep: (ms: number) => Promise<Function>;
 export declare const readImage: (path: string) => Promise<HTMLImageElement>;
 export declare const isMobile: () => boolean;
 export declare const isExistTouchEvent: () => boolean;
-export declare const isExistPointerEvent: () => boolean;
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。

@@ -53,6 +53,7 @@ export interface MangaViewerElements {
 // 最低限のsvg生成に必要な内容だけ格納
 export interface IconData {
   id: string,
+  className: string,
   viewBox: string,
   pathDs: string[],
 }
@@ -66,6 +67,8 @@ export interface MangaViewerIcons {
   showThumbs: IconData,
   vertView: IconData,
   horizView: IconData,
+  checkboxOuter: IconData,
+  checkboxInner: IconData,
 }
 
 // mangaViewer UI要素として組み込むボタン要素まとめ
@@ -97,7 +100,6 @@ export interface MangaViewerStates {
   thumbItemGap: number,
   thumbsWrapperPadding: number,
   isTouchEvent: boolean,
-  isPointerEvent: boolean,
 }
 
 export type ViewerDirection = "auto" | "vertical" | "horizontal";
@@ -107,3 +109,8 @@ export interface PreferenceData {
   viewerDirection: ViewerDirection,
   isEnableTapSlidePage: boolean,
 }
+
+export type PreferenceButtons = {[P in keyof PreferenceData]: HTMLButtonElement}
+// export interface MangaViewerPreferenceButtons {
+//   [P in keyof PreferenceData]: HTMLElement
+// }

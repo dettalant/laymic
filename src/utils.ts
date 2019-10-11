@@ -54,9 +54,9 @@ export const isExistTouchEvent = (): boolean => {
   return "ontouchmove" in window;
 }
 
-export const isExistPointerEvent = (): boolean => {
-  return "onpointerup" in window;
-}
+// export const isExistPointerEvent = (): boolean => {
+//   return "onpointerup" in window;
+// }
 
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す

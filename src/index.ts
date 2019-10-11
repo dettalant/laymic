@@ -1,6 +1,13 @@
 import Swiper, { SwiperOptions } from "swiper";
 import screenfull from "screenfull";
-import { calcGCD, viewerCnt, sleep, readImage, isExistTouchEvent, isExistPointerEvent, rafThrottle} from "#/utils";
+import {
+  calcGCD,
+  viewerCnt,
+  sleep,
+  readImage,
+  isExistTouchEvent,
+  rafThrottle,
+} from "#/utils";
 import { ViewerDOMBuilder } from "#/builder";
 import { MangaViewerPreference } from "#/preference";
 import { MangaViewerThumbnails } from "#/thumbs";
@@ -134,17 +141,8 @@ export default class MangaViewer {
     }
     // 各種イベント登録
 
-    // タッチ操作可能なデバイスではスキップする処理
-    if (!this.state.isTouchEvent) {
-      // 画面端のswiperElでない余白部分にもクリック判定をつける
-      this.el.controllerEl.addEventListener(this.deviceClickEvent, e => this.slideClickHandler(e));
-
-      // UIクリック時にcontrollerElへとクリックイベントが伝播しないようにする
-      Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener(this.deviceClickEvent, e => e.stopPropagation()));
-    }
-
     // 縦読み/横読み切り替えボタン
-    this.el.buttons.direction.addEventListener(this.deviceClickEvent, () => {
+    this.el.buttons.direction.addEventListener("click", () => {
       if (!this.state.isVertView) {
         this.enableVerticalView()
       } else {
@@ -153,7 +151,7 @@ export default class MangaViewer {
     });
 
     // サムネイル表示ボタン
-    this.el.buttons.thumbs.addEventListener(this.deviceClickEvent, () => {
+    this.el.buttons.thumbs.addEventListener("click", () => {
 
       if (this.thumbs.el.style.display === "none") {
         // ページ読み込み後一度だけ動作する
@@ -166,74 +164,86 @@ export default class MangaViewer {
     })
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
-    this.thumbs.el.addEventListener(this.deviceClickEvent, () => {
+    this.thumbs.el.addEventListener("click", () => {
       this.el.rootEl.classList.remove("is_showThumbs");
-    })
-
-
-    // サムネイル表示中のサムネイル格納コンテナのクリックイベント
-    this.thumbs.wrapperEl.addEventListener(this.deviceClickEvent, e => {
-      // ユーザビリティのためオーバーレイでも画像でもない部分をクリックした際に
-      // 何も起きないようにする
-      e.stopPropagation();
     });
 
     // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
-    this.thumbs.thumbEls.forEach((el, i) => el.addEventListener(this.deviceClickEvent, () => {
+    this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
       this.swiper.slideTo(i);
       this.el.rootEl.classList.remove("is_showThumbs");
     }));
 
-    this.preference.el.addEventListener(this.deviceClickEvent, () => {
+    this.preference.el.addEventListener("click", () => {
       this.el.rootEl.classList.remove("is_showPreference");
     })
 
     // 全画面化ボタンのクリックイベント
-    this.el.buttons.fullscreen.addEventListener(this.deviceClickEvent, () => this.fullscreenHandler());
+    this.el.buttons.fullscreen.addEventListener("click", () => {
+      this.fullscreenHandler()
+    });
 
     // 設定ボタンのクリックイベント
-    this.el.buttons.preference.addEventListener(this.deviceClickEvent, () => {
+    this.el.buttons.preference.addEventListener("click", () => {
       this.el.rootEl.classList.toggle("is_showPreference");
       // NOTE: 暫定でUIを閉じておく
       this.hideViewerUI();
     })
 
     // オーバーレイ終了ボタンのクリックイベント
-    this.el.buttons.close.addEventListener(this.deviceClickEvent, () => {
+    this.el.buttons.close.addEventListener("click", () => {
       this.close();
     });
 
-    // 横読み時のマウスホイール処理
-    // swiper純正のマウスホイール処理は動作がすっとろいので自作
+    // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
     [
       this.el.swiperEl,
       this.el.controllerEl
-    ].forEach(el => el.addEventListener("wheel", rafThrottle((e) => {
-      // NOTE: LV3さんに「縦読み時のホイール処理は通常スクロールか一ページごとのスクロールかどちらが良いか」を聞いてからどうするか決める
-      // 縦読み時は無効化する場合は下コメントアウト部分を復帰させること
-      // if (this.state.isVertView) {
-      //   return;
-      // }
+    ].forEach(el => {
+      // クリック時のイベント
+      el.addEventListener("click", e => {
+        if (!this.state.isTouchEvent) {
+          // 非タッチデバイスでの処理
+          // TODO: preference.isEnableTapSlidePageがtrueの際もこちらに飛ばしたい
+          this.slideClickHandler(e);
+        } else {
+          // タッチデバイスでの処理
+          this.toggleViewerUI();
+        }
+      })
 
-      // 上下ホイール判定
-      // || RTL時の左右ホイール判定
-      // || LTR時の左右ホイール判定
-      const isNext = e.deltaY > 0
-      || !this.state.isLTR && e.deltaX < 0
-      || this.state.isLTR && e.deltaX > 0;
-      const isPrev = e.deltaY < 0
-      || !this.state.isLTR && e.deltaX > 0
-      || this.state.isLTR && e.deltaX < 0;
+      // マウスホイールでのイベント
+      // swiper純正のマウスホイール処理は動作がすっとろいので自作
+      el.addEventListener("wheel", rafThrottle((e) => {
+        // 上下ホイール判定
+        // || RTL時の左右ホイール判定
+        // || LTR時の左右ホイール判定
+        const isNext = e.deltaY > 0
+        || !this.state.isLTR && e.deltaX < 0
+        || this.state.isLTR && e.deltaX > 0;
+        const isPrev = e.deltaY < 0
+        || !this.state.isLTR && e.deltaX > 0
+        || this.state.isLTR && e.deltaX < 0;
 
-      if (isNext) {
-        // 進む
-        this.swiper.slideNext();
-      } else if (isPrev) {
-        // 戻る
-        this.swiper.slidePrev();
-      }
-    })));
+        if (isNext) {
+          // 進む
+          this.swiper.slideNext();
+        } else if (isPrev) {
+          // 戻る
+          this.swiper.slidePrev();
+        }
+      }));
+    });
+
+    // ユーザビリティのため「クリックしても何も起きない」
+    // 場所ではイベント伝播を停止させる
+    Array.from(this.el.controllerEl.children).concat([
+      // サムネイル表示中のサムネイル格納コンテナ
+      this.thumbs.wrapperEl,
+      // 設定表示中の設定格納コンテナ
+      this.preference.wrapperEl,
+    ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
   }
 
   /**
@@ -310,7 +320,6 @@ export default class MangaViewer {
       thumbItemGap: 16,
       thumbsWrapperPadding: 16,
       isTouchEvent: isExistTouchEvent(),
-      isPointerEvent: isExistPointerEvent(),
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
@@ -324,7 +333,7 @@ export default class MangaViewer {
       on: {
         resize: () => this.viewUpdate(),
         slideChange: () => this.hideViewerUI(),
-        tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
+        // tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
       pagination: {
         el: ".swiper-pagination",
@@ -354,7 +363,7 @@ export default class MangaViewer {
       on: {
         resize: () => this.viewUpdate(),
         slideChange: () => this.hideViewerUI(),
-        tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
+        // tap: (e) => !this.state.isTouchEvent && this.slideClickHandler(e),
       },
       pagination: {
         el: ".swiper-pagination",
@@ -366,10 +375,6 @@ export default class MangaViewer {
         loadPrevNextAmount: 4,
       },
     }
-  }
-
-  private get deviceClickEvent(): "pointerup" | "click" {
-    return (this.state.isPointerEvent) ? "pointerup" : "click"
   }
 
   /**
@@ -488,10 +493,11 @@ export default class MangaViewer {
    *
    * @param  e pointer-up event
    */
-  private slideClickHandler(e: PointerEvent | MouseEvent) {
+  private slideClickHandler(e: TouchEvent | MouseEvent) {
     const {l, t, w, h} = this.state.swiperRect;
-
-    const [x, y] = [e.pageX - l, e.pageY - t]
+    const [x, y] = (e instanceof TouchEvent)
+      ? [e.changedTouches[0].pageX - l, e.changedTouches[0].pageY - t]
+      : [e.pageX - l, e.pageY - t];
 
     let [isNextClick, isPrevClick] = [false, false];
 
@@ -509,12 +515,10 @@ export default class MangaViewer {
       isPrevClick = x > w * 0.80;
     }
 
-    const uiVisibleClass = "is_ui_visible";
-
     if (isNextClick && !this.swiper.isEnd) {
       // 進めるページがある状態で進む側をクリックした際の処理
       this.swiper.slideNext();
-      this.el.rootEl.classList.remove(uiVisibleClass);
+      this.hideViewerUI();
     } else if (isPrevClick && !this.swiper.isBeginning) {
       // 戻れるページがある状態で戻る側をクリックした際の処理
 
@@ -525,10 +529,14 @@ export default class MangaViewer {
         : 0;
       this.swiper.slideTo(idx);
 
-      this.el.rootEl.classList.remove(uiVisibleClass);
+      this.hideViewerUI();
     } else {
-      this.el.rootEl.classList.toggle(uiVisibleClass);
+      this.toggleViewerUI();
     }
+  }
+
+  private toggleViewerUI() {
+    this.el.rootEl.classList.toggle("is_ui_visible");
   }
 
   private hideViewerUI() {

@@ -31,7 +31,6 @@ export default class MangaViewer {
     private readonly defaultMangaViewerStates;
     private readonly mainSwiperHorizViewConf;
     private readonly mainSwiperVertViewConf;
-    private readonly deviceClickEvent;
     /**
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる
@@ -59,6 +58,7 @@ export default class MangaViewer {
      * @param  e pointer-up event
      */
     private slideClickHandler;
+    private toggleViewerUI;
     private hideViewerUI;
     /**
      * mangaViewer表示を更新する

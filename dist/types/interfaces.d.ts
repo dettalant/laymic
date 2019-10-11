@@ -28,6 +28,7 @@ export interface MangaViewerElements {
 }
 export interface IconData {
     id: string;
+    className: string;
     viewBox: string;
     pathDs: string[];
 }
@@ -39,6 +40,8 @@ export interface MangaViewerIcons {
     showThumbs: IconData;
     vertView: IconData;
     horizView: IconData;
+    checkboxOuter: IconData;
+    checkboxInner: IconData;
 }
 export interface MangaViewerUIButtons {
     close: HTMLButtonElement;
@@ -63,5 +66,13 @@ export interface MangaViewerStates {
     thumbItemGap: number;
     thumbsWrapperPadding: number;
     isTouchEvent: boolean;
-    isPointerEvent: boolean;
 }
+export declare type ViewerDirection = "auto" | "vertical" | "horizontal";
+export interface PreferenceData {
+    isAutoFullscreen: boolean;
+    viewerDirection: ViewerDirection;
+    isEnableTapSlidePage: boolean;
+}
+export declare type PreferenceButtons = {
+    [P in keyof PreferenceData]: HTMLButtonElement;
+};

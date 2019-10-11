@@ -45,7 +45,10 @@ export declare class ViewerDOMBuilder {
      * 空のbutton要素を返す
      * @return button要素
      */
-    private createButton;
+    createButton(className?: string): HTMLButtonElement;
+    private createSpan;
+    createCheckBoxButton(label: string, className?: string): HTMLButtonElement;
+    createSelectButton(label: string, className?: string): HTMLButtonElement;
     /**
      * IconData形式のオブジェクトであるかを判別する
      * type guard用の関数

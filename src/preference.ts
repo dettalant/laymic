@@ -1,5 +1,5 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, ViewerDirection } from "#/interfaces";
+import { PreferenceData, ViewerDirection, PreferenceButtons } from "#/interfaces";
 
 const PREFERENCE_KEY = "mangaViewer_preferenceData";
 
@@ -8,6 +8,7 @@ export class MangaViewerPreference {
   el: HTMLElement;
   // preference wrapper el
   wrapperEl: HTMLElement;
+  buttons: PreferenceButtons;
   // preference save data
   data: PreferenceData = this.loadPreferenceData();
   constructor(builder: ViewerDOMBuilder, className?: string) {
@@ -17,14 +18,32 @@ export class MangaViewerPreference {
     const wrapperEl = builder.createDiv();
     wrapperEl.className = "mangaViewer_preferenceWrapper";
 
-    const testTextEl = builder.createDiv();
-    testTextEl.textContent = "設定部分制作中";
+    const preferenceBtnClass = "mangaViewer_preferenceButton";
+    const isAutoFullscreen = builder.createCheckBoxButton("isAutoFullscreen: ", preferenceBtnClass);
 
-    wrapperEl.appendChild(testTextEl);
+    const viewerDirection = builder.createSelectButton("viewerDirection: ", preferenceBtnClass);
+
+    const isEnableTapSlidePage = builder.createCheckBoxButton("isEnableTapSlidePage: ", preferenceBtnClass);
+
+    [
+      isAutoFullscreen,
+      viewerDirection,
+      isEnableTapSlidePage
+    ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
+
+    isAutoFullscreen.addEventListener("click", () => {
+      console.log("isAutoFullscreen");
+    });
+
 
     this.el = containerEl;
     this.wrapperEl = wrapperEl;
+    this.buttons = {
+      isAutoFullscreen,
+      isEnableTapSlidePage,
+      viewerDirection
+    }
   }
 
   get isAutoFullscreen(): boolean {
