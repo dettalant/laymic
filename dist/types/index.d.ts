@@ -33,6 +33,11 @@ export default class MangaViewer {
     private readonly mainSwiperHorizViewConf;
     private readonly mainSwiperVertViewConf;
     /**
+     * 各種イベントの登録
+     * インスタンス生成時に一度だけ呼び出されることを想定
+     */
+    private applyEventListeners;
+    /**
      * オーバーレイ表示を展開させる
      * @param  isFullscreen trueならば同時に全画面化させる
      */

@@ -8964,101 +8964,8 @@ var mangaViewer = (function () {
           if (location.hash === "#" + this.mangaViewerId) {
               this.open(false);
           }
-          // 各種イベント登録
-          // 縦読み/横読み切り替えボタン
-          this.el.buttons.direction.addEventListener("click", () => {
-              if (!this.state.isVertView) {
-                  this.enableVerticalView();
-              }
-              else {
-                  this.disableVerticalView();
-              }
-          });
-          // サムネイル表示ボタン
-          this.el.buttons.thumbs.addEventListener("click", () => {
-              if (this.thumbs.el.style.display === "none") {
-                  // ページ読み込み後一度だけ動作する
-                  this.thumbs.el.style.display = "";
-                  this.thumbs.revealImgs();
-              }
-              this.el.rootEl.classList.add(this.stateNames.showThumbs);
-              this.hideViewerUI();
-          });
-          // サムネイル表示中オーバーレイ要素でのクリックイベント
-          this.thumbs.el.addEventListener("click", () => {
-              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
-          });
-          // サムネイルのクリックイベント
-          // 各サムネイルとswiper各スライドとを紐づける
-          this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
-              this.swiper.slideTo(i);
-              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
-          }));
-          this.preference.el.addEventListener("click", () => {
-              this.el.rootEl.classList.remove(this.stateNames.showPreference);
-          });
-          // 全画面化ボタンのクリックイベント
-          this.el.buttons.fullscreen.addEventListener("click", () => {
-              this.fullscreenHandler();
-          });
-          // 設定ボタンのクリックイベント
-          this.el.buttons.preference.addEventListener("click", () => {
-              this.el.rootEl.classList.toggle(this.stateNames.showPreference);
-              // NOTE: 暫定でUIを閉じておく
-              this.hideViewerUI();
-          });
-          // オーバーレイ終了ボタンのクリックイベント
-          this.el.buttons.close.addEventListener("click", () => {
-              this.close();
-          });
-          // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
-          [
-              this.el.swiperEl,
-              this.el.controllerEl
-          ].forEach(el => {
-              // クリック時のイベント
-              el.addEventListener("click", e => {
-                  if (!this.state.isMobile
-                      || this.preference.isEnableTapSlidePage) {
-                      // 非タッチデバイス、
-                      // またはisEnableTapSlidePageがtrueの場合の処理
-                      this.slideClickHandler(e);
-                  }
-                  else {
-                      // タッチデバイスでの処理
-                      this.toggleViewerUI();
-                  }
-              });
-              // マウスホイールでのイベント
-              // swiper純正のマウスホイール処理は動作がすっとろいので自作
-              el.addEventListener("wheel", rafThrottle((e) => {
-                  // 上下ホイール判定
-                  // || RTL時の左右ホイール判定
-                  // || LTR時の左右ホイール判定
-                  const isNext = e.deltaY > 0
-                      || !this.state.isLTR && e.deltaX < 0
-                      || this.state.isLTR && e.deltaX > 0;
-                  const isPrev = e.deltaY < 0
-                      || !this.state.isLTR && e.deltaX > 0
-                      || this.state.isLTR && e.deltaX < 0;
-                  if (isNext) {
-                      // 進む
-                      this.swiper.slideNext();
-                  }
-                  else if (isPrev) {
-                      // 戻る
-                      this.swiper.slidePrev();
-                  }
-              }));
-          });
-          // ユーザビリティのため「クリックしても何も起きない」
-          // 場所ではイベント伝播を停止させる
-          Array.from(this.el.controllerEl.children).concat([
-              // サムネイル表示中のサムネイル格納コンテナ
-              this.thumbs.wrapperEl,
-              // 設定表示中の設定格納コンテナ
-              this.preference.wrapperEl,
-          ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
+          // 各種イベントの停止
+          this.applyEventListeners();
       }
       /**
        * インスタンスごとに固有のビューワーIDを返す
@@ -9172,6 +9079,106 @@ var mangaViewer = (function () {
                   loadPrevNextAmount: 4,
               },
           };
+      }
+      /**
+       * 各種イベントの登録
+       * インスタンス生成時に一度だけ呼び出されることを想定
+       */
+      applyEventListeners() {
+          // 縦読み/横読み切り替えボタン
+          this.el.buttons.direction.addEventListener("click", () => {
+              if (!this.state.isVertView) {
+                  this.enableVerticalView();
+              }
+              else {
+                  this.disableVerticalView();
+              }
+          });
+          // サムネイル表示ボタン
+          this.el.buttons.thumbs.addEventListener("click", () => {
+              if (this.thumbs.el.style.display === "none") {
+                  // ページ読み込み後一度だけ動作する
+                  this.thumbs.el.style.display = "";
+                  this.thumbs.revealImgs();
+              }
+              this.el.rootEl.classList.add(this.stateNames.showThumbs);
+              this.hideViewerUI();
+          });
+          // サムネイル表示中オーバーレイ要素でのクリックイベント
+          this.thumbs.el.addEventListener("click", () => {
+              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
+          });
+          // サムネイルのクリックイベント
+          // 各サムネイルとswiper各スライドとを紐づける
+          this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
+              this.swiper.slideTo(i);
+              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
+          }));
+          this.preference.el.addEventListener("click", () => {
+              this.el.rootEl.classList.remove(this.stateNames.showPreference);
+          });
+          // 全画面化ボタンのクリックイベント
+          this.el.buttons.fullscreen.addEventListener("click", () => {
+              this.fullscreenHandler();
+          });
+          // 設定ボタンのクリックイベント
+          this.el.buttons.preference.addEventListener("click", () => {
+              this.el.rootEl.classList.toggle(this.stateNames.showPreference);
+              // NOTE: 暫定でUIを閉じておく
+              this.hideViewerUI();
+          });
+          // オーバーレイ終了ボタンのクリックイベント
+          this.el.buttons.close.addEventListener("click", () => {
+              this.close();
+          });
+          // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
+          [
+              this.el.swiperEl,
+              this.el.controllerEl
+          ].forEach(el => {
+              // クリック時のイベント
+              el.addEventListener("click", e => {
+                  if (!this.state.isMobile
+                      || this.preference.isEnableTapSlidePage) {
+                      // 非タッチデバイス、
+                      // またはisEnableTapSlidePageがtrueの場合の処理
+                      this.slideClickHandler(e);
+                  }
+                  else {
+                      // タッチデバイスでの処理
+                      this.toggleViewerUI();
+                  }
+              });
+              // マウスホイールでのイベント
+              // swiper純正のマウスホイール処理は動作がすっとろいので自作
+              el.addEventListener("wheel", rafThrottle((e) => {
+                  // 上下ホイール判定
+                  // || RTL時の左右ホイール判定
+                  // || LTR時の左右ホイール判定
+                  const isNext = e.deltaY > 0
+                      || !this.state.isLTR && e.deltaX < 0
+                      || this.state.isLTR && e.deltaX > 0;
+                  const isPrev = e.deltaY < 0
+                      || !this.state.isLTR && e.deltaX > 0
+                      || this.state.isLTR && e.deltaX < 0;
+                  if (isNext) {
+                      // 進む
+                      this.swiper.slideNext();
+                  }
+                  else if (isPrev) {
+                      // 戻る
+                      this.swiper.slidePrev();
+                  }
+              }));
+          });
+          // ユーザビリティのため「クリックしても何も起きない」
+          // 場所ではイベント伝播を停止させる
+          Array.from(this.el.controllerEl.children).concat([
+              // サムネイル表示中のサムネイル格納コンテナ
+              this.thumbs.wrapperEl,
+              // 設定表示中の設定格納コンテナ
+              this.preference.wrapperEl,
+          ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
       }
       /**
        * オーバーレイ表示を展開させる
