@@ -361,8 +361,8 @@ export class ViewerDOMBuilder {
     ].forEach(el => wrapperEl.appendChild(el));
 
     [
-      labelEl,
       wrapperEl,
+      labelEl,
     ].forEach(el => btn.appendChild(el));
 
     btn.addEventListener("click", () => btn.classList.toggle(this.stateNames.active));
@@ -388,8 +388,8 @@ export class ViewerDOMBuilder {
     });
 
     [
-      labelEl,
       wrapperEl,
+      labelEl,
     ].forEach(el => btn.appendChild(el));
 
     btn.addEventListener("click", () => {

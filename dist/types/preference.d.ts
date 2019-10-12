@@ -1,5 +1,5 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, ViewerDirection, PreferenceButtons, StateClassNames } from "#/interfaces";
+import { PreferenceData, UIVisibility, PreferenceButtons, StateClassNames } from "#/interfaces";
 export declare class MangaViewerPreference {
     el: HTMLElement;
     wrapperEl: HTMLElement;
@@ -9,7 +9,7 @@ export declare class MangaViewerPreference {
     constructor(builder: ViewerDOMBuilder, className?: string);
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
-    viewerDirection: ViewerDirection;
+    progressBarVisibility: UIVisibility;
     private readonly defaultPreferenceData;
     private savePreferenceData;
     /**
@@ -21,7 +21,6 @@ export declare class MangaViewerPreference {
      * 主に初期化時に用いる関数
      */
     private applyCurrentPreferenceValue;
-    private isHTMLElementArray;
     /**
      * 各種ボタンイベントを登録する
      * インスタンス生成時に一度だけ呼び出される

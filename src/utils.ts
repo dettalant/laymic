@@ -85,3 +85,18 @@ export const rafThrottle = function<T extends Element, E extends Event>(callback
     });
   }
 }
+
+export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
+  let bool = true;
+
+  if (Array.isArray(array)) {
+    array.forEach(v => {
+      const b = v instanceof HTMLElement;
+      if (!b) bool = false;
+    })
+  } else {
+    bool = false;
+  }
+
+  return bool;
+}

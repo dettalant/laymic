@@ -41,3 +41,4 @@ export declare const isExistTouchEvent: () => boolean;
  * @return          イベントデータを受け取る関数
  */
 export declare const rafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => (this: T, ev: E) => void;
+export declare const isHTMLElementArray: (array: any) => array is HTMLElement[];

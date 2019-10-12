@@ -1,5 +1,6 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, ViewerDirection, PreferenceButtons, StateClassNames } from "#/interfaces";
+import { PreferenceData, UIVisibility, PreferenceButtons, StateClassNames } from "#/interfaces";
+import { isHTMLElementArray } from "#/utils";
 
 const PREFERENCE_KEY = "mangaViewer_preferenceData";
 
@@ -20,21 +21,21 @@ export class MangaViewerPreference {
     wrapperEl.className = "mangaViewer_preferenceWrapper";
 
     const preferenceBtnClass = "mangaViewer_preferenceButton";
-    const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化: ", preferenceBtnClass);
+    const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
 
-    const viewerDirectionValues = [
+    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
+
+    const uiVisibilityValues = [
       "自動",
-      "横読み",
-      "縦読み",
+      "表示する",
+      "表示しない",
     ];
 
-    const viewerDirection = builder.createSelectButton("ビューワー方向初期値: ", viewerDirectionValues, preferenceBtnClass);
-
-    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する: ", preferenceBtnClass);
+    const progressBarVisibility = builder.createSelectButton("進捗バー表示設定", uiVisibilityValues, preferenceBtnClass);
 
     const descriptionEl = builder.createDiv();
     [
-      " ",
+      "",
       "※1: 一部設定値は次回以降のページ読み込み時に適用されます",
       "※2: 自動全画面化処理はブラウザの仕様から「ビューワー展開ボタンクリック時」にしか動きません",
     ].forEach(s => {
@@ -45,8 +46,8 @@ export class MangaViewerPreference {
 
     [
       isAutoFullscreen,
-      viewerDirection,
       isEnableTapSlidePage,
+      progressBarVisibility,
       descriptionEl
     ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
@@ -56,8 +57,8 @@ export class MangaViewerPreference {
     this.buttons = {
       isAutoFullscreen,
       isEnableTapSlidePage,
-      viewerDirection
-    }
+      progressBarVisibility,
+    };
     this.stateNames = builder.stateNames;
 
     // 読み込んだpreference値を各ボタン状態に適用
@@ -84,12 +85,12 @@ export class MangaViewerPreference {
     this.savePreferenceData();
   }
 
-  get viewerDirection(): ViewerDirection {
-    return this.data.viewerDirection;
+  get progressBarVisibility(): UIVisibility {
+    return this.data.progressBarVisibility
   }
 
-  set viewerDirection(direction: ViewerDirection) {
-    this.data.viewerDirection = direction;
+  set progressBarVisibility(visibility: UIVisibility) {
+    this.data.progressBarVisibility = visibility;
     this.savePreferenceData();
   }
 
@@ -97,7 +98,7 @@ export class MangaViewerPreference {
     return {
       isAutoFullscreen: false,
       isEnableTapSlidePage: false,
-      viewerDirection: "auto",
+      progressBarVisibility: "auto",
     }
   }
 
@@ -151,31 +152,17 @@ export class MangaViewerPreference {
       isEnableTapSlidePage.classList.remove(active);
     }
 
-    const vdIdx = [
+    const uiVisibilityValues = [
       "auto",
-      "horizontal",
-      "vertical",
-    ].indexOf(this.viewerDirection);
+      "visible",
+      "hidden"
+    ];
 
-    const vdItemEls = Array.from(this.buttons.viewerDirection.getElementsByClassName("mangaViewer_selectItem") || [])
-    if (this.isHTMLElementArray(vdItemEls) && vdItemEls[vdIdx]) {
-      vdItemEls[vdIdx].style.order = "-1";
+    const pbvIdx = uiVisibilityValues.indexOf(this.progressBarVisibility);
+    const pbvItemEls = Array.from(this.buttons.progressBarVisibility.getElementsByClassName("mangaViewer_selectItem") || []);
+    if (isHTMLElementArray(pbvItemEls) && pbvItemEls[pbvIdx]) {
+      pbvItemEls[pbvIdx].style.order = "-1";
     }
-  }
-
-  private isHTMLElementArray(array: any): array is HTMLElement[] {
-    let bool = true;
-
-    if (Array.isArray(array)) {
-      array.forEach(v => {
-        const b = v instanceof HTMLElement;
-        if (!b) bool = false;
-      })
-    } else {
-      bool = false;
-    }
-
-    return bool;
   }
 
   /**
@@ -191,30 +178,30 @@ export class MangaViewerPreference {
       this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
     });
 
-    const viewerDirectionItemEls = Array.from(this.buttons.viewerDirection.getElementsByClassName("mangaViewer_selectItem") || []);
-    if (this.isHTMLElementArray(viewerDirectionItemEls)) {
-      viewerDirectionItemEls.forEach((el) => {
-        el.addEventListener("click", (e) => {
-          if (!(e.target instanceof HTMLElement)) return;
+    const uiVisibilityButtonHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
+      if (!(e.target instanceof HTMLElement)) return;
 
-          const idx = parseInt(e.target.dataset.itemIdx || "", 10);
+      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
 
-          if (idx === 0) {
-            // auto
-            this.viewerDirection = "auto";
-          } else if (idx === 1) {
-            // horizontal
-            this.viewerDirection = "horizontal";
-          } else if (idx === 2) {
-            // vertical
-            this.viewerDirection = "vertical";
-          }
+      if (idx === 0) {
+        // auto
+        this.progressBarVisibility = "auto";
+      } else if (idx === 1) {
+        // horizontal
+        this.progressBarVisibility = "visible";
+      } else if (idx === 2) {
+        // vertical
+        this.progressBarVisibility = "hidden";
+      }
 
-          viewerDirectionItemEls.forEach(el => el.style.order = "");
+      itemEls.forEach(el => el.style.order = "");
 
-          el.style.order = "-1";
-        })
-      })
+      el.style.order = "-1";
+    }
+
+    const pbvItemEls = Array.from(this.buttons.progressBarVisibility.getElementsByClassName("mangaViewer_selectItem") || []);
+    if (isHTMLElementArray(pbvItemEls)) {
+      pbvItemEls.forEach((el) => el.addEventListener("click", (e) => uiVisibilityButtonHandler(e, el, pbvItemEls)));
     }
   }
 }

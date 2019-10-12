@@ -91,6 +91,8 @@ export default class MangaViewer {
       this.setPageSizeFromImgPath(src);
     }
 
+    this.preference = new MangaViewerPreference(builder);
+
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
     if (options.isLTR !== void 0) this.state.isLTR = options.isLTR;
@@ -99,6 +101,14 @@ export default class MangaViewer {
     if (options.isFirstSlideEmpty !== void 0) this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
     if (options.viewerPadding !== void 0) this.state.viewerPadding = options.viewerPadding;
     if (options.progressBarWidth !== void 0) this.state.progressBarWidth = options.progressBarWidth;
+    if (options.isDisableProgressBar
+      && this.preference.progressBarVisibility !== "visible"
+      || this.preference.progressBarVisibility === "hidden") 
+    {
+      this.state.progressBarWidth = 0;
+    }
+
+    this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
 
     rootEl.style.display = "none";
     rootEl.classList.add("mangaViewer_root", this.stateNames.visibleUI);
@@ -115,8 +125,6 @@ export default class MangaViewer {
       this.state.isFirstSlideEmpty
     );
 
-    this.preference = new MangaViewerPreference(builder);
-    this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
     [
       controllerEl,
       swiperEl,
@@ -136,12 +144,7 @@ export default class MangaViewer {
 
     this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
-    const viewerDirection = this.preference.data.viewerDirection;
-    if (viewerDirection === "vertical"
-    || viewerDirection !== "horizontal" && options.viewerDirection === "vertical")
-    {
-      this.enableVerticalView();
-    }
+    if (options.viewerDirection === "vertical") this.enableVerticalView()
 
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
