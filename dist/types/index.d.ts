@@ -1,10 +1,11 @@
 import Swiper from "swiper";
 import { MangaViewerPreference } from "#/preference";
 import { MangaViewerThumbnails } from "#/thumbs";
-import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates } from "./interfaces";
+import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates, StateClassNames } from "./interfaces";
 export default class MangaViewer {
     el: MangaViewerElements;
     state: MangaViewerStates;
+    stateNames: StateClassNames;
     preference: MangaViewerPreference;
     thumbs: MangaViewerThumbnails;
     swiper: Swiper;

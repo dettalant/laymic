@@ -8348,8 +8348,20 @@ class ViewerDOMBuilder {
         this.icons = this.defaultMangaViewerIcons;
         // uiボタンクラス名
         this.uiButtonClass = "mangaViewer_uiButton";
+        this.stateNames = this.defaultStateClassNames;
         if (icons)
             this.icons = Object.assign(this.icons, icons);
+    }
+    get defaultStateClassNames() {
+        return {
+            active: "is_active",
+            showThumbs: "is_showThumbs",
+            showPreference: "is_showPreference",
+            vertView: "is_vertView",
+            visibleUI: "is_visibleUI",
+            fullscreen: "is_fullscreen",
+            ltr: "is_ltr",
+        };
     }
     /**
      * 初期状態でのアイコンセットを返す
@@ -8631,7 +8643,7 @@ class ViewerDOMBuilder {
             labelEl,
             wrapperEl,
         ].forEach(el => btn.appendChild(el));
-        btn.addEventListener("click", () => btn.classList.toggle("is_active"));
+        btn.addEventListener("click", () => btn.classList.toggle(this.stateNames.active));
         return btn;
     }
     createSelectButton(label, className = "") {
@@ -8676,9 +8688,6 @@ class MangaViewerPreference {
             isEnableTapSlidePage
         ].forEach(el => wrapperEl.appendChild(el));
         containerEl.appendChild(wrapperEl);
-        isAutoFullscreen.addEventListener("click", () => {
-            console.log("isAutoFullscreen");
-        });
         this.el = containerEl;
         this.wrapperEl = wrapperEl;
         this.buttons = {
@@ -8686,6 +8695,11 @@ class MangaViewerPreference {
             isEnableTapSlidePage,
             viewerDirection
         };
+        this.stateNames = builder.stateNames;
+        // 読み込んだpreference値を各ボタン状態に適用
+        this.applyCurrentPreferenceValue();
+        // 各種イベントをボタンに適用
+        this.applyButtonEventListeners();
     }
     get isAutoFullscreen() {
         return this.data.isAutoFullscreen;
@@ -8708,6 +8722,13 @@ class MangaViewerPreference {
         this.data.viewerDirection = direction;
         this.savePreferenceData();
     }
+    get defaultPreferenceData() {
+        return {
+            isAutoFullscreen: false,
+            isEnableTapSlidePage: false,
+            viewerDirection: "auto",
+        };
+    }
     savePreferenceData() {
         localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
     }
@@ -8716,14 +8737,49 @@ class MangaViewerPreference {
      */
     loadPreferenceData() {
         const dataStr = localStorage.getItem(PREFERENCE_KEY);
-        const data = (dataStr)
-            ? JSON.parse(dataStr)
-            : {
-                isAutoFullscreen: false,
-                isEnableTapSlidePage: false,
-                viewerDirection: "auto",
-            };
+        let data = this.defaultPreferenceData;
+        if (dataStr) {
+            try {
+                data = JSON.parse(dataStr);
+            }
+            catch (e) {
+                console.error(e);
+                localStorage.removeItem(PREFERENCE_KEY);
+            }
+        }
         return data;
+    }
+    /**
+     * 現在のpreference状態をボタン状態に適用する
+     * 主に初期化時に用いる関数
+     */
+    applyCurrentPreferenceValue() {
+        const { isAutoFullscreen, isEnableTapSlidePage } = this.buttons;
+        const { active } = this.stateNames;
+        if (this.isAutoFullscreen) {
+            isAutoFullscreen.classList.add(active);
+        }
+        else {
+            isAutoFullscreen.classList.remove(active);
+        }
+        if (this.isEnableTapSlidePage) {
+            isEnableTapSlidePage.classList.add(active);
+        }
+        else {
+            isEnableTapSlidePage.classList.remove(active);
+        }
+    }
+    /**
+     * 各種ボタンイベントを登録する
+     * インスタンス生成時に一度だけ呼び出される
+     */
+    applyButtonEventListeners() {
+        this.buttons.isAutoFullscreen.addEventListener("click", () => {
+            this.isAutoFullscreen = !this.isAutoFullscreen;
+        });
+        this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
+            this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
+        });
     }
 }
 
@@ -8814,6 +8870,7 @@ class MangaViewer {
         if (rootEl.parentNode)
             rootEl.parentNode.removeChild(rootEl);
         const builder = new ViewerDOMBuilder(options.icons);
+        this.stateNames = builder.stateNames;
         if (this.state.viewerId === 0) {
             // 一つのページにつき一度だけの処理
             const svgCtn = builder.createSVGIcons();
@@ -8875,9 +8932,9 @@ class MangaViewer {
         if (options.progressBarWidth !== void 0)
             this.state.progressBarWidth = options.progressBarWidth;
         rootEl.style.display = "none";
-        rootEl.classList.add("mangaViewer_root", "is_ui_visible");
+        rootEl.classList.add("mangaViewer_root", this.stateNames.visibleUI);
         if (this.state.isLTR)
-            rootEl.classList.add("is_ltr");
+            rootEl.classList.add(this.stateNames.ltr);
         rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
         rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
         const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
@@ -8923,21 +8980,21 @@ class MangaViewer {
                 this.thumbs.el.style.display = "";
                 this.thumbs.revealImgs();
             }
-            this.el.rootEl.classList.add("is_showThumbs");
+            this.el.rootEl.classList.add(this.stateNames.showThumbs);
             this.hideViewerUI();
         });
         // サムネイル表示中オーバーレイ要素でのクリックイベント
         this.thumbs.el.addEventListener("click", () => {
-            this.el.rootEl.classList.remove("is_showThumbs");
+            this.el.rootEl.classList.remove(this.stateNames.showThumbs);
         });
         // サムネイルのクリックイベント
         // 各サムネイルとswiper各スライドとを紐づける
         this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
             this.swiper.slideTo(i);
-            this.el.rootEl.classList.remove("is_showThumbs");
+            this.el.rootEl.classList.remove(this.stateNames.showThumbs);
         }));
         this.preference.el.addEventListener("click", () => {
-            this.el.rootEl.classList.remove("is_showPreference");
+            this.el.rootEl.classList.remove(this.stateNames.showPreference);
         });
         // 全画面化ボタンのクリックイベント
         this.el.buttons.fullscreen.addEventListener("click", () => {
@@ -8945,7 +9002,7 @@ class MangaViewer {
         });
         // 設定ボタンのクリックイベント
         this.el.buttons.preference.addEventListener("click", () => {
-            this.el.rootEl.classList.toggle("is_showPreference");
+            this.el.rootEl.classList.toggle(this.stateNames.showPreference);
             // NOTE: 暫定でUIを閉じておく
             this.hideViewerUI();
         });
@@ -8960,9 +9017,10 @@ class MangaViewer {
         ].forEach(el => {
             // クリック時のイベント
             el.addEventListener("click", e => {
-                if (!this.state.isTouchEvent) {
-                    // 非タッチデバイスでの処理
-                    // TODO: preference.isEnableTapSlidePageがtrueの際もこちらに飛ばしたい
+                if (!this.state.isMobile
+                    || this.preference.isEnableTapSlidePage) {
+                    // 非タッチデバイス、
+                    // またはisEnableTapSlidePageがtrueの場合の処理
                     this.slideClickHandler(e);
                 }
                 else {
@@ -9062,7 +9120,7 @@ class MangaViewer {
             thumbItemWidth: 96,
             thumbItemGap: 16,
             thumbsWrapperPadding: 16,
-            isTouchEvent: isExistTouchEvent(),
+            isMobile: isExistTouchEvent(),
         };
     }
     get mainSwiperHorizViewConf() {
@@ -9081,7 +9139,6 @@ class MangaViewer {
                 type: "progressbar",
             },
             keyboard: true,
-            // mousewheel: true,
             preloadImages: false,
             lazy: {
                 loadPrevNext: true,
@@ -9166,7 +9223,7 @@ class MangaViewer {
      */
     enableVerticalView() {
         this.state.isVertView = true;
-        this.el.rootEl.classList.add("is_vertView");
+        this.el.rootEl.classList.add(this.stateNames.vertView);
         // 一番目に空要素を入れる設定の場合はindex数値を1増やす
         const activeIdx = this.swiper.activeIndex;
         const idx = (this.state.isFirstSlideEmpty && activeIdx !== 0)
@@ -9186,7 +9243,7 @@ class MangaViewer {
      */
     disableVerticalView() {
         this.state.isVertView = false;
-        this.el.rootEl.classList.remove("is_vertView");
+        this.el.rootEl.classList.remove(this.stateNames.vertView);
         // 一番目に空要素を入れる設定の場合はindex数値を1増やす
         const activeIdx = this.swiper.activeIndex;
         const idx = (this.state.isFirstSlideEmpty)
@@ -9212,9 +9269,7 @@ class MangaViewer {
      */
     slideClickHandler(e) {
         const { l, t, w, h } = this.state.swiperRect;
-        const [x, y] = (e instanceof TouchEvent)
-            ? [e.changedTouches[0].pageX - l, e.changedTouches[0].pageY - t]
-            : [e.pageX - l, e.pageY - t];
+        const [x, y] = [e.pageX - l, e.pageY - t];
         let [isNextClick, isPrevClick] = [false, false];
         if (this.state.isVertView) {
             // 縦読み時処理
@@ -9251,10 +9306,10 @@ class MangaViewer {
         }
     }
     toggleViewerUI() {
-        this.el.rootEl.classList.toggle("is_ui_visible");
+        this.el.rootEl.classList.toggle(this.stateNames.visibleUI);
     }
     hideViewerUI() {
-        const stateName = "is_ui_visible";
+        const stateName = this.stateNames.visibleUI;
         if (this.el.rootEl.classList.contains(stateName)) {
             this.el.rootEl.classList.remove(stateName);
         }
@@ -9280,13 +9335,14 @@ class MangaViewer {
         // フルスクリーン切り替え後に呼び出される関数
         const postToggleFullscreen = () => {
             const isFullscreen = document.fullscreenElement;
+            const fsClass = this.stateNames.fullscreen;
             if (isFullscreen) {
                 // 全画面有効時
-                this.el.rootEl.classList.add("is_fullscreen");
+                this.el.rootEl.classList.add(fsClass);
             }
             else {
                 // 通常時
-                this.el.rootEl.classList.remove("is_fullscreen");
+                this.el.rootEl.classList.remove(fsClass);
             }
             this.swiper.slideTo(this.swiper.activeIndex);
             this.viewUpdate();

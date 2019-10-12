@@ -65,7 +65,7 @@ export interface MangaViewerStates {
     thumbItemWidth: number;
     thumbItemGap: number;
     thumbsWrapperPadding: number;
-    isTouchEvent: boolean;
+    isMobile: boolean;
 }
 export declare type ViewerDirection = "auto" | "vertical" | "horizontal";
 export interface PreferenceData {
@@ -76,3 +76,12 @@ export interface PreferenceData {
 export declare type PreferenceButtons = {
     [P in keyof PreferenceData]: HTMLButtonElement;
 };
+export interface StateClassNames {
+    active: string;
+    showPreference: string;
+    showThumbs: string;
+    fullscreen: string;
+    visibleUI: string;
+    vertView: string;
+    ltr: string;
+}

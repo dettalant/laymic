@@ -1,8 +1,10 @@
-import { MangaViewerIcons, MangaViewerUIButtons } from "#/interfaces";
+import { MangaViewerIcons, MangaViewerUIButtons, StateClassNames } from "#/interfaces";
 export declare class ViewerDOMBuilder {
     private icons;
     private readonly uiButtonClass;
+    readonly stateNames: StateClassNames;
     constructor(icons?: MangaViewerIcons);
+    private readonly defaultStateClassNames;
     /**
      * 初期状態でのアイコンセットを返す
      * @return アイコンをひとまとめにしたオブジェクト

@@ -1,5 +1,5 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, ViewerDirection, PreferenceButtons } from "#/interfaces";
+import { PreferenceData, ViewerDirection, PreferenceButtons, StateClassNames } from "#/interfaces";
 
 const PREFERENCE_KEY = "mangaViewer_preferenceData";
 
@@ -9,6 +9,7 @@ export class MangaViewerPreference {
   // preference wrapper el
   wrapperEl: HTMLElement;
   buttons: PreferenceButtons;
+  stateNames: StateClassNames;
   // preference save data
   data: PreferenceData = this.loadPreferenceData();
   constructor(builder: ViewerDOMBuilder, className?: string) {
@@ -32,11 +33,6 @@ export class MangaViewerPreference {
     ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
 
-    isAutoFullscreen.addEventListener("click", () => {
-      console.log("isAutoFullscreen");
-    });
-
-
     this.el = containerEl;
     this.wrapperEl = wrapperEl;
     this.buttons = {
@@ -44,6 +40,12 @@ export class MangaViewerPreference {
       isEnableTapSlidePage,
       viewerDirection
     }
+    this.stateNames = builder.stateNames;
+
+    // 読み込んだpreference値を各ボタン状態に適用
+    this.applyCurrentPreferenceValue();
+    // 各種イベントをボタンに適用
+    this.applyButtonEventListeners();
   }
 
   get isAutoFullscreen(): boolean {
@@ -73,6 +75,14 @@ export class MangaViewerPreference {
     this.savePreferenceData();
   }
 
+  private get defaultPreferenceData(): PreferenceData {
+    return {
+      isAutoFullscreen: false,
+      isEnableTapSlidePage: false,
+      viewerDirection: "auto",
+    }
+  }
+
   private savePreferenceData() {
     localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
   }
@@ -82,13 +92,59 @@ export class MangaViewerPreference {
    */
   private loadPreferenceData(): PreferenceData {
     const dataStr = localStorage.getItem(PREFERENCE_KEY);
-    const data = (dataStr)
-      ? JSON.parse(dataStr)
-      : {
-        isAutoFullscreen: false,
-        isEnableTapSlidePage: false,
-        viewerDirection: "auto",
-      };
+
+    let data = this.defaultPreferenceData;
+
+    if (dataStr) {
+      try {
+        data = JSON.parse(dataStr)
+      } catch(e) {
+        console.error(e);
+        localStorage.removeItem(PREFERENCE_KEY);
+      }
+    }
+
     return data;
+  }
+
+  /**
+   * 現在のpreference状態をボタン状態に適用する
+   * 主に初期化時に用いる関数
+   */
+  private applyCurrentPreferenceValue() {
+    const {
+      isAutoFullscreen,
+      isEnableTapSlidePage
+    } = this.buttons;
+
+    const {
+      active
+    } = this.stateNames;
+
+    if (this.isAutoFullscreen) {
+      isAutoFullscreen.classList.add(active);
+    } else {
+      isAutoFullscreen.classList.remove(active);
+    }
+
+    if (this.isEnableTapSlidePage) {
+      isEnableTapSlidePage.classList.add(active);
+    } else {
+      isEnableTapSlidePage.classList.remove(active);
+    }
+  }
+
+  /**
+   * 各種ボタンイベントを登録する
+   * インスタンス生成時に一度だけ呼び出される
+   */
+  private applyButtonEventListeners() {
+    this.buttons.isAutoFullscreen.addEventListener("click", () => {
+      this.isAutoFullscreen = !this.isAutoFullscreen;
+    });
+
+    this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
+      this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
+    });
   }
 }

@@ -1,4 +1,9 @@
-import { MangaViewerIcons, MangaViewerUIButtons, IconData } from "#/interfaces";
+import {
+  MangaViewerIcons,
+  MangaViewerUIButtons,
+  IconData,
+  StateClassNames
+} from "#/interfaces";
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -11,8 +16,21 @@ export class ViewerDOMBuilder {
   private icons: MangaViewerIcons = this.defaultMangaViewerIcons;
   // uiボタンクラス名
   private readonly uiButtonClass = "mangaViewer_uiButton";
+  readonly stateNames = this.defaultStateClassNames;
   constructor(icons?: MangaViewerIcons) {
     if (icons) this.icons = Object.assign(this.icons, icons);
+  }
+
+  private get defaultStateClassNames(): StateClassNames {
+    return {
+      active: "is_active",
+      showThumbs: "is_showThumbs",
+      showPreference: "is_showPreference",
+      vertView: "is_vertView",
+      visibleUI: "is_visibleUI",
+      fullscreen: "is_fullscreen",
+      ltr: "is_ltr",
+    }
   }
 
   /**
@@ -343,7 +361,7 @@ export class ViewerDOMBuilder {
       wrapperEl,
     ].forEach(el => btn.appendChild(el));
 
-    btn.addEventListener("click", () => btn.classList.toggle("is_active"));
+    btn.addEventListener("click", () => btn.classList.toggle(this.stateNames.active));
     return btn;
   }
 
