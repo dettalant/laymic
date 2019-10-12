@@ -136,12 +136,17 @@ export default class MangaViewer {
 
     this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
 
-    if (options.defaultDirection === "vertical") this.enableVerticalView();
+    const viewerDirection = this.preference.data.viewerDirection;
+    if (viewerDirection === "vertical"
+    || viewerDirection !== "horizontal" && options.viewerDirection === "vertical")
+    {
+      this.enableVerticalView();
+    }
 
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
     if (location.hash === "#" + this.mangaViewerId) {
-      this.open(false);
+      this.open(true);
     }
 
     // 各種イベントの停止
@@ -390,9 +395,11 @@ export default class MangaViewer {
 
   /**
    * オーバーレイ表示を展開させる
-   * @param  isFullscreen trueならば同時に全画面化させる
+   * @param  isDisableFullscreen trueならば全画面化処理を無効化する
    */
-  public open(isFullscreen?: boolean) {
+  public open(isDisableFullscreen: boolean = false) {
+    const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
+
     // display:none状態の場合にそれを解除する
     // 主にページ読み込み後一度目の展開でだけ動く部分
     if (this.el.rootEl.style.display === "none") {

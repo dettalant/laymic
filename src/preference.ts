@@ -20,16 +20,34 @@ export class MangaViewerPreference {
     wrapperEl.className = "mangaViewer_preferenceWrapper";
 
     const preferenceBtnClass = "mangaViewer_preferenceButton";
-    const isAutoFullscreen = builder.createCheckBoxButton("isAutoFullscreen: ", preferenceBtnClass);
+    const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化: ", preferenceBtnClass);
 
-    const viewerDirection = builder.createSelectButton("viewerDirection: ", preferenceBtnClass);
+    const viewerDirectionValues = [
+      "自動",
+      "横読み",
+      "縦読み",
+    ];
 
-    const isEnableTapSlidePage = builder.createCheckBoxButton("isEnableTapSlidePage: ", preferenceBtnClass);
+    const viewerDirection = builder.createSelectButton("ビューワー方向初期値: ", viewerDirectionValues, preferenceBtnClass);
+
+    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する: ", preferenceBtnClass);
+
+    const descriptionEl = builder.createDiv();
+    [
+      " ",
+      "※1: 一部設定値は次回以降のページ読み込み時に適用されます",
+      "※2: 自動全画面化処理はブラウザの仕様から「ビューワー展開ボタンクリック時」にしか動きません",
+    ].forEach(s => {
+      const p = builder.createParagraph();
+      p.textContent = s;
+      descriptionEl.appendChild(p);
+    });
 
     [
       isAutoFullscreen,
       viewerDirection,
-      isEnableTapSlidePage
+      isEnableTapSlidePage,
+      descriptionEl
     ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
 
@@ -132,6 +150,32 @@ export class MangaViewerPreference {
     } else {
       isEnableTapSlidePage.classList.remove(active);
     }
+
+    const vdIdx = [
+      "auto",
+      "horizontal",
+      "vertical",
+    ].indexOf(this.viewerDirection);
+
+    const vdItemEls = Array.from(this.buttons.viewerDirection.getElementsByClassName("mangaViewer_selectItem") || [])
+    if (this.isHTMLElementArray(vdItemEls) && vdItemEls[vdIdx]) {
+      vdItemEls[vdIdx].style.order = "-1";
+    }
+  }
+
+  private isHTMLElementArray(array: any): array is HTMLElement[] {
+    let bool = true;
+
+    if (Array.isArray(array)) {
+      array.forEach(v => {
+        const b = v instanceof HTMLElement;
+        if (!b) bool = false;
+      })
+    } else {
+      bool = false;
+    }
+
+    return bool;
   }
 
   /**
@@ -146,5 +190,31 @@ export class MangaViewerPreference {
     this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
       this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
     });
+
+    const viewerDirectionItemEls = Array.from(this.buttons.viewerDirection.getElementsByClassName("mangaViewer_selectItem") || []);
+    if (this.isHTMLElementArray(viewerDirectionItemEls)) {
+      viewerDirectionItemEls.forEach((el) => {
+        el.addEventListener("click", (e) => {
+          if (!(e.target instanceof HTMLElement)) return;
+
+          const idx = parseInt(e.target.dataset.itemIdx || "", 10);
+
+          if (idx === 0) {
+            // auto
+            this.viewerDirection = "auto";
+          } else if (idx === 1) {
+            // horizontal
+            this.viewerDirection = "horizontal";
+          } else if (idx === 2) {
+            // vertical
+            this.viewerDirection = "vertical";
+          }
+
+          viewerDirectionItemEls.forEach(el => el.style.order = "");
+
+          el.style.order = "-1";
+        })
+      })
+    }
   }
 }

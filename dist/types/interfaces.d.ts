@@ -1,4 +1,5 @@
 export declare type MangaViewerPages = (string | HTMLElement)[];
+export declare type ViewerDirection = "auto" | "vertical" | "horizontal";
 export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
@@ -10,7 +11,7 @@ export interface MangaViewerOptions {
     horizPageMargin?: number;
     viewerPadding?: number;
     progressBarWidth?: number;
-    defaultDirection?: "horizontal" | "vertical";
+    viewerDirection?: "vertical" | "horizontal";
 }
 export interface PageSize {
     w: number;
@@ -67,7 +68,6 @@ export interface MangaViewerStates {
     thumbsWrapperPadding: number;
     isMobile: boolean;
 }
-export declare type ViewerDirection = "auto" | "vertical" | "horizontal";
 export interface PreferenceData {
     isAutoFullscreen: boolean;
     viewerDirection: ViewerDirection;

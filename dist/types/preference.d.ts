@@ -21,6 +21,7 @@ export declare class MangaViewerPreference {
      * 主に初期化時に用いる関数
      */
     private applyCurrentPreferenceValue;
+    private isHTMLElementArray;
     /**
      * 各種ボタンイベントを登録する
      * インスタンス生成時に一度だけ呼び出される

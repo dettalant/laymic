@@ -48,9 +48,10 @@ export declare class ViewerDOMBuilder {
      * @return button要素
      */
     createButton(className?: string): HTMLButtonElement;
-    private createSpan;
+    createSpan(): HTMLSpanElement;
+    createParagraph(): HTMLParagraphElement;
     createCheckBoxButton(label: string, className?: string): HTMLButtonElement;
-    createSelectButton(label: string, className?: string): HTMLButtonElement;
+    createSelectButton(label: string, values: string[], className?: string): HTMLButtonElement;
     /**
      * IconData形式のオブジェクトであるかを判別する
      * type guard用の関数

@@ -39,9 +39,9 @@ export default class MangaViewer {
     private applyEventListeners;
     /**
      * オーバーレイ表示を展開させる
-     * @param  isFullscreen trueならば同時に全画面化させる
+     * @param  isDisableFullscreen trueならば全画面化処理を無効化する
      */
-    open(isFullscreen?: boolean): void;
+    open(isDisableFullscreen?: boolean): void;
     /**
      * オーバーレイ表示を閉じる
      */

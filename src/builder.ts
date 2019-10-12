@@ -338,8 +338,12 @@ export class ViewerDOMBuilder {
     return btn;
   }
 
-  private createSpan(): HTMLSpanElement {
+  createSpan(): HTMLSpanElement {
     return document.createElement("span");
+  }
+
+  createParagraph(): HTMLParagraphElement {
+    return document.createElement("p");
   }
 
   createCheckBoxButton(label: string, className: string = ""): HTMLButtonElement {
@@ -365,16 +369,36 @@ export class ViewerDOMBuilder {
     return btn;
   }
 
-  createSelectButton(label: string, className: string = ""): HTMLButtonElement {
+  createSelectButton(label: string, values: string[], className: string = ""): HTMLButtonElement {
     const btn = this.createButton("mangaViewer_select " + className);
 
     const labelEl = this.createSpan();
     labelEl.className = "mangaViewer_selectLabel";
     labelEl.textContent = label;
 
+    const wrapperEl = this.createDiv();
+    wrapperEl.className = "mangaViewer_selectWrapper";
+
+    values.forEach((item, i) => {
+      const el = this.createDiv();
+      el.className = "mangaViewer_selectItem mangaViewer_selectItem" + i;
+      el.textContent = item;
+      el.dataset.itemIdx = i.toString();
+      wrapperEl.appendChild(el);
+    });
+
     [
       labelEl,
+      wrapperEl,
     ].forEach(el => btn.appendChild(el));
+
+    btn.addEventListener("click", () => {
+      btn.classList.toggle(this.stateNames.active);
+    })
+
+    btn.addEventListener("blur", () => {
+      btn.classList.remove(this.stateNames.active);
+    })
 
     return btn;
   }

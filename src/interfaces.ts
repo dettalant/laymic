@@ -1,5 +1,7 @@
 export type MangaViewerPages = (string | HTMLElement)[];
 
+export type ViewerDirection = "auto" | "vertical" | "horizontal";
+
 export interface MangaViewerOptions {
   // ページ横幅
   pageWidth?: number,
@@ -22,7 +24,9 @@ export interface MangaViewerOptions {
   // swiper-container周囲の余白ピクセル数値
   viewerPadding?: number,
   progressBarWidth?: number,
-  defaultDirection?: "horizontal" | "vertical",
+  // ビューワーで読み進める方向のデフォルト値
+  // ユーザー設定がなされていればそちらを優先
+  viewerDirection?: "vertical" | "horizontal",
 }
 
 export interface PageSize {
@@ -102,18 +106,15 @@ export interface MangaViewerStates {
   isMobile: boolean,
 }
 
-export type ViewerDirection = "auto" | "vertical" | "horizontal";
-
 export interface PreferenceData {
   isAutoFullscreen: boolean,
   viewerDirection: ViewerDirection,
   isEnableTapSlidePage: boolean,
 }
 
-export type PreferenceButtons = {[P in keyof PreferenceData]: HTMLButtonElement}
-// export interface MangaViewerPreferenceButtons {
-//   [P in keyof PreferenceData]: HTMLElement
-// }
+export type PreferenceButtons = {
+  [P in keyof PreferenceData]: HTMLButtonElement
+}
 
 export interface StateClassNames {
   active: string,
