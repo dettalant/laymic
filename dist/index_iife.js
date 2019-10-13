@@ -8869,7 +8869,14 @@ var mangaViewer = (function () {
           };
           const pbvItemEls = Array.from(this.buttons.progressBarVisibility.getElementsByClassName("mangaViewer_selectItem") || []);
           if (isHTMLElementArray(pbvItemEls)) {
-              pbvItemEls.forEach((el) => el.addEventListener("click", (e) => uiVisibilityButtonHandler(e, el, pbvItemEls)));
+              pbvItemEls.forEach((el) => el.addEventListener("click", (e) => {
+                  // 親要素がアクティブな時 === selectButtonが選択された時
+                  // この時だけ処理を動かす
+                  const isActive = this.buttons.progressBarVisibility.classList.contains(this.stateNames.active);
+                  if (isActive) {
+                      uiVisibilityButtonHandler(e, el, pbvItemEls);
+                  }
+              }));
           }
       }
   }
