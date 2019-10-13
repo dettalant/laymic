@@ -25,6 +25,7 @@ export default class MangaViewer {
   el: MangaViewerElements;
   // mangaViewer内部で用いるステートまとめ
   state: MangaViewerStates = this.defaultMangaViewerStates;
+  initOptions: MangaViewerOptions;
   // ステート変化に用いるクラス名まとめ
   stateNames: StateClassNames;
   preference: MangaViewerPreference;
@@ -91,7 +92,7 @@ export default class MangaViewer {
       this.setPageSizeFromImgPath(src);
     }
 
-    this.preference = new MangaViewerPreference(builder);
+    this.preference = new MangaViewerPreference(builder, rootEl);
 
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
@@ -103,7 +104,7 @@ export default class MangaViewer {
     if (options.progressBarWidth !== void 0) this.state.progressBarWidth = options.progressBarWidth;
     if (options.isDisableProgressBar
       && this.preference.progressBarVisibility !== "visible"
-      || this.preference.progressBarVisibility === "hidden") 
+      || this.preference.progressBarVisibility === "hidden")
     {
       this.state.progressBarWidth = 0;
     }
@@ -113,8 +114,6 @@ export default class MangaViewer {
     rootEl.style.display = "none";
     rootEl.classList.add("mangaViewer_root", this.stateNames.visibleUI);
     if (this.state.isLTR) rootEl.classList.add(this.stateNames.ltr);
-    rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
-    rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
 
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(
@@ -138,6 +137,8 @@ export default class MangaViewer {
       controllerEl,
       buttons: uiButtons,
     }
+    this.cssProgressBarWidthUpdate();
+    this.cssViewerPaddingUpdate();
 
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
@@ -154,6 +155,9 @@ export default class MangaViewer {
 
     // 各種イベントの停止
     this.applyEventListeners();
+
+    // 初期化引数を保管
+    this.initOptions = options;
   }
 
   /**
@@ -394,6 +398,25 @@ export default class MangaViewer {
       // 設定表示中の設定格納コンテナ
       this.preference.wrapperEl,
     ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
+
+    // カスタムイベント登録
+    this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e: CustomEvent<string>) => {
+      console.log("manga viewer update event");
+      if (e.detail === "progressBarVisibility") {
+        // 特定条件の場合にはprogressBarWidthを0にする
+        // これが0であると非表示状態になる
+        const w = (
+          this.preference.progressBarVisibility === "hidden"
+          || this.preference.progressBarVisibility !== "visible"
+            && this.initOptions.isDisableProgressBar)
+          ? 0
+          : 6;
+        this.state.progressBarWidth = w;
+        // 設定した値を画面に適用する
+        this.cssProgressBarWidthUpdate();
+        this.viewUpdate();
+      }
+    }) as EventListener)
   }
 
   /**
@@ -572,8 +595,7 @@ export default class MangaViewer {
   private viewUpdate() {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
-    this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
-
+    if (this.thumbs && this.el) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
     if (this.swiper) this.swiper.update();
   }
 
@@ -646,7 +668,13 @@ export default class MangaViewer {
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
 
+  private cssProgressBarWidthUpdate() {
+    this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
+  }
 
+  private cssViewerPaddingUpdate() {
+    this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+  }
 
   /**
    * mangaViewerと紐付いたrootElを表示する

@@ -5,6 +5,7 @@ import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerS
 export default class MangaViewer {
     el: MangaViewerElements;
     state: MangaViewerStates;
+    initOptions: MangaViewerOptions;
     stateNames: StateClassNames;
     preference: MangaViewerPreference;
     thumbs: MangaViewerThumbnails;
@@ -84,6 +85,8 @@ export default class MangaViewer {
      * pageHeightの値も更新するのはこれいかに
      */
     private cssPageWidthUpdate;
+    private cssProgressBarWidthUpdate;
+    private cssViewerPaddingUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */

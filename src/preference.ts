@@ -5,6 +5,7 @@ import { isHTMLElementArray } from "#/utils";
 const PREFERENCE_KEY = "mangaViewer_preferenceData";
 
 export class MangaViewerPreference {
+  rootEl: HTMLElement;
   // preference el
   el: HTMLElement;
   // preference wrapper el
@@ -13,7 +14,7 @@ export class MangaViewerPreference {
   stateNames: StateClassNames;
   // preference save data
   data: PreferenceData = this.loadPreferenceData();
-  constructor(builder: ViewerDOMBuilder, className?: string) {
+  constructor(builder: ViewerDOMBuilder, rootEl: HTMLElement, className?: string) {
     const containerEl = builder.createDiv();
     containerEl.className = (className) ? className : "mangaViewer_preference";
 
@@ -52,6 +53,7 @@ export class MangaViewerPreference {
     ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
 
+    this.rootEl = rootEl;
     this.el = containerEl;
     this.wrapperEl = wrapperEl;
     this.buttons = {
@@ -92,6 +94,7 @@ export class MangaViewerPreference {
   set progressBarVisibility(visibility: UIVisibility) {
     this.data.progressBarVisibility = visibility;
     this.savePreferenceData();
+    this.dispatchViewerUpdateEvent("progressBarVisibility");
   }
 
   private get defaultPreferenceData(): PreferenceData {
@@ -104,6 +107,14 @@ export class MangaViewerPreference {
 
   private savePreferenceData() {
     localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
+  }
+
+  private dispatchViewerUpdateEvent(detail: string = "") {
+    const ev = new CustomEvent("MangaViewerPreferenceUpdate", {
+      detail
+    });
+
+    this.rootEl.dispatchEvent(ev);
   }
 
   /**
