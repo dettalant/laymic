@@ -29,5 +29,10 @@ export declare class MangaViewerPreference {
      * インスタンス生成時に一度だけ呼び出される
      */
     private applyButtonEventListeners;
+    /**
+     * 入力した要素内部にあるselectItem要素を配列として返す
+     * @param  el selectButtonを想定した引数
+     * @return    クラス名で抽出したElement配列
+     */
     private getSelectItemEls;
 }

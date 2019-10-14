@@ -27,8 +27,8 @@ export class MangaViewerPreference {
     const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
 
     const progressBarWidths = [
-      "自動",
-      "なし",
+      "初期値",
+      "非表示",
       "細い",
       "普通",
       "太い"
@@ -37,9 +37,9 @@ export class MangaViewerPreference {
     const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
 
     const uiVisibilityValues = [
-      "自動",
-      "表示する",
-      "表示しない",
+      "初期値",
+      "非表示",
+      "表示",
     ];
 
     const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, preferenceBtnClass);
@@ -189,8 +189,8 @@ export class MangaViewerPreference {
 
     const uiVisibilityValues: UIVisibility[] = [
       "auto",
-      "visible",
       "hidden",
+      "visible",
     ];
 
     const barWidthValues: BarWidth[] = [
@@ -243,10 +243,10 @@ export class MangaViewerPreference {
         this.paginationVisibility = "auto";
       } else if (idx === 1) {
         // horizontal
-        this.paginationVisibility = "visible";
+        this.paginationVisibility = "hidden";
       } else if (idx === 2) {
         // vertical
-        this.paginationVisibility = "hidden";
+        this.paginationVisibility = "visible";
       }
 
       itemEls.forEach(el => el.style.order = "");
