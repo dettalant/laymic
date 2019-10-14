@@ -1,5 +1,6 @@
 export declare type MangaViewerPages = (string | HTMLElement)[];
 export declare type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
+export declare type UIVisibility = "auto" | "visible" | "hidden";
 export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
@@ -74,6 +75,7 @@ export interface PreferenceData {
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
+    paginationVisibility: UIVisibility;
 }
 export declare type PreferenceButtons = {
     [P in keyof PreferenceData]: HTMLButtonElement;

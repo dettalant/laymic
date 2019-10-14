@@ -8724,11 +8724,6 @@ var mangaViewer = (function () {
           const preferenceBtnClass = "mangaViewer_preferenceButton";
           const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
           const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
-          // const uiVisibilityValues = [
-          //   "自動",
-          //   "表示する",
-          //   "表示しない",
-          // ];
           const progressBarWidths = [
               "自動",
               "なし",
@@ -8737,6 +8732,12 @@ var mangaViewer = (function () {
               "太い"
           ];
           const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
+          const uiVisibilityValues = [
+              "自動",
+              "表示する",
+              "表示しない",
+          ];
+          const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, preferenceBtnClass);
           const descriptionEl = builder.createDiv();
           [
               "",
@@ -8749,6 +8750,7 @@ var mangaViewer = (function () {
           });
           [
               progressBarWidth,
+              paginationVisibility,
               isAutoFullscreen,
               isEnableTapSlidePage,
               descriptionEl
@@ -8761,6 +8763,7 @@ var mangaViewer = (function () {
               isAutoFullscreen,
               isEnableTapSlidePage,
               progressBarWidth,
+              paginationVisibility,
           };
           this.stateNames = builder.stateNames;
           // 読み込んだpreference値を各ボタン状態に適用
@@ -8790,11 +8793,20 @@ var mangaViewer = (function () {
           this.savePreferenceData();
           this.dispatchViewerUpdateEvent("progressBarWidth");
       }
+      get paginationVisibility() {
+          return this.data.paginationVisibility;
+      }
+      set paginationVisibility(visibility) {
+          this.data.paginationVisibility = visibility;
+          this.savePreferenceData();
+          this.dispatchViewerUpdateEvent("paginationVisibility");
+      }
       get defaultPreferenceData() {
           return {
               isAutoFullscreen: false,
               isEnableTapSlidePage: false,
               progressBarWidth: "auto",
+              paginationVisibility: "auto",
           };
       }
       savePreferenceData() {
@@ -8845,13 +8857,32 @@ var mangaViewer = (function () {
           const uiVisibilityValues = [
               "auto",
               "visible",
-              "hidden"
+              "hidden",
           ];
-          const pbwIdx = uiVisibilityValues.indexOf(this.progressBarWidth);
-          const pbwItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
-          if (isHTMLElementArray(pbwItemEls) && pbwItemEls[pbwIdx]) {
-              pbwItemEls[pbwIdx].style.order = "-1";
-          }
+          const barWidthValues = [
+              "auto",
+              "none",
+              "tint",
+              "medium",
+              "bold",
+          ];
+          [
+              {
+                  // pagination visibility
+                  els: this.getSelectItemEls(this.buttons.paginationVisibility),
+                  idx: uiVisibilityValues.indexOf(this.paginationVisibility)
+              },
+              {
+                  // progress bar width
+                  els: this.getSelectItemEls(this.buttons.progressBarWidth),
+                  idx: barWidthValues.indexOf(this.progressBarWidth)
+              }
+          ].forEach(obj => {
+              const { els, idx } = obj;
+              if (isHTMLElementArray(els) && els[idx]) {
+                  els[idx].style.order = "-1";
+              }
+          });
       }
       /**
        * 各種ボタンイベントを登録する
@@ -8864,7 +8895,26 @@ var mangaViewer = (function () {
           this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
               this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
           });
-          const uiVisibilityButtonHandler = (e, el, itemEls) => {
+          const paginationVisibilityHandler = (e, el, itemEls) => {
+              if (!(e.target instanceof HTMLElement))
+                  return;
+              const idx = parseInt(e.target.dataset.itemIdx || "", 10);
+              if (idx === 0) {
+                  // auto
+                  this.paginationVisibility = "auto";
+              }
+              else if (idx === 1) {
+                  // horizontal
+                  this.paginationVisibility = "visible";
+              }
+              else if (idx === 2) {
+                  // vertical
+                  this.paginationVisibility = "hidden";
+              }
+              itemEls.forEach(el => el.style.order = "");
+              el.style.order = "-1";
+          };
+          const progressBarWidthHandler = (e, el, itemEls) => {
               if (!(e.target instanceof HTMLElement))
                   return;
               const idx = parseInt(e.target.dataset.itemIdx || "", 10);
@@ -8889,17 +8939,44 @@ var mangaViewer = (function () {
               itemEls.forEach(el => el.style.order = "");
               el.style.order = "-1";
           };
-          const pbvItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
-          if (isHTMLElementArray(pbvItemEls)) {
-              pbvItemEls.forEach((el) => el.addEventListener("click", (e) => {
-                  // 親要素がアクティブな時 === selectButtonが選択された時
-                  // この時だけ処理を動かす
-                  const isActive = this.buttons.progressBarWidth.classList.contains(this.stateNames.active);
-                  if (isActive) {
-                      uiVisibilityButtonHandler(e, el, pbvItemEls);
-                  }
-              }));
-          }
+          // const pbwItemEls = this.getSelectItemEls(this.buttons.progressBarWidth);
+          // if (isHTMLElementArray(pbwItemEls)) {
+          //   pbwItemEls.forEach((el) => el.addEventListener("click", (e) => {
+          //
+          //     const isActive = this.buttons.progressBarWidth.classList.contains(this.stateNames.active)
+          //
+          //     if (isActive) {
+          //       barWidthButtonHandler(e, el, pbwItemEls)
+          //     }
+          //   }));
+          // }
+          // select buttons add event listener
+          [
+              {
+                  el: this.buttons.paginationVisibility,
+                  callback: (e, el, itemEls) => paginationVisibilityHandler(e, el, itemEls)
+              },
+              {
+                  el: this.buttons.progressBarWidth,
+                  callback: (e, el, itemEls) => progressBarWidthHandler(e, el, itemEls)
+              },
+          ].forEach(obj => {
+              const { el: parentEl, callback } = obj;
+              const els = this.getSelectItemEls(parentEl);
+              if (isHTMLElementArray(els)) {
+                  els.forEach(el => el.addEventListener("click", e => {
+                      // 親要素がアクティブな時 === selectButtonが選択された時
+                      // この時だけ処理を動かす
+                      const isActive = parentEl.classList.contains(this.stateNames.active);
+                      if (isActive)
+                          callback(e, el, els);
+                  }));
+              }
+          });
+      }
+      getSelectItemEls(el) {
+          const selectItemClass = "mangaViewer_selectItem";
+          return Array.from(el.getElementsByClassName(selectItemClass) || []);
       }
   }
 
@@ -9325,7 +9402,6 @@ var mangaViewer = (function () {
           ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
           this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e) => {
-              console.log("manga viewer update event");
               if (e.detail === "progressBarWidth") {
                   // progressBarWidth数値を取得する
                   const w = this.getBarWidth(this.preference.progressBarWidth);
@@ -9333,6 +9409,24 @@ var mangaViewer = (function () {
                   // 設定した値を画面に適用する
                   this.cssProgressBarWidthUpdate();
                   this.viewUpdate();
+              }
+              else if (e.detail === "paginationVisibility") {
+                  // ページ送り表示設定
+                  // pagination visibility
+                  const pv = this.preference.paginationVisibility;
+                  // isVisiblePagination
+                  const isVP = this.initOptions.isVisiblePagination;
+                  const isVisible = pv === "visible" || pv !== "hidden" && isVP;
+                  const vpClass = this.stateNames.visiblePagination;
+                  if (isVisible) {
+                      this.el.rootEl.classList.add(vpClass);
+                  }
+                  else {
+                      this.el.rootEl.classList.remove(vpClass);
+                  }
+              }
+              else {
+                  console.log("manga viewer update event");
               }
           }));
       }

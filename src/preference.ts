@@ -1,5 +1,5 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
 const PREFERENCE_KEY = "mangaViewer_preferenceData";
@@ -26,12 +26,6 @@ export class MangaViewerPreference {
 
     const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
 
-    // const uiVisibilityValues = [
-    //   "自動",
-    //   "表示する",
-    //   "表示しない",
-    // ];
-
     const progressBarWidths = [
       "自動",
       "なし",
@@ -41,6 +35,14 @@ export class MangaViewerPreference {
     ]
 
     const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
+
+    const uiVisibilityValues = [
+      "自動",
+      "表示する",
+      "表示しない",
+    ];
+
+    const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, preferenceBtnClass);
 
     const descriptionEl = builder.createDiv();
     [
@@ -55,6 +57,7 @@ export class MangaViewerPreference {
 
     [
       progressBarWidth,
+      paginationVisibility,
       isAutoFullscreen,
       isEnableTapSlidePage,
       descriptionEl
@@ -68,6 +71,7 @@ export class MangaViewerPreference {
       isAutoFullscreen,
       isEnableTapSlidePage,
       progressBarWidth,
+      paginationVisibility,
     };
     this.stateNames = builder.stateNames;
 
@@ -106,11 +110,22 @@ export class MangaViewerPreference {
     this.dispatchViewerUpdateEvent("progressBarWidth");
   }
 
+  get paginationVisibility(): UIVisibility {
+    return this.data.paginationVisibility;
+  }
+
+  set paginationVisibility(visibility: UIVisibility) {
+    this.data.paginationVisibility = visibility;
+    this.savePreferenceData();
+    this.dispatchViewerUpdateEvent("paginationVisibility");
+  }
+
   private get defaultPreferenceData(): PreferenceData {
     return {
       isAutoFullscreen: false,
       isEnableTapSlidePage: false,
       progressBarWidth: "auto",
+      paginationVisibility: "auto",
     }
   }
 
@@ -172,17 +187,37 @@ export class MangaViewerPreference {
       isEnableTapSlidePage.classList.remove(active);
     }
 
-    const uiVisibilityValues = [
+    const uiVisibilityValues: UIVisibility[] = [
       "auto",
       "visible",
-      "hidden"
+      "hidden",
     ];
 
-    const pbwIdx = uiVisibilityValues.indexOf(this.progressBarWidth);
-    const pbwItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
-    if (isHTMLElementArray(pbwItemEls) && pbwItemEls[pbwIdx]) {
-      pbwItemEls[pbwIdx].style.order = "-1";
-    }
+    const barWidthValues: BarWidth[] = [
+      "auto",
+      "none",
+      "tint",
+      "medium",
+      "bold",
+    ];
+
+    [
+      {
+        // pagination visibility
+        els: this.getSelectItemEls(this.buttons.paginationVisibility),
+        idx: uiVisibilityValues.indexOf(this.paginationVisibility)
+      },
+      {
+        // progress bar width
+        els: this.getSelectItemEls(this.buttons.progressBarWidth),
+        idx: barWidthValues.indexOf(this.progressBarWidth)
+      }
+    ].forEach(obj => {
+      const {els, idx} = obj;
+      if (isHTMLElementArray(els) && els[idx]) {
+        els[idx].style.order = "-1";
+      }
+    })
   }
 
   /**
@@ -198,7 +233,28 @@ export class MangaViewerPreference {
       this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
     });
 
-    const uiVisibilityButtonHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
+    const paginationVisibilityHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
+      if (!(e.target instanceof HTMLElement)) return;
+
+      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
+
+      if (idx === 0) {
+        // auto
+        this.paginationVisibility = "auto";
+      } else if (idx === 1) {
+        // horizontal
+        this.paginationVisibility = "visible";
+      } else if (idx === 2) {
+        // vertical
+        this.paginationVisibility = "hidden";
+      }
+
+      itemEls.forEach(el => el.style.order = "");
+
+      el.style.order = "-1";
+    }
+
+    const progressBarWidthHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
       if (!(e.target instanceof HTMLElement)) return;
 
       const idx = parseInt(e.target.dataset.itemIdx || "", 10);
@@ -223,17 +279,37 @@ export class MangaViewerPreference {
       el.style.order = "-1";
     }
 
-    const pbvItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
-    if (isHTMLElementArray(pbvItemEls)) {
-      pbvItemEls.forEach((el) => el.addEventListener("click", (e) => {
-        // 親要素がアクティブな時 === selectButtonが選択された時
-        // この時だけ処理を動かす
-        const isActive = this.buttons.progressBarWidth.classList.contains(this.stateNames.active)
+    // 各種selectButton要素のイベントリスナーを登録
+    [
+      {
+        el: this.buttons.paginationVisibility,
+        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => paginationVisibilityHandler(e, el, itemEls)
+      },
+      {
+        el: this.buttons.progressBarWidth,
+        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => progressBarWidthHandler(e, el, itemEls)
+      },
+    ].forEach(obj => {
+      const {el: parentEl, callback} = obj;
+      const els = this.getSelectItemEls(parentEl);
+      if (isHTMLElementArray(els)) {
+        els.forEach(el => el.addEventListener("click", e => {
+          // 親要素がアクティブな時 === selectButtonが選択された時
+          // この時だけ処理を動かす
+          const isActive = parentEl.classList.contains(this.stateNames.active);
+          if (isActive) callback(e, el, els);
+        }));
+      }
+    })
+  }
 
-        if (isActive) {
-          uiVisibilityButtonHandler(e, el, pbvItemEls)
-        }
-      }));
-    }
+  /**
+   * 入力した要素内部にあるselectItem要素を配列として返す
+   * @param  el selectButtonを想定した引数
+   * @return    クラス名で抽出したElement配列
+   */
+  private getSelectItemEls(el: HTMLElement): Element[] {
+    const selectItemClass = "mangaViewer_selectItem";
+    return Array.from(el.getElementsByClassName(selectItemClass) || [])
   }
 }

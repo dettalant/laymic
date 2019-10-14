@@ -1,5 +1,5 @@
 import { ViewerDOMBuilder } from "#/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
 export declare class MangaViewerPreference {
     rootEl: HTMLElement;
     el: HTMLElement;
@@ -11,6 +11,7 @@ export declare class MangaViewerPreference {
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
+    paginationVisibility: UIVisibility;
     private readonly defaultPreferenceData;
     private savePreferenceData;
     private dispatchViewerUpdateEvent;
@@ -28,4 +29,5 @@ export declare class MangaViewerPreference {
      * インスタンス生成時に一度だけ呼び出される
      */
     private applyButtonEventListeners;
+    private getSelectItemEls;
 }

@@ -422,7 +422,6 @@ export default class MangaViewer {
 
     // カスタムイベント登録
     this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e: CustomEvent<string>) => {
-      console.log("manga viewer update event");
       if (e.detail === "progressBarWidth") {
         // progressBarWidth数値を取得する
         const w = this.getBarWidth(this.preference.progressBarWidth);
@@ -430,6 +429,22 @@ export default class MangaViewer {
         // 設定した値を画面に適用する
         this.cssProgressBarWidthUpdate();
         this.viewUpdate();
+      } else if (e.detail === "paginationVisibility") {
+        // ページ送り表示設定
+        // pagination visibility
+        const pv = this.preference.paginationVisibility;
+        // isVisiblePagination
+        const isVP = this.initOptions.isVisiblePagination;
+        const isVisible = pv === "visible" || pv !== "hidden" && isVP;
+        const vpClass = this.stateNames.visiblePagination;
+
+        if (isVisible) {
+          this.el.rootEl.classList.add(vpClass);
+        } else {
+          this.el.rootEl.classList.remove(vpClass);
+        }
+      } else {
+        console.log("manga viewer update event");
       }
     }) as EventListener)
   }

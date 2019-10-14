@@ -1,6 +1,7 @@
 export type MangaViewerPages = (string | HTMLElement)[];
 
 export type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
+export type UIVisibility = "auto" | "visible" | "hidden";
 
 export interface MangaViewerOptions {
   // ページ横幅
@@ -107,13 +108,11 @@ export interface MangaViewerStates {
   isMobile: boolean,
 }
 
-// export type UIVisibility = "auto" | "visible" | "hidden";
-
 export interface PreferenceData {
   isAutoFullscreen: boolean,
   isEnableTapSlidePage: boolean,
   progressBarWidth: BarWidth,
-  // progressBarVisibility: UIVisibility
+  paginationVisibility: UIVisibility
 }
 
 export type PreferenceButtons = {
