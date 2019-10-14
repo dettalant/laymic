@@ -9265,6 +9265,12 @@ class MangaViewer {
         this.el.buttons.close.addEventListener("click", () => {
             this.close();
         });
+        this.el.buttons.nextPage.addEventListener("click", () => {
+            this.swiper.slideNext();
+        });
+        this.el.buttons.prevPage.addEventListener("click", () => {
+            this.swiper.slidePrev();
+        });
         // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
         [
             this.el.swiperEl,
