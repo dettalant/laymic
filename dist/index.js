@@ -8369,10 +8369,12 @@ class ViewerDOMBuilder {
     get defaultStateClassNames() {
         return {
             active: "is_active",
+            hidden: "is_hidden",
             showThumbs: "is_showThumbs",
             showPreference: "is_showPreference",
             vertView: "is_vertView",
             visibleUI: "is_visibleUI",
+            visiblePagination: "is_visiblePagination",
             fullscreen: "is_fullscreen",
             ltr: "is_ltr",
         };
@@ -8513,8 +8515,9 @@ class ViewerDOMBuilder {
     }
     /**
      * 漫画ビューワーコントローラー要素を返す
-     * @param  id 要素のid名となる文字列
-     * @return    [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
+     * @param  id    要素のid名となる文字列
+     * @param  isLTR 左から右に流れる形式を取るならtrue
+     * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
      */
     createViewerController(id) {
         const ctrlEl = this.createDiv();
@@ -8524,44 +8527,48 @@ class ViewerDOMBuilder {
         progressEl.className = "swiper-pagination mangaViewer_progressbar";
         const ctrlTopEl = this.createDiv();
         ctrlTopEl.className = "mangaViewer_controller_top";
-        const directionBtn = this.createButton();
-        directionBtn.classList.add("mangaViewer_direction");
+        const direction = this.createButton();
+        direction.classList.add("mangaViewer_direction");
         [
             this.createSvgUseElement(this.icons.vertView),
             this.createSvgUseElement(this.icons.horizView),
-        ].forEach(icon => directionBtn.appendChild(icon));
-        const fullscreenBtn = this.createButton();
+        ].forEach(icon => direction.appendChild(icon));
+        const fullscreen = this.createButton();
         [
             this.createSvgUseElement(this.icons.fullscreen),
             this.createSvgUseElement(this.icons.exitFullscreen),
-        ].forEach(icon => fullscreenBtn.appendChild(icon));
-        fullscreenBtn.classList.add("mangaViewer_fullscreen");
-        const thumbsBtn = this.createButton();
+        ].forEach(icon => fullscreen.appendChild(icon));
+        fullscreen.classList.add("mangaViewer_fullscreen");
+        const thumbs = this.createButton();
         [
             this.createSvgUseElement(this.icons.showThumbs),
-        ].forEach(icon => thumbsBtn.appendChild(icon));
-        thumbsBtn.classList.add("mangaViewer_showThumbs");
-        const preferenceBtn = this.createButton();
-        preferenceBtn.classList.add("mangaViewer_showPreference");
+        ].forEach(icon => thumbs.appendChild(icon));
+        thumbs.classList.add("mangaViewer_showThumbs");
+        const preference = this.createButton();
+        preference.classList.add("mangaViewer_showPreference");
         const preferenceIcon = this.createSvgUseElement(this.icons.preference);
-        preferenceBtn.appendChild(preferenceIcon);
-        const closeBtn = this.createButton();
-        closeBtn.classList.add("mangaViewer_close");
+        preference.appendChild(preferenceIcon);
+        const close = this.createButton();
+        close.classList.add("mangaViewer_close");
         const closeIcon = this.createSvgUseElement(this.icons.close);
-        closeBtn.appendChild(closeIcon);
+        close.appendChild(closeIcon);
         [
-            directionBtn,
-            thumbsBtn,
-            fullscreenBtn,
-            preferenceBtn,
-            closeBtn
+            direction,
+            thumbs,
+            fullscreen,
+            preference,
+            close
         ].forEach(btn => ctrlTopEl.appendChild(btn));
+        const nextPage = this.createButton("mangaViewer_pagination swiper-button-next");
+        const prevPage = this.createButton("mangaViewer_pagination swiper-button-prev");
         const uiButtons = {
-            close: closeBtn,
-            thumbs: thumbsBtn,
-            fullscreen: fullscreenBtn,
-            preference: preferenceBtn,
-            direction: directionBtn,
+            close,
+            thumbs,
+            fullscreen,
+            preference,
+            direction,
+            nextPage,
+            prevPage
         };
         const ctrlBottomEl = this.createDiv();
         ctrlBottomEl.className = "mangaViewer_controller_bottom";
@@ -8569,6 +8576,8 @@ class ViewerDOMBuilder {
             ctrlTopEl,
             ctrlBottomEl,
             progressEl,
+            nextPage,
+            prevPage,
         ].forEach(el => ctrlEl.appendChild(el));
         return [ctrlEl, uiButtons];
     }
@@ -8714,12 +8723,19 @@ class MangaViewerPreference {
         const preferenceBtnClass = "mangaViewer_preferenceButton";
         const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
         const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
-        const uiVisibilityValues = [
+        // const uiVisibilityValues = [
+        //   "自動",
+        //   "表示する",
+        //   "表示しない",
+        // ];
+        const progressBarWidths = [
             "自動",
-            "表示する",
-            "表示しない",
+            "なし",
+            "細い",
+            "普通",
+            "太い"
         ];
-        const progressBarVisibility = builder.createSelectButton("進捗バー表示設定", uiVisibilityValues, preferenceBtnClass);
+        const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
         const descriptionEl = builder.createDiv();
         [
             "",
@@ -8731,9 +8747,9 @@ class MangaViewerPreference {
             descriptionEl.appendChild(p);
         });
         [
+            progressBarWidth,
             isAutoFullscreen,
             isEnableTapSlidePage,
-            progressBarVisibility,
             descriptionEl
         ].forEach(el => wrapperEl.appendChild(el));
         containerEl.appendChild(wrapperEl);
@@ -8743,7 +8759,7 @@ class MangaViewerPreference {
         this.buttons = {
             isAutoFullscreen,
             isEnableTapSlidePage,
-            progressBarVisibility,
+            progressBarWidth,
         };
         this.stateNames = builder.stateNames;
         // 読み込んだpreference値を各ボタン状態に適用
@@ -8765,19 +8781,19 @@ class MangaViewerPreference {
         this.data.isEnableTapSlidePage = bool;
         this.savePreferenceData();
     }
-    get progressBarVisibility() {
-        return this.data.progressBarVisibility;
+    get progressBarWidth() {
+        return this.data.progressBarWidth;
     }
-    set progressBarVisibility(visibility) {
-        this.data.progressBarVisibility = visibility;
+    set progressBarWidth(Width) {
+        this.data.progressBarWidth = Width;
         this.savePreferenceData();
-        this.dispatchViewerUpdateEvent("progressBarVisibility");
+        this.dispatchViewerUpdateEvent("progressBarWidth");
     }
     get defaultPreferenceData() {
         return {
             isAutoFullscreen: false,
             isEnableTapSlidePage: false,
-            progressBarVisibility: "auto",
+            progressBarWidth: "auto",
         };
     }
     savePreferenceData() {
@@ -8830,10 +8846,10 @@ class MangaViewerPreference {
             "visible",
             "hidden"
         ];
-        const pbvIdx = uiVisibilityValues.indexOf(this.progressBarVisibility);
-        const pbvItemEls = Array.from(this.buttons.progressBarVisibility.getElementsByClassName("mangaViewer_selectItem") || []);
-        if (isHTMLElementArray(pbvItemEls) && pbvItemEls[pbvIdx]) {
-            pbvItemEls[pbvIdx].style.order = "-1";
+        const pbwIdx = uiVisibilityValues.indexOf(this.progressBarWidth);
+        const pbwItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
+        if (isHTMLElementArray(pbwItemEls) && pbwItemEls[pbwIdx]) {
+            pbwItemEls[pbwIdx].style.order = "-1";
         }
     }
     /**
@@ -8853,25 +8869,31 @@ class MangaViewerPreference {
             const idx = parseInt(e.target.dataset.itemIdx || "", 10);
             if (idx === 0) {
                 // auto
-                this.progressBarVisibility = "auto";
+                this.progressBarWidth = "auto";
             }
             else if (idx === 1) {
                 // horizontal
-                this.progressBarVisibility = "visible";
+                this.progressBarWidth = "none";
             }
             else if (idx === 2) {
                 // vertical
-                this.progressBarVisibility = "hidden";
+                this.progressBarWidth = "tint";
+            }
+            else if (idx === 3) {
+                this.progressBarWidth = "medium";
+            }
+            else if (idx === 4) {
+                this.progressBarWidth = "bold";
             }
             itemEls.forEach(el => el.style.order = "");
             el.style.order = "-1";
         };
-        const pbvItemEls = Array.from(this.buttons.progressBarVisibility.getElementsByClassName("mangaViewer_selectItem") || []);
+        const pbvItemEls = Array.from(this.buttons.progressBarWidth.getElementsByClassName("mangaViewer_selectItem") || []);
         if (isHTMLElementArray(pbvItemEls)) {
             pbvItemEls.forEach((el) => el.addEventListener("click", (e) => {
                 // 親要素がアクティブな時 === selectButtonが選択された時
                 // この時だけ処理を動かす
-                const isActive = this.buttons.progressBarVisibility.classList.contains(this.stateNames.active);
+                const isActive = this.buttons.progressBarWidth.classList.contains(this.stateNames.active);
                 if (isActive) {
                     uiVisibilityButtonHandler(e, el, pbvItemEls);
                 }
@@ -9027,12 +9049,13 @@ class MangaViewer {
             this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
         if (options.viewerPadding !== void 0)
             this.state.viewerPadding = options.viewerPadding;
-        if (options.progressBarWidth !== void 0)
-            this.state.progressBarWidth = options.progressBarWidth;
-        if (options.isDisableProgressBar
-            && this.preference.progressBarVisibility !== "visible"
-            || this.preference.progressBarVisibility === "hidden") {
-            this.state.progressBarWidth = 0;
+        if (options.isVisiblePagination)
+            rootEl.classList.add(this.stateNames.visiblePagination);
+        if (this.preference.progressBarWidth !== "auto") {
+            this.state.progressBarWidth = this.getBarWidth(this.preference.progressBarWidth);
+        }
+        else if (typeof options.progressBarWidth === "string" && options.progressBarWidth !== "auto") {
+            this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
         }
         this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
         rootEl.style.display = "none";
@@ -9127,7 +9150,7 @@ class MangaViewer {
             isFirstSlideEmpty: false,
             vertPageMargin: 10,
             horizPageMargin: 0,
-            progressBarWidth: 6,
+            progressBarWidth: this.getBarWidth(),
             thumbItemWidth: 96,
             thumbItemGap: 16,
             thumbsWrapperPadding: 16,
@@ -9142,8 +9165,12 @@ class MangaViewer {
             slidesPerGroup: 2,
             spaceBetween: this.state.horizPageMargin,
             on: {
+                reachBeginning: () => this.changePaginationVisibility(),
                 resize: () => this.viewUpdate(),
-                slideChange: () => this.hideViewerUI(),
+                slideChange: () => {
+                    this.hideViewerUI();
+                    this.changePaginationVisibility();
+                },
             },
             pagination: {
                 el: ".swiper-pagination",
@@ -9169,8 +9196,12 @@ class MangaViewer {
             freeModeMomentumVelocityRatio: 1,
             freeModeMinimumVelocity: 0.02,
             on: {
+                reachBeginning: () => this.changePaginationVisibility(),
                 resize: () => this.viewUpdate(),
-                slideChange: () => this.hideViewerUI(),
+                slideChange: () => {
+                    this.hideViewerUI();
+                    this.changePaginationVisibility();
+                },
             },
             pagination: {
                 el: ".swiper-pagination",
@@ -9252,6 +9283,9 @@ class MangaViewer {
                     this.toggleViewerUI();
                 }
             });
+            el.addEventListener("mousemove", rafThrottle((e) => {
+                this.slideMouseHoverHandler(e);
+            }));
             // マウスホイールでのイベント
             // swiper純正のマウスホイール処理は動作がすっとろいので自作
             el.addEventListener("wheel", rafThrottle((e) => {
@@ -9285,14 +9319,9 @@ class MangaViewer {
         // カスタムイベント登録
         this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e) => {
             console.log("manga viewer update event");
-            if (e.detail === "progressBarVisibility") {
-                // 特定条件の場合にはprogressBarWidthを0にする
-                // これが0であると非表示状態になる
-                const w = (this.preference.progressBarVisibility === "hidden"
-                    || this.preference.progressBarVisibility !== "visible"
-                        && this.initOptions.isDisableProgressBar)
-                    ? 0
-                    : 6;
+            if (e.detail === "progressBarWidth") {
+                // progressBarWidth数値を取得する
+                const w = this.getBarWidth(this.preference.progressBarWidth);
                 this.state.progressBarWidth = w;
                 // 設定した値を画面に適用する
                 this.cssProgressBarWidthUpdate();
@@ -9388,15 +9417,17 @@ class MangaViewer {
         this.viewUpdate();
     }
     /**
-     * mangaViewer画面をクリックした際のイベントハンドラ
+     * 入力したMouseEventが
+     * mangaViewer画面のクリックポイントに重なっているかを返す
      *
      * 横読み時   : 左側クリックで進む、右側クリックで戻る
      * 横読みLTR時: 右側クリックで進む、左側クリックで戻る
      * 縦読み時   : 下側クリックで進む、上側クリックで戻る
      *
-     * @param  e pointer-up event
+     * @param  e mouse event
+     * @return   [次に進むクリックポイントに重なっているか, 前に戻るクリックポイントに重なっているか]
      */
-    slideClickHandler(e) {
+    getClickPoint(e) {
         const { l, t, w, h } = this.state.swiperRect;
         const [x, y] = [e.pageX - l, e.pageY - t];
         let [isNextClick, isPrevClick] = [false, false];
@@ -9415,6 +9446,17 @@ class MangaViewer {
             isNextClick = x < w * 0.20;
             isPrevClick = x > w * 0.80;
         }
+        return [isNextClick, isPrevClick];
+    }
+    /**
+     * mangaViewer画面をクリックした際のイベントハンドラ
+     *
+     * クリック判定基準についてはgetClickPoint()を参照のこと
+     *
+     * @param  e  mouse event
+     */
+    slideClickHandler(e) {
+        const [isNextClick, isPrevClick] = this.getClickPoint(e);
         if (isNextClick && !this.swiper.isEnd) {
             // 進めるページがある状態で進む側をクリックした際の処理
             this.swiper.slideNext();
@@ -9432,6 +9474,54 @@ class MangaViewer {
         }
         else {
             this.toggleViewerUI();
+        }
+    }
+    /**
+     * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
+     * @param  e  mouse event
+     */
+    slideMouseHoverHandler(e) {
+        const [isNextClick, isPrevClick] = this.getClickPoint(e);
+        const { nextPage, prevPage } = this.el.buttons;
+        const active = this.stateNames.active;
+        const { controllerEl, swiperEl } = this.el;
+        const setCursorStyle = (isPointer) => {
+            const cursor = (isPointer) ? "pointer" : "";
+            controllerEl.style.cursor = cursor;
+            swiperEl.style.cursor = cursor;
+        };
+        if (isNextClick && !this.swiper.isEnd) {
+            // 進めるページがある状態で進む側クリックポイントと重なった際の処理
+            nextPage.classList.add(active);
+            setCursorStyle(true);
+        }
+        else if (isPrevClick && !this.swiper.isBeginning) {
+            // 戻れるページがある状態で戻る側クリックポイントと重なった際の処理
+            prevPage.classList.add(active);
+            setCursorStyle(true);
+        }
+        else {
+            // どちらでもない場合の処理
+            nextPage.classList.contains(active) && nextPage.classList.remove(active);
+            prevPage.classList.contains(active) && prevPage.classList.remove(active);
+            setCursorStyle(false);
+        }
+    }
+    changePaginationVisibility() {
+        const hidden = this.stateNames.hidden;
+        const { prevPage, nextPage } = this.el.buttons;
+        const { isBeginning, isEnd } = this.swiper;
+        if (isBeginning) {
+            prevPage.classList.add(hidden);
+        }
+        else {
+            prevPage.classList.remove(hidden);
+        }
+        if (isEnd) {
+            nextPage.classList.add(hidden);
+        }
+        else {
+            nextPage.classList.remove(hidden);
         }
     }
     toggleViewerUI() {
@@ -9571,6 +9661,24 @@ class MangaViewer {
             // もしここでエラーが起きても問題ないので握りつぶす
             this.viewUpdate();
         }).catch(e => console.error(e));
+    }
+    /**
+     * BarWidthの値から進捗バー幅数値を取得する
+     * @param  widthStr BarWidth値
+     * @return          対応する数値
+     */
+    getBarWidth(widthStr = "auto") {
+        let width = 8;
+        if (widthStr === "none") {
+            width = 0;
+        }
+        else if (widthStr === "tint") {
+            width = 4;
+        }
+        else if (widthStr === "bold") {
+            width = 12;
+        }
+        return width;
     }
 }
 

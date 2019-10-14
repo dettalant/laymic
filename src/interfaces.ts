@@ -1,5 +1,7 @@
 export type MangaViewerPages = (string | HTMLElement)[];
 
+export type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
+
 export interface MangaViewerOptions {
   // ページ横幅
   pageWidth?: number,
@@ -7,9 +9,8 @@ export interface MangaViewerOptions {
   pageHeight?: number,
   // 左から右へと流れる形式で初期化する
   isLTR?: boolean,
-  // サムネイル機能を無効にする
-  // NOTE: 現在未使用
-  isDisableThumbs?: boolean,
+  // 戻る進むボタンを表示する
+  isVisiblePagination?: boolean,
   // 横読み時一ページ目を空白として空ける
   // 表紙ページを単独表示することを想定
   isFirstSlideEmpty?: boolean,
@@ -21,11 +22,10 @@ export interface MangaViewerOptions {
   horizPageMargin?: number,
   // swiper-container周囲の余白ピクセル数値
   viewerPadding?: number,
-  progressBarWidth?: number,
+  progressBarWidth?: BarWidth,
   // ビューワーで読み進める方向のデフォルト値
   // ユーザー設定がなされていればそちらを優先
   viewerDirection?: "vertical" | "horizontal",
-  isDisableProgressBar?: boolean,
 }
 
 export interface PageSize {
@@ -83,6 +83,8 @@ export interface MangaViewerUIButtons {
   thumbs: HTMLButtonElement,
   // direction change button
   direction: HTMLButtonElement,
+  nextPage: HTMLButtonElement,
+  prevPage: HTMLButtonElement,
 }
 
 // mangaViewer内部で用いるステートまとめ
@@ -105,12 +107,13 @@ export interface MangaViewerStates {
   isMobile: boolean,
 }
 
-export type UIVisibility = "auto" | "visible" | "hidden";
+// export type UIVisibility = "auto" | "visible" | "hidden";
 
 export interface PreferenceData {
   isAutoFullscreen: boolean,
   isEnableTapSlidePage: boolean,
-  progressBarVisibility: UIVisibility
+  progressBarWidth: BarWidth,
+  // progressBarVisibility: UIVisibility
 }
 
 export type PreferenceButtons = {
@@ -119,10 +122,12 @@ export type PreferenceButtons = {
 
 export interface StateClassNames {
   active: string,
+  hidden: string,
   showPreference: string,
   showThumbs: string,
   fullscreen: string,
   visibleUI: string,
+  visiblePagination: string,
   vertView: string,
   ltr: string,
 }

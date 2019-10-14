@@ -1,17 +1,17 @@
 export declare type MangaViewerPages = (string | HTMLElement)[];
+export declare type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
 export interface MangaViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
     isLTR?: boolean;
-    isDisableThumbs?: boolean;
+    isVisiblePagination?: boolean;
     isFirstSlideEmpty?: boolean;
     icons?: MangaViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
     viewerPadding?: number;
-    progressBarWidth?: number;
+    progressBarWidth?: BarWidth;
     viewerDirection?: "vertical" | "horizontal";
-    isDisableProgressBar?: boolean;
 }
 export interface PageSize {
     w: number;
@@ -50,6 +50,8 @@ export interface MangaViewerUIButtons {
     preference: HTMLButtonElement;
     thumbs: HTMLButtonElement;
     direction: HTMLButtonElement;
+    nextPage: HTMLButtonElement;
+    prevPage: HTMLButtonElement;
 }
 export interface MangaViewerStates {
     viewerId: number;
@@ -68,21 +70,22 @@ export interface MangaViewerStates {
     thumbsWrapperPadding: number;
     isMobile: boolean;
 }
-export declare type UIVisibility = "auto" | "visible" | "hidden";
 export interface PreferenceData {
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
-    progressBarVisibility: UIVisibility;
+    progressBarWidth: BarWidth;
 }
 export declare type PreferenceButtons = {
     [P in keyof PreferenceData]: HTMLButtonElement;
 };
 export interface StateClassNames {
     active: string;
+    hidden: string;
     showPreference: string;
     showThumbs: string;
     fullscreen: string;
     visibleUI: string;
+    visiblePagination: string;
     vertView: string;
     ltr: string;
 }

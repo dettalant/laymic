@@ -21,8 +21,9 @@ export declare class ViewerDOMBuilder {
     createSwiperContainer(id: string, className: string, pages: (string | HTMLElement)[], isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement;
     /**
      * 漫画ビューワーコントローラー要素を返す
-     * @param  id 要素のid名となる文字列
-     * @return    [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
+     * @param  id    要素のid名となる文字列
+     * @param  isLTR 左から右に流れる形式を取るならtrue
+     * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
      */
     createViewerController(id: string): [HTMLElement, MangaViewerUIButtons];
     /**

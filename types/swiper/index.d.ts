@@ -1388,6 +1388,8 @@ export default class Swiper {
      */
     destroy(deleteInstance: boolean, cleanupStyles: boolean): void;
 
+    init(): void;
+
     /**
      * Set it to false (by default it is true) to not to delete Swiper instance
      */

@@ -24,10 +24,12 @@ export class ViewerDOMBuilder {
   private get defaultStateClassNames(): StateClassNames {
     return {
       active: "is_active",
+      hidden: "is_hidden",
       showThumbs: "is_showThumbs",
       showPreference: "is_showPreference",
       vertView: "is_vertView",
       visibleUI: "is_visibleUI",
+      visiblePagination: "is_visiblePagination",
       fullscreen: "is_fullscreen",
       ltr: "is_ltr",
     }
@@ -178,15 +180,16 @@ export class ViewerDOMBuilder {
 
       wrapperEl.appendChild(divEl);
     }
-
     swiperEl.appendChild(wrapperEl);
+
     return swiperEl;
   }
 
   /**
    * 漫画ビューワーコントローラー要素を返す
-   * @param  id 要素のid名となる文字列
-   * @return    [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
+   * @param  id    要素のid名となる文字列
+   * @param  isLTR 左から右に流れる形式を取るならtrue
+   * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
   createViewerController(id: string): [HTMLElement, MangaViewerUIButtons] {
     const ctrlEl = this.createDiv();
@@ -199,50 +202,55 @@ export class ViewerDOMBuilder {
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = "mangaViewer_controller_top";
 
-    const directionBtn = this.createButton();
-    directionBtn.classList.add("mangaViewer_direction");
+    const direction = this.createButton();
+    direction.classList.add("mangaViewer_direction");
     [
       this.createSvgUseElement(this.icons.vertView),
       this.createSvgUseElement(this.icons.horizView),
-    ].forEach(icon => directionBtn.appendChild(icon))
+    ].forEach(icon => direction.appendChild(icon))
 
-    const fullscreenBtn = this.createButton();
+    const fullscreen = this.createButton();
     [
       this.createSvgUseElement(this.icons.fullscreen),
       this.createSvgUseElement(this.icons.exitFullscreen),
-    ].forEach(icon => fullscreenBtn.appendChild(icon));
-    fullscreenBtn.classList.add("mangaViewer_fullscreen");
+    ].forEach(icon => fullscreen.appendChild(icon));
+    fullscreen.classList.add("mangaViewer_fullscreen");
 
-    const thumbsBtn = this.createButton();
+    const thumbs = this.createButton();
     [
       this.createSvgUseElement(this.icons.showThumbs),
-    ].forEach(icon => thumbsBtn.appendChild(icon));
-    thumbsBtn.classList.add("mangaViewer_showThumbs");
+    ].forEach(icon => thumbs.appendChild(icon));
+    thumbs.classList.add("mangaViewer_showThumbs");
 
-    const preferenceBtn = this.createButton();
-    preferenceBtn.classList.add("mangaViewer_showPreference");
+    const preference = this.createButton();
+    preference.classList.add("mangaViewer_showPreference");
     const preferenceIcon = this.createSvgUseElement(this.icons.preference);
-    preferenceBtn.appendChild(preferenceIcon);
+    preference.appendChild(preferenceIcon);
 
-    const closeBtn = this.createButton();
-    closeBtn.classList.add("mangaViewer_close");
+    const close = this.createButton();
+    close.classList.add("mangaViewer_close");
     const closeIcon = this.createSvgUseElement(this.icons.close);
-    closeBtn.appendChild(closeIcon);
+    close.appendChild(closeIcon);
 
     [
-      directionBtn,
-      thumbsBtn,
-      fullscreenBtn,
-      preferenceBtn,
-      closeBtn
+      direction,
+      thumbs,
+      fullscreen,
+      preference,
+      close
     ].forEach(btn => ctrlTopEl.appendChild(btn));
 
+    const nextPage = this.createButton("mangaViewer_pagination swiper-button-next");
+    const prevPage = this.createButton("mangaViewer_pagination swiper-button-prev");
+
     const uiButtons: MangaViewerUIButtons = {
-      close: closeBtn,
-      thumbs: thumbsBtn,
-      fullscreen: fullscreenBtn,
-      preference: preferenceBtn,
-      direction: directionBtn,
+      close,
+      thumbs,
+      fullscreen,
+      preference,
+      direction,
+      nextPage,
+      prevPage
     }
 
     const ctrlBottomEl = this.createDiv();
@@ -252,6 +260,8 @@ export class ViewerDOMBuilder {
       ctrlTopEl,
       ctrlBottomEl,
       progressEl,
+      nextPage,
+      prevPage,
     ].forEach(el => ctrlEl.appendChild(el));
 
     return [ctrlEl, uiButtons]

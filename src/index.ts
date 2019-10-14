@@ -18,6 +18,7 @@ import {
   MangaViewerStates,
   PageRect,
   StateClassNames,
+  BarWidth
 } from "./interfaces";
 
 export default class MangaViewer {
@@ -101,12 +102,12 @@ export default class MangaViewer {
     if (options.horizPageMargin !== void 0) this.state.horizPageMargin = options.horizPageMargin;
     if (options.isFirstSlideEmpty !== void 0) this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
     if (options.viewerPadding !== void 0) this.state.viewerPadding = options.viewerPadding;
-    if (options.progressBarWidth !== void 0) this.state.progressBarWidth = options.progressBarWidth;
-    if (options.isDisableProgressBar
-      && this.preference.progressBarVisibility !== "visible"
-      || this.preference.progressBarVisibility === "hidden")
-    {
-      this.state.progressBarWidth = 0;
+    if (options.isVisiblePagination) rootEl.classList.add(this.stateNames.visiblePagination);
+
+    if (this.preference.progressBarWidth !== "auto") {
+      this.state.progressBarWidth = this.getBarWidth(this.preference.progressBarWidth);
+    } else if (typeof options.progressBarWidth === "string" && options.progressBarWidth !== "auto") {
+      this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
     }
 
     this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
@@ -229,7 +230,7 @@ export default class MangaViewer {
       isFirstSlideEmpty: false,
       vertPageMargin: 10,
       horizPageMargin: 0,
-      progressBarWidth: 6,
+      progressBarWidth: this.getBarWidth(),
       thumbItemWidth: 96,
       thumbItemGap: 16,
       thumbsWrapperPadding: 16,
@@ -245,8 +246,12 @@ export default class MangaViewer {
       spaceBetween: this.state.horizPageMargin,
 
       on: {
+        reachBeginning: () => this.changePaginationVisibility(),
         resize: () => this.viewUpdate(),
-        slideChange: () => this.hideViewerUI(),
+        slideChange: () => {
+          this.hideViewerUI();
+          this.changePaginationVisibility();
+        },
       },
       pagination: {
         el: ".swiper-pagination",
@@ -273,8 +278,12 @@ export default class MangaViewer {
       freeModeMomentumVelocityRatio: 1,
       freeModeMinimumVelocity: 0.02,
       on: {
+        reachBeginning: () => this.changePaginationVisibility(),
         resize: () => this.viewUpdate(),
-        slideChange: () => this.hideViewerUI(),
+        slideChange: () => {
+          this.hideViewerUI();
+          this.changePaginationVisibility();
+        },
       },
       pagination: {
         el: ".swiper-pagination",
@@ -367,6 +376,10 @@ export default class MangaViewer {
         }
       })
 
+      el.addEventListener("mousemove", rafThrottle((e) => {
+        this.slideMouseHoverHandler(e);
+      }))
+
       // マウスホイールでのイベント
       // swiper純正のマウスホイール処理は動作がすっとろいので自作
       el.addEventListener("wheel", rafThrottle((e) => {
@@ -402,15 +415,9 @@ export default class MangaViewer {
     // カスタムイベント登録
     this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e: CustomEvent<string>) => {
       console.log("manga viewer update event");
-      if (e.detail === "progressBarVisibility") {
-        // 特定条件の場合にはprogressBarWidthを0にする
-        // これが0であると非表示状態になる
-        const w = (
-          this.preference.progressBarVisibility === "hidden"
-          || this.preference.progressBarVisibility !== "visible"
-            && this.initOptions.isDisableProgressBar)
-          ? 0
-          : 6;
+      if (e.detail === "progressBarWidth") {
+        // progressBarWidth数値を取得する
+        const w = this.getBarWidth(this.preference.progressBarWidth);
         this.state.progressBarWidth = w;
         // 設定した値を画面に適用する
         this.cssProgressBarWidthUpdate();
@@ -527,17 +534,18 @@ export default class MangaViewer {
 
     this.viewUpdate();
   }
-
   /**
-   * mangaViewer画面をクリックした際のイベントハンドラ
+   * 入力したMouseEventが
+   * mangaViewer画面のクリックポイントに重なっているかを返す
    *
    * 横読み時   : 左側クリックで進む、右側クリックで戻る
    * 横読みLTR時: 右側クリックで進む、左側クリックで戻る
    * 縦読み時   : 下側クリックで進む、上側クリックで戻る
    *
-   * @param  e pointer-up event
+   * @param  e mouse event
+   * @return   [次に進むクリックポイントに重なっているか, 前に戻るクリックポイントに重なっているか]
    */
-  private slideClickHandler(e: MouseEvent) {
+  private getClickPoint(e: MouseEvent): [boolean, boolean] {
     const {l, t, w, h} = this.state.swiperRect;
     const [x, y] = [e.pageX - l, e.pageY - t];
 
@@ -557,6 +565,19 @@ export default class MangaViewer {
       isPrevClick = x > w * 0.80;
     }
 
+    return [isNextClick, isPrevClick];
+  }
+
+  /**
+   * mangaViewer画面をクリックした際のイベントハンドラ
+   *
+   * クリック判定基準についてはgetClickPoint()を参照のこと
+   *
+   * @param  e  mouse event
+   */
+  private slideClickHandler(e: MouseEvent) {
+    const [isNextClick, isPrevClick] = this.getClickPoint(e);
+
     if (isNextClick && !this.swiper.isEnd) {
       // 進めるページがある状態で進む側をクリックした際の処理
       this.swiper.slideNext();
@@ -574,6 +595,56 @@ export default class MangaViewer {
       this.hideViewerUI();
     } else {
       this.toggleViewerUI();
+    }
+  }
+
+  /**
+   * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
+   * @param  e  mouse event
+   */
+  private slideMouseHoverHandler(e: MouseEvent) {
+    const [isNextClick, isPrevClick] = this.getClickPoint(e);
+    const {nextPage, prevPage} = this.el.buttons;
+    const active = this.stateNames.active;
+    const {controllerEl, swiperEl} = this.el;
+
+    const setCursorStyle = (isPointer: boolean) => {
+      const cursor = (isPointer) ? "pointer" : "";
+      controllerEl.style.cursor = cursor
+      swiperEl.style.cursor = cursor;
+    }
+
+    if (isNextClick && !this.swiper.isEnd) {
+      // 進めるページがある状態で進む側クリックポイントと重なった際の処理
+      nextPage.classList.add(active);
+      setCursorStyle(true);
+    } else if (isPrevClick && !this.swiper.isBeginning) {
+      // 戻れるページがある状態で戻る側クリックポイントと重なった際の処理
+      prevPage.classList.add(active);
+      setCursorStyle(true);
+    } else {
+      // どちらでもない場合の処理
+      nextPage.classList.contains(active) && nextPage.classList.remove(active);
+      prevPage.classList.contains(active) && prevPage.classList.remove(active);
+      setCursorStyle(false);
+    }
+  }
+
+  private changePaginationVisibility() {
+    const hidden = this.stateNames.hidden;
+    const {prevPage, nextPage} = this.el.buttons;
+    const {isBeginning, isEnd} = this.swiper;
+
+    if (isBeginning) {
+      prevPage.classList.add(hidden)
+    } else {
+      prevPage.classList.remove(hidden);
+    }
+
+    if (isEnd) {
+      nextPage.classList.add(hidden);
+    } else {
+      nextPage.classList.remove(hidden);
     }
   }
 
@@ -730,5 +801,23 @@ export default class MangaViewer {
       // もしここでエラーが起きても問題ないので握りつぶす
       this.viewUpdate();
     }).catch(e => console.error(e));
+  }
+
+  /**
+   * BarWidthの値から進捗バー幅数値を取得する
+   * @param  widthStr BarWidth値
+   * @return          対応する数値
+   */
+  private getBarWidth(widthStr: BarWidth = "auto") {
+    let width = 8;
+    if (widthStr === "none") {
+      width = 0;
+    } else if (widthStr === "tint") {
+      width = 4;
+    } else if (widthStr === "bold")  {
+      width = 12;
+    }
+
+    return width;
   }
 }
