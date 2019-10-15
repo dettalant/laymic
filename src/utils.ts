@@ -75,10 +75,7 @@ export const isExistTouchEvent = (): boolean => {
 export const rafThrottle = function<T extends Element, E extends Event>(callback: (ev: E) => void) {
   let requestId = 0;
   return function(this: T, ev: E) {
-    if (requestId) {
-      console.log("throttled");
-      return;
-    };
+    if (requestId) return;
     requestId = requestAnimationFrame(() => {
       requestId = 0;
       callback.call(this, ev);
