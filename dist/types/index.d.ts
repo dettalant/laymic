@@ -137,4 +137,5 @@ export default class MangaViewer {
      * @return          対応する数値
      */
     private getBarWidth;
+    private debugFunction;
 }

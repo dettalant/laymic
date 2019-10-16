@@ -27,6 +27,7 @@ export class ViewerDOMBuilder {
       hidden: "is_hidden",
       showThumbs: "is_showThumbs",
       showPreference: "is_showPreference",
+      singleSlide: "is_singleSlide",
       vertView: "is_vertView",
       visibleUI: "is_visibleUI",
       visiblePagination: "is_visiblePagination",

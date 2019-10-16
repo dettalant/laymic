@@ -8370,6 +8370,7 @@ class ViewerDOMBuilder {
             hidden: "is_hidden",
             showThumbs: "is_showThumbs",
             showPreference: "is_showPreference",
+            singleSlide: "is_singleSlide",
             vertView: "is_vertView",
             visibleUI: "is_visibleUI",
             visiblePagination: "is_visiblePagination",
@@ -9153,6 +9154,8 @@ class MangaViewer {
         this.applyEventListeners();
         // 初期化引数を保管
         this.initOptions = options;
+        // DEBUG: デバッグ用の仮関数
+        this.debugFunction();
     }
     /**
      * インスタンスごとに固有のビューワーIDを返す
@@ -9475,12 +9478,12 @@ class MangaViewer {
     }
     switchSingleSlideState() {
         const rootEl = this.el.rootEl;
-        const state = "is_singleSlide";
+        const state = this.stateNames.singleSlide;
         if (this.state.thresholdWidth <= window.innerWidth) {
-            rootEl.classList.contains(state) && rootEl.classList.remove(state);
+            rootEl.classList.remove(state);
         }
         else {
-            !rootEl.classList.contains(state) && rootEl.classList.add(state);
+            rootEl.classList.add(state);
         }
     }
     /**
@@ -9795,6 +9798,24 @@ class MangaViewer {
             width = 12;
         }
         return width;
+    }
+    debugFunction() {
+        // thresholdWidth
+        const tw = this.state.thresholdWidth;
+        // window.innerWidth
+        const iw = window.innerWidth;
+        const div = document.createElement("div");
+        [
+            "　",
+            "-----デバッグ用ここから-----",
+            `tw: ${tw}, iw: ${iw}`,
+            "　"
+        ].forEach(s => {
+            const p = document.createElement("p");
+            p.textContent = s;
+            div.appendChild(p);
+        });
+        this.preference.wrapperEl.appendChild(div);
     }
 }
 

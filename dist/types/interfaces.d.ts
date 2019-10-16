@@ -84,6 +84,7 @@ export declare type PreferenceButtons = {
 export interface StateClassNames {
     active: string;
     hidden: string;
+    singleSlide: string;
     showPreference: string;
     showThumbs: string;
     fullscreen: string;
