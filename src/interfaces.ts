@@ -95,6 +95,7 @@ export interface MangaViewerStates {
   viewerPadding: number,
   pageSize: PageSize,
   pageAspect: PageSize,
+  thresholdWidth: number,
   swiperRect: PageRect,
   isLTR: boolean,
   isVertView: boolean,

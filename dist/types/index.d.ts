@@ -47,6 +47,7 @@ export default class MangaViewer {
      * オーバーレイ表示を閉じる
      */
     close(isHashChange?: boolean): void;
+    private switchSingleSlideState;
     /**
      * 縦読み表示へと切り替える
      */
@@ -119,6 +120,12 @@ export default class MangaViewer {
      * body要素のスクロールを再開させる
      */
     private enableBodyScroll;
+    /**
+     * pageSizeと関連する部分を一挙に設定する
+     * @param  width  新たなページ横幅
+     * @param  height 新たなページ縦幅
+     */
+    private setPageSize;
     /**
      * 入力したpathの画像からpageSizeを設定する
      * @param src 画像path

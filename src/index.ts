@@ -63,16 +63,7 @@ export default class MangaViewer {
 
     if (options.pageWidth && options.pageHeight) {
       const [pw, ph] = [options.pageWidth, options.pageHeight]
-      const gcd = calcGCD(pw, ph);
-
-      this.state.pageSize = {
-        w: pw,
-        h: ph
-      };
-      this.state.pageAspect = {
-        w: pw / gcd,
-        h: ph / gcd,
-      }
+      this.setPageSize(pw, ph);
     } else {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
       const getBeginningSrc = (pages: (string | HTMLElement)[]): string => {
@@ -205,6 +196,10 @@ export default class MangaViewer {
       innerHeight: ih,
       innerWidth: iw,
     } = window;
+    const pageSize = {
+      w: 720,
+      h: 1024
+    };
 
     return {
       viewerPadding: 10,
@@ -217,10 +212,8 @@ export default class MangaViewer {
       },
       // インスタンスごとに固有のid数字
       viewerId: viewerCnt(),
-      pageSize: {
-        w: 720,
-        h: 1024
-      },
+      pageSize,
+      thresholdWidth: Math.round(pageSize.w * 1.5),
       pageAspect: {
         w: 45,
         h: 64
@@ -238,16 +231,38 @@ export default class MangaViewer {
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
+    const breakpoints: { [index: number]: SwiperOptions } = {};
+    const thresholdWidth = Math.round(this.state.pageSize.w * 1.5);
+    breakpoints[thresholdWidth] = {
+      slidesPerView: 2,
+      slidesPerGroup: 2,
+    };
+
+    const changeSingleSlideState = () => {
+      const rootEl = this.el.rootEl;
+      const state = "is_singleSlide";
+      if (thresholdWidth <= window.innerWidth) {
+        rootEl.classList.contains(state) && rootEl.classList.remove(state);
+      } else {
+        !rootEl.classList.contains(state) && rootEl.classList.add(state);
+      }
+    }
+
+    changeSingleSlideState();
+
     return {
       direction: "horizontal",
       speed: 200,
-      slidesPerView: 2,
-      slidesPerGroup: 2,
+      slidesPerView: 1,
+      slidesPerGroup: 1,
       spaceBetween: this.state.horizPageMargin,
 
       on: {
         reachBeginning: () => this.changePaginationVisibility(),
-        resize: () => this.viewUpdate(),
+        resize: () => {
+          changeSingleSlideState();
+          this.viewUpdate();
+        },
         slideChange: () => {
           this.hideViewerUI();
           this.changePaginationVisibility();
@@ -263,6 +278,7 @@ export default class MangaViewer {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
+      breakpoints
     }
   }
 
@@ -505,6 +521,15 @@ export default class MangaViewer {
     if (location.hash && isHashChange) {
       // 履歴を残さずhashを削除する
       location.replace(location.href.split("#")[0]);
+    }
+  }
+  private switchSingleSlideState() {
+    const rootEl = this.el.rootEl;
+    const state = "is_singleSlide";
+    if (this.state.thresholdWidth <= window.innerWidth) {
+      rootEl.classList.contains(state) && rootEl.classList.remove(state);
+    } else {
+      !rootEl.classList.contains(state) && rootEl.classList.add(state);
     }
   }
 
@@ -803,6 +828,27 @@ export default class MangaViewer {
   }
 
   /**
+   * pageSizeと関連する部分を一挙に設定する
+   * @param  width  新たなページ横幅
+   * @param  height 新たなページ縦幅
+   */
+  private setPageSize(width: number, height: number) {
+    this.state.pageSize = {
+      w: width,
+      h: height,
+    }
+
+    const gcd = calcGCD(width, height);
+
+    this.state.pageAspect = {
+      w: width / gcd,
+      h: height / gcd,
+    }
+
+    this.state.thresholdWidth = Math.round(width * 1.5);
+  }
+
+  /**
    * 入力したpathの画像からpageSizeを設定する
    * @param src 画像path
    */
@@ -810,16 +856,7 @@ export default class MangaViewer {
     readImage(src).then(img => {
       const {width: w, height: h} = img;
 
-      this.state.pageSize = {
-        w,
-        h
-      };
-
-      const gcd = calcGCD(w, h);
-      this.state.pageAspect = {
-        w: w / gcd,
-        h: h / gcd,
-      }
+      this.setPageSize(w, h);
 
       // もしここでエラーが起きても問題ないので握りつぶす
       this.viewUpdate();
