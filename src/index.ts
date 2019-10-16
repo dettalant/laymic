@@ -232,23 +232,14 @@ export default class MangaViewer {
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
     const breakpoints: { [index: number]: SwiperOptions } = {};
-    const thresholdWidth = Math.round(this.state.pageSize.w * 1.5);
+    const thresholdWidth = this.state.thresholdWidth;
     breakpoints[thresholdWidth] = {
       slidesPerView: 2,
       slidesPerGroup: 2,
     };
 
-    const changeSingleSlideState = () => {
-      const rootEl = this.el.rootEl;
-      const state = "is_singleSlide";
-      if (thresholdWidth <= window.innerWidth) {
-        rootEl.classList.contains(state) && rootEl.classList.remove(state);
-      } else {
-        !rootEl.classList.contains(state) && rootEl.classList.add(state);
-      }
-    }
 
-    changeSingleSlideState();
+    this.switchSingleSlideState();
 
     return {
       direction: "horizontal",
@@ -260,7 +251,7 @@ export default class MangaViewer {
       on: {
         reachBeginning: () => this.changePaginationVisibility(),
         resize: () => {
-          changeSingleSlideState();
+          this.switchSingleSlideState();
           this.viewUpdate();
         },
         slideChange: () => {
