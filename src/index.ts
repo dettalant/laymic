@@ -216,7 +216,7 @@ export default class MangaViewer {
       // インスタンスごとに固有のid数字
       viewerId: viewerCnt(),
       pageSize,
-      thresholdWidth: Math.round(pageSize.w * 1.5),
+      thresholdWidth: pageSize.w,
       pageAspect: {
         w: 45,
         h: 64
@@ -666,8 +666,8 @@ export default class MangaViewer {
       setCursorStyle(true);
     } else {
       // どちらでもない場合の処理
-      nextPage.classList.contains(active) && nextPage.classList.remove(active);
-      prevPage.classList.contains(active) && prevPage.classList.remove(active);
+      nextPage.classList.remove(active);
+      prevPage.classList.remove(active);
       setCursorStyle(false);
     }
   }
@@ -839,7 +839,7 @@ export default class MangaViewer {
       h: height / gcd,
     }
 
-    this.state.thresholdWidth = Math.round(width * 1.5);
+    this.state.thresholdWidth = width;
   }
 
   /**
