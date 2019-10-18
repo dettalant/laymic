@@ -403,8 +403,8 @@ export class ViewerDOMBuilder {
       labelEl,
     ].forEach(el => btn.appendChild(el));
 
-    btn.addEventListener("click", () => {
-      btn.classList.toggle(this.stateNames.active);
+    btn.addEventListener("focus", () => {
+      btn.classList.add(this.stateNames.active);
     })
 
     btn.addEventListener("blur", () => {

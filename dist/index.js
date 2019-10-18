@@ -8689,8 +8689,8 @@ class ViewerDOMBuilder {
             wrapperEl,
             labelEl,
         ].forEach(el => btn.appendChild(el));
-        btn.addEventListener("click", () => {
-            btn.classList.toggle(this.stateNames.active);
+        btn.addEventListener("focus", () => {
+            btn.classList.add(this.stateNames.active);
         });
         btn.addEventListener("blur", () => {
             btn.classList.remove(this.stateNames.active);
@@ -8710,9 +8710,9 @@ class ViewerDOMBuilder {
     }
 }
 
-const PREFERENCE_KEY = "mangaViewer_preferenceData";
 class MangaViewerPreference {
     constructor(builder, rootEl, className) {
+        this.PREFERENCE_KEY = "mangaViewer_preferenceData";
         // preference save data
         this.data = this.loadPreferenceData();
         const containerEl = builder.createDiv();
@@ -8769,6 +8769,14 @@ class MangaViewerPreference {
         // 各種イベントをボタンに適用
         this.applyButtonEventListeners();
     }
+    get defaultPreferenceData() {
+        return {
+            isAutoFullscreen: false,
+            isEnableTapSlidePage: false,
+            progressBarWidth: "auto",
+            paginationVisibility: "auto",
+        };
+    }
     get isAutoFullscreen() {
         return this.data.isAutoFullscreen;
     }
@@ -8789,7 +8797,7 @@ class MangaViewerPreference {
     set progressBarWidth(Width) {
         this.data.progressBarWidth = Width;
         this.savePreferenceData();
-        this.dispatchViewerUpdateEvent("progressBarWidth");
+        this.dispatchPreferenceUpdateEvent("progressBarWidth");
     }
     get paginationVisibility() {
         return this.data.paginationVisibility;
@@ -8797,20 +8805,12 @@ class MangaViewerPreference {
     set paginationVisibility(visibility) {
         this.data.paginationVisibility = visibility;
         this.savePreferenceData();
-        this.dispatchViewerUpdateEvent("paginationVisibility");
-    }
-    get defaultPreferenceData() {
-        return {
-            isAutoFullscreen: false,
-            isEnableTapSlidePage: false,
-            progressBarWidth: "auto",
-            paginationVisibility: "auto",
-        };
+        this.dispatchPreferenceUpdateEvent("paginationVisibility");
     }
     savePreferenceData() {
-        localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
+        localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
     }
-    dispatchViewerUpdateEvent(detail = "") {
+    dispatchPreferenceUpdateEvent(detail = "") {
         const ev = new CustomEvent("MangaViewerPreferenceUpdate", {
             detail
         });
@@ -8820,7 +8820,7 @@ class MangaViewerPreference {
      * localStorageから設定データを読み込む
      */
     loadPreferenceData() {
-        const dataStr = localStorage.getItem(PREFERENCE_KEY);
+        const dataStr = localStorage.getItem(this.PREFERENCE_KEY);
         let data = this.defaultPreferenceData;
         if (dataStr) {
             try {
@@ -8828,7 +8828,7 @@ class MangaViewerPreference {
             }
             catch (e) {
                 console.error(e);
-                localStorage.removeItem(PREFERENCE_KEY);
+                localStorage.removeItem(this.PREFERENCE_KEY);
             }
         }
         return data;
@@ -8838,7 +8838,7 @@ class MangaViewerPreference {
      * 主に初期化時に用いる関数
      */
     applyCurrentPreferenceValue() {
-        const { isAutoFullscreen, isEnableTapSlidePage } = this.buttons;
+        const { isAutoFullscreen, isEnableTapSlidePage, paginationVisibility, progressBarWidth, } = this.buttons;
         const { active } = this.stateNames;
         if (this.isAutoFullscreen) {
             isAutoFullscreen.classList.add(active);
@@ -8867,12 +8867,12 @@ class MangaViewerPreference {
         [
             {
                 // pagination visibility
-                els: this.getSelectItemEls(this.buttons.paginationVisibility),
+                els: this.getSelectItemEls(paginationVisibility),
                 idx: uiVisibilityValues.indexOf(this.paginationVisibility)
             },
             {
                 // progress bar width
-                els: this.getSelectItemEls(this.buttons.progressBarWidth),
+                els: this.getSelectItemEls(progressBarWidth),
                 idx: barWidthValues.indexOf(this.progressBarWidth)
             }
         ].forEach(obj => {

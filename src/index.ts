@@ -34,8 +34,10 @@ export default class MangaViewer {
   // swiper instance
   swiper: Swiper;
 
-  constructor(queryStr: string, pages: MangaViewerPages | string, options: MangaViewerOptions = {}) {
-    const rootEl = document.querySelector(queryStr);
+  constructor(query: string | HTMLElement, pages: MangaViewerPages | string, options: MangaViewerOptions = {}) {
+    const rootEl = (typeof query === "string" )
+      ? document.querySelector(query)
+      : query;
 
     if (!(rootEl instanceof HTMLElement)) throw new Error("rootElの取得に失敗");
     if (rootEl.parentNode) rootEl.parentNode.removeChild(rootEl);

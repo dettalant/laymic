@@ -1,6 +1,7 @@
 import { ViewerDOMBuilder } from "#/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
 export declare class MangaViewerPreference {
+    readonly PREFERENCE_KEY = "mangaViewer_preferenceData";
     rootEl: HTMLElement;
     el: HTMLElement;
     wrapperEl: HTMLElement;
@@ -8,13 +9,13 @@ export declare class MangaViewerPreference {
     stateNames: StateClassNames;
     data: PreferenceData;
     constructor(builder: ViewerDOMBuilder, rootEl: HTMLElement, className?: string);
+    private readonly defaultPreferenceData;
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
-    private readonly defaultPreferenceData;
     private savePreferenceData;
-    private dispatchViewerUpdateEvent;
+    private dispatchPreferenceUpdateEvent;
     /**
      * localStorageから設定データを読み込む
      */

@@ -2,9 +2,8 @@ import { ViewerDOMBuilder } from "#/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
-const PREFERENCE_KEY = "mangaViewer_preferenceData";
-
 export class MangaViewerPreference {
+  private readonly PREFERENCE_KEY = "mangaViewer_preferenceData";
   rootEl: HTMLElement;
   // preference el
   el: HTMLElement;
@@ -81,6 +80,15 @@ export class MangaViewerPreference {
     this.applyButtonEventListeners();
   }
 
+  private get defaultPreferenceData(): PreferenceData {
+    return {
+      isAutoFullscreen: false,
+      isEnableTapSlidePage: false,
+      progressBarWidth: "auto",
+      paginationVisibility: "auto",
+    }
+  }
+
   get isAutoFullscreen(): boolean {
     return this.data.isAutoFullscreen;
   }
@@ -107,7 +115,7 @@ export class MangaViewerPreference {
   set progressBarWidth(Width: BarWidth) {
     this.data.progressBarWidth = Width;
     this.savePreferenceData();
-    this.dispatchViewerUpdateEvent("progressBarWidth");
+    this.dispatchPreferenceUpdateEvent("progressBarWidth");
   }
 
   get paginationVisibility(): UIVisibility {
@@ -117,23 +125,14 @@ export class MangaViewerPreference {
   set paginationVisibility(visibility: UIVisibility) {
     this.data.paginationVisibility = visibility;
     this.savePreferenceData();
-    this.dispatchViewerUpdateEvent("paginationVisibility");
-  }
-
-  private get defaultPreferenceData(): PreferenceData {
-    return {
-      isAutoFullscreen: false,
-      isEnableTapSlidePage: false,
-      progressBarWidth: "auto",
-      paginationVisibility: "auto",
-    }
+    this.dispatchPreferenceUpdateEvent("paginationVisibility");
   }
 
   private savePreferenceData() {
-    localStorage.setItem(PREFERENCE_KEY, JSON.stringify(this.data));
+    localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
   }
 
-  private dispatchViewerUpdateEvent(detail: string = "") {
+  private dispatchPreferenceUpdateEvent(detail: string = "") {
     const ev = new CustomEvent("MangaViewerPreferenceUpdate", {
       detail
     });
@@ -145,7 +144,7 @@ export class MangaViewerPreference {
    * localStorageから設定データを読み込む
    */
   private loadPreferenceData(): PreferenceData {
-    const dataStr = localStorage.getItem(PREFERENCE_KEY);
+    const dataStr = localStorage.getItem(this.PREFERENCE_KEY);
 
     let data = this.defaultPreferenceData;
 
@@ -154,7 +153,7 @@ export class MangaViewerPreference {
         data = JSON.parse(dataStr)
       } catch(e) {
         console.error(e);
-        localStorage.removeItem(PREFERENCE_KEY);
+        localStorage.removeItem(this.PREFERENCE_KEY);
       }
     }
 
@@ -168,7 +167,9 @@ export class MangaViewerPreference {
   private applyCurrentPreferenceValue() {
     const {
       isAutoFullscreen,
-      isEnableTapSlidePage
+      isEnableTapSlidePage,
+      paginationVisibility,
+      progressBarWidth,
     } = this.buttons;
 
     const {
@@ -204,12 +205,12 @@ export class MangaViewerPreference {
     [
       {
         // pagination visibility
-        els: this.getSelectItemEls(this.buttons.paginationVisibility),
+        els: this.getSelectItemEls(paginationVisibility),
         idx: uiVisibilityValues.indexOf(this.paginationVisibility)
       },
       {
         // progress bar width
-        els: this.getSelectItemEls(this.buttons.progressBarWidth),
+        els: this.getSelectItemEls(progressBarWidth),
         idx: barWidthValues.indexOf(this.progressBarWidth)
       }
     ].forEach(obj => {
