@@ -1,4 +1,4 @@
-import Swiper from "swiper";
+import { Swiper } from "swiper/js/swiper.esm";
 import { MangaViewerPreference } from "#/preference";
 import { MangaViewerThumbnails } from "#/thumbs";
 import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates, StateClassNames } from "./interfaces";
@@ -10,7 +10,7 @@ export default class MangaViewer {
     preference: MangaViewerPreference;
     thumbs: MangaViewerThumbnails;
     swiper: Swiper;
-    constructor(queryStr: string, pages: MangaViewerPages | string, options?: MangaViewerOptions);
+    constructor(query: string | HTMLElement, pages: MangaViewerPages | string, options?: MangaViewerOptions);
     /**
      * インスタンスごとに固有のビューワーIDを返す
      * @return ビューワーID文字列

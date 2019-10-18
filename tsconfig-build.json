@@ -16,7 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "#/*": ["src/*"],
-      "swiper": ["types/swiper"]
+      "swiper": ["types/swiper"],
+      "swiper/js/swiper.esm": ["types/swiper/js/swiper.esm"]
     },
     "typeRoots": ["types", "node_modules/@types"]
   },

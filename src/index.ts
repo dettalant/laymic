@@ -1,4 +1,5 @@
-import Swiper, { SwiperOptions } from "swiper";
+import { SwiperOptions } from "swiper";
+import { Swiper, Keyboard, Pagination, Lazy } from "swiper/js/swiper.esm";
 import screenfull from "screenfull";
 import {
   calcGCD,
@@ -20,6 +21,8 @@ import {
   StateClassNames,
   BarWidth
 } from "./interfaces";
+
+Swiper.use([Keyboard, Pagination, Lazy]);
 
 export default class MangaViewer {
   // HTMLElementまとめ
@@ -283,7 +286,6 @@ export default class MangaViewer {
       direction: "vertical",
       spaceBetween: this.state.vertPageMargin,
       speed: 200,
-      // mousewheel: true,
       keyboard: true,
       freeMode: true,
       freeModeMomentumRatio: 0.36,
@@ -491,7 +493,7 @@ export default class MangaViewer {
     // swiperのfreeModeには
     // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
     // 不具合があるようなので手動で画像読み込み
-    if (this.swiper.activeIndex === 0) {
+    if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
       this.swiper.lazy.load();
     }
 
