@@ -9,36 +9,36 @@ import {
   isExistTouchEvent,
   rafThrottle,
 } from "#/utils";
-import ViewerDOMBuilder from "#/builder";
-import MangaViewerPreference from "#/preference";
-import MangaViewerThumbnails from "#/thumbs";
+import DOMBuilder from "#/components/builder";
+import Preference from "#/components/preference";
+import Thumbnails from "#/components/thumbs";
 import {
-  MangaViewerPages,
-  MangaViewerElements,
-  MangaViewerOptions,
-  MangaViewerStates,
+  ViewerPages,
+  ViewerElements,
+  ViewerOptions,
+  ViewerStates,
   PageRect,
   StateClassNames,
   BarWidth
-} from "./interfaces";
+} from "#/interfaces";
 
 Swiper.use([Keyboard, Pagination, Lazy]);
 
-export default class MangaViewer {
+export default class Laymic {
   // HTMLElementまとめ
-  el: MangaViewerElements;
+  el: ViewerElements;
   // mangaViewer内部で用いるステートまとめ
-  state: MangaViewerStates = this.defaultMangaViewerStates;
-  initOptions: MangaViewerOptions;
+  state: ViewerStates = this.defaultMangaViewerStates;
+  initOptions: ViewerOptions;
   // ステート変化に用いるクラス名まとめ
   stateNames: StateClassNames;
-  preference: MangaViewerPreference;
-  thumbs: MangaViewerThumbnails;
+  preference: Preference;
+  thumbs: Thumbnails;
   // swiper instance
   swiper: Swiper;
 
-  constructor(pages: MangaViewerPages | string, options: MangaViewerOptions = {}) {
-    const builder = new ViewerDOMBuilder(options.icons);
+  constructor(pages: ViewerPages | string, options: ViewerOptions = {}) {
+    const builder = new DOMBuilder(options.icons);
     const rootEl = builder.createDiv();
     this.stateNames = builder.stateNames;
 
@@ -83,7 +83,7 @@ export default class MangaViewer {
       this.setPageSizeFromImgPath(src);
     }
 
-    this.preference = new MangaViewerPreference(builder, rootEl);
+    this.preference = new Preference(builder, rootEl);
 
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
@@ -100,16 +100,16 @@ export default class MangaViewer {
       this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
     }
 
-    this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
+    this.thumbs = new Thumbnails(builder, pages, this.state);
 
     rootEl.style.display = "none";
-    rootEl.classList.add("mangaViewer_root", this.stateNames.visibleUI);
+    rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
     if (this.state.isLTR) rootEl.classList.add(this.stateNames.ltr);
 
     const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
     const swiperEl = builder.createSwiperContainer(
       this.mangaViewerId,
-      "mangaViewer_mainGallery",
+      "laymic_slider",
       pages,
       this.state.isLTR,
       this.state.isFirstSlideEmpty
@@ -159,7 +159,7 @@ export default class MangaViewer {
    * @return ビューワーID文字列
    */
   private get mangaViewerId(): string {
-    return "mangaViewer" + this.state.viewerId;
+    return "laymic" + this.state.viewerId;
   }
 
   /**
@@ -167,7 +167,7 @@ export default class MangaViewer {
    * @return ビューワーコントローラーID文字列
    */
   private get mangaViewerControllerId(): string {
-    return "mangaViewerController" + this.state.viewerId;
+    return "laymicController" + this.state.viewerId;
   }
 
   /**
@@ -193,7 +193,7 @@ export default class MangaViewer {
    * 初期状態のmangaViewerステートオブジェクトを返す
    * @return this.stateの初期値
    */
-  private get defaultMangaViewerStates(): MangaViewerStates {
+  private get defaultMangaViewerStates(): ViewerStates {
     const {
       innerHeight: ih,
       innerWidth: iw,
@@ -344,10 +344,6 @@ export default class MangaViewer {
       this.el.rootEl.classList.remove(this.stateNames.showThumbs);
     }));
 
-    this.preference.el.addEventListener("click", () => {
-      this.el.rootEl.classList.remove(this.stateNames.showPreference);
-    })
-
     // 全画面化ボタンのクリックイベント
     this.el.buttons.fullscreen.addEventListener("click", () => {
       this.fullscreenHandler()
@@ -424,12 +420,10 @@ export default class MangaViewer {
     Array.from(this.el.controllerEl.children).concat([
       // サムネイル表示中のサムネイル格納コンテナ
       this.thumbs.wrapperEl,
-      // 設定表示中の設定格納コンテナ
-      this.preference.wrapperEl,
     ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
     // カスタムイベント登録
-    this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e: CustomEvent<string>) => {
+    this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
       if (e.detail === "progressBarWidth") {
         // progressBarWidth数値を取得する
         const w = this.getBarWidth(this.preference.progressBarWidth);

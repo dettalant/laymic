@@ -1,8 +1,8 @@
-import MangaViewerThumbnails from "#/thumbs";
-import ViewerDOMBuilder from "#/builder";
+import Thumbnails from "#/components/thumbs";
+import DOMBuilder from "#/components/builder";
 
 describe("thumbs class test", () => {
-  const builder = new ViewerDOMBuilder();
+  const builder = new DOMBuilder();
   const testPics = [
     "test0.png",
     "test1.png",
@@ -40,7 +40,7 @@ describe("thumbs class test", () => {
     isMobile: false,
   };
 
-  const thumbs = new MangaViewerThumbnails(builder, testPics, state);
+  const thumbs = new Thumbnails(builder, testPics, state);
 
   it("revealImgs test", () => {
     thumbs.thumbEls.forEach(el => {

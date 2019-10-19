@@ -1,9 +1,9 @@
-export type MangaViewerPages = (string | HTMLElement)[];
+export type ViewerPages = (string | HTMLElement)[];
 
 export type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
 export type UIVisibility = "auto" | "visible" | "hidden";
 
-export interface MangaViewerOptions {
+export interface ViewerOptions {
   // ページ横幅
   pageWidth?: number,
   // ページの縦幅
@@ -16,7 +16,7 @@ export interface MangaViewerOptions {
   // 表紙ページを単独表示することを想定
   isFirstSlideEmpty?: boolean,
   // アイコンを別のものに変更する
-  icons?: MangaViewerIcons,
+  icons?: ViewerIcons,
   // 縦読み時のページ間余白ピクセル数値
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
@@ -46,10 +46,10 @@ export interface PageRect extends PageSize {
 // mangaViewerが管理するElements
 // swiperElについてはswiper instanceから触れるけど
 // わかりやすさ重視でここに入れておく
-export interface MangaViewerElements {
+export interface ViewerElements {
   rootEl: HTMLElement,
   swiperEl: HTMLElement,
-  buttons: MangaViewerUIButtons,
+  buttons: ViewerUIButtons,
   controllerEl: HTMLElement,
 }
 
@@ -63,7 +63,7 @@ export interface IconData {
 }
 
 // mangaViewerで用いるアイコンまとめ
-export interface MangaViewerIcons {
+export interface ViewerIcons {
   close: IconData,
   fullscreen: IconData,
   exitFullscreen: IconData,
@@ -76,7 +76,7 @@ export interface MangaViewerIcons {
 }
 
 // mangaViewer UI要素として組み込むボタン要素まとめ
-export interface MangaViewerUIButtons {
+export interface ViewerUIButtons {
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
   preference: HTMLButtonElement,
@@ -89,7 +89,7 @@ export interface MangaViewerUIButtons {
 }
 
 // mangaViewer内部で用いるステートまとめ
-export interface MangaViewerStates {
+export interface ViewerStates {
   // インスタンスごとに固有のid数字
   viewerId: number,
   viewerPadding: number,

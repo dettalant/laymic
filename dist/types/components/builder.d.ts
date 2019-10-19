@@ -1,9 +1,9 @@
-import { MangaViewerIcons, MangaViewerUIButtons, StateClassNames } from "#/interfaces";
-export default class ViewerDOMBuilder {
+import { ViewerIcons, ViewerUIButtons, StateClassNames } from "#/interfaces";
+export default class DOMBuilder {
     private icons;
     private readonly uiButtonClass;
     readonly stateNames: StateClassNames;
-    constructor(icons?: MangaViewerIcons);
+    constructor(icons?: ViewerIcons);
     private readonly defaultStateClassNames;
     /**
      * 初期状態でのアイコンセットを返す
@@ -25,7 +25,7 @@ export default class ViewerDOMBuilder {
      * @param  isLTR 左から右に流れる形式を取るならtrue
      * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
      */
-    createViewerController(id: string): [HTMLElement, MangaViewerUIButtons];
+    createViewerController(id: string): [HTMLElement, ViewerUIButtons];
     /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名

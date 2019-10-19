@@ -1,7 +1,7 @@
 // NOTE: jestがエラーを吐くので一旦コメントアウト
 // import MangaViewer from "#/core";
 
-describe("mangaViewer class test", () => {
+describe("Laymic class test", () => {
   // const rootEl = document.createElement("div");
   // rootEl.id = "testViewer";
   // document.body.appendChild(rootEl);

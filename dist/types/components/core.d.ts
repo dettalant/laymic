@@ -1,16 +1,16 @@
 import { Swiper } from "swiper/js/swiper.esm";
-import MangaViewerPreference from "#/preference";
-import MangaViewerThumbnails from "#/thumbs";
-import { MangaViewerPages, MangaViewerElements, MangaViewerOptions, MangaViewerStates, StateClassNames } from "./interfaces";
-export default class MangaViewer {
-    el: MangaViewerElements;
-    state: MangaViewerStates;
-    initOptions: MangaViewerOptions;
+import Preference from "#/components/preference";
+import Thumbnails from "#/components/thumbs";
+import { ViewerPages, ViewerElements, ViewerOptions, ViewerStates, StateClassNames } from "#/interfaces";
+export default class Laymic {
+    el: ViewerElements;
+    state: ViewerStates;
+    initOptions: ViewerOptions;
     stateNames: StateClassNames;
-    preference: MangaViewerPreference;
-    thumbs: MangaViewerThumbnails;
+    preference: Preference;
+    thumbs: Thumbnails;
     swiper: Swiper;
-    constructor(pages: MangaViewerPages | string, options?: MangaViewerOptions);
+    constructor(pages: ViewerPages | string, options?: ViewerOptions);
     /**
      * インスタンスごとに固有のビューワーIDを返す
      * @return ビューワーID文字列

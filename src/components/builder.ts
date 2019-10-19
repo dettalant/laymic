@@ -1,6 +1,6 @@
 import {
-  MangaViewerIcons,
-  MangaViewerUIButtons,
+  ViewerIcons,
+  ViewerUIButtons,
   IconData,
   StateClassNames
 } from "#/interfaces";
@@ -11,28 +11,28 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 
 // mangaViewerで用いるDOMを生成するやつ
-export default class ViewerDOMBuilder {
+export default class DOMBuilder {
   // 使用するアイコンセット
-  private icons: MangaViewerIcons = this.defaultMangaViewerIcons;
+  private icons: ViewerIcons = this.defaultMangaViewerIcons;
   // uiボタンクラス名
-  private readonly uiButtonClass = "mangaViewer_uiButton";
+  private readonly uiButtonClass = "laymic_uiButton";
   readonly stateNames = this.defaultStateClassNames;
-  constructor(icons?: MangaViewerIcons) {
+  constructor(icons?: ViewerIcons) {
     if (icons) this.icons = Object.assign(this.icons, icons);
   }
 
   private get defaultStateClassNames(): StateClassNames {
     return {
-      active: "is_active",
-      hidden: "is_hidden",
-      showThumbs: "is_showThumbs",
-      showPreference: "is_showPreference",
-      singleSlide: "is_singleSlide",
-      vertView: "is_vertView",
-      visibleUI: "is_visibleUI",
-      visiblePagination: "is_visiblePagination",
-      fullscreen: "is_fullscreen",
-      ltr: "is_ltr",
+      active: "laymic_isActive",
+      hidden: "laymic_isHidden",
+      showThumbs: "laymic_isShowThumbs",
+      showPreference: "laymic_isShowPreference",
+      singleSlide: "laymic_isSingleSlide",
+      vertView: "laymic_isVertView",
+      visibleUI: "laymic_isVisibleUI",
+      visiblePagination: "laymic_isVisiblePagination",
+      fullscreen: "laymic_isFullscreen",
+      ltr: "laymic_isLTR",
     }
   }
 
@@ -40,10 +40,10 @@ export default class ViewerDOMBuilder {
    * 初期状態でのアイコンセットを返す
    * @return アイコンをひとまとめにしたオブジェクト
    */
-  private get defaultMangaViewerIcons(): MangaViewerIcons {
+  private get defaultMangaViewerIcons(): ViewerIcons {
     // material.io: close
     const close = {
-      id: "mangaViewer_svgClose",
+      id: "laymic_svgClose",
       className: "icon_close",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -53,7 +53,7 @@ export default class ViewerDOMBuilder {
 
     // material.io: fullscreen
     const fullscreen = {
-      id: "mangaViewer_svgFullscreen",
+      id: "laymic_svgFullscreen",
       className: "icon_fullscreen",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -63,7 +63,7 @@ export default class ViewerDOMBuilder {
 
     // material.io: fullscreen-exit
     const exitFullscreen = {
-      id: "mangaViewer_svgExitFullscreen",
+      id: "laymic_svgExitFullscreen",
       className: "icon_exitFullscreen",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -72,7 +72,7 @@ export default class ViewerDOMBuilder {
     }
 
     const showThumbs = {
-      id: "mangaViewer_svgThumbs",
+      id: "laymic_svgThumbs",
       className: "icon_showThumbs",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -82,7 +82,7 @@ export default class ViewerDOMBuilder {
 
     // material.io: settings_applications(modified)
     const preference = {
-      id: "mangaViewer_svgPreference",
+      id: "laymic_svgPreference",
       className: "icon_showPreference",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -91,7 +91,7 @@ export default class ViewerDOMBuilder {
     }
 
     const horizView = {
-      id: "mangaViewer_svgHorizView",
+      id: "laymic_svgHorizView",
       className: "icon_horizView",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -100,7 +100,7 @@ export default class ViewerDOMBuilder {
     };
 
     const vertView = {
-      id: "mangaViewer_svgVertView",
+      id: "laymic_svgVertView",
       className: "icon_vertView",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -110,7 +110,7 @@ export default class ViewerDOMBuilder {
 
     // material.io: check_box(modified)
     const checkboxInner = {
-      id: "mangaViewer_svgCheckBoxInner",
+      id: "laymic_svgCheckBoxInner",
       className: "icon_checkBoxInner",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -120,7 +120,7 @@ export default class ViewerDOMBuilder {
 
     // material.io: check_box(modified)
     const checkboxOuter = {
-      id: "mangaViewer_svgCheckBoxOuter",
+      id: "laymic_svgCheckBoxOuter",
       className: "icon_checkBoxOuter",
       viewBox: "0 0 24 24",
       pathDs: [
@@ -162,7 +162,7 @@ export default class ViewerDOMBuilder {
     // 空の要素を一番目に入れる
     if (isFirstSlideEmpty) {
       const emptyEl = this.createDiv();
-      emptyEl.className = "swiper-slide mangaViewer_emptySlide";
+      emptyEl.className = "swiper-slide laymic_emptySlide";
       wrapperEl.appendChild(emptyEl);
     }
 
@@ -192,19 +192,19 @@ export default class ViewerDOMBuilder {
    * @param  isLTR 左から右に流れる形式を取るならtrue
    * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
-  createViewerController(id: string): [HTMLElement, MangaViewerUIButtons] {
+  createViewerController(id: string): [HTMLElement, ViewerUIButtons] {
     const ctrlEl = this.createDiv();
-    ctrlEl.className = "mangaViewer_controller";
+    ctrlEl.className = "laymic_controller";
     ctrlEl.id = id;
 
     const progressEl = this.createDiv();
-    progressEl.className = "swiper-pagination mangaViewer_progressbar";
+    progressEl.className = "swiper-pagination laymic_progressbar";
 
     const ctrlTopEl = this.createDiv();
-    ctrlTopEl.className = "mangaViewer_controller_top";
+    ctrlTopEl.className = "laymic_controllerTop";
 
     const direction = this.createButton();
-    direction.classList.add("mangaViewer_direction");
+    direction.classList.add("laymic_direction");
     [
       this.createSvgUseElement(this.icons.vertView),
       this.createSvgUseElement(this.icons.horizView),
@@ -215,21 +215,21 @@ export default class ViewerDOMBuilder {
       this.createSvgUseElement(this.icons.fullscreen),
       this.createSvgUseElement(this.icons.exitFullscreen),
     ].forEach(icon => fullscreen.appendChild(icon));
-    fullscreen.classList.add("mangaViewer_fullscreen");
+    fullscreen.classList.add("laymic_fullscreen");
 
     const thumbs = this.createButton();
     [
       this.createSvgUseElement(this.icons.showThumbs),
     ].forEach(icon => thumbs.appendChild(icon));
-    thumbs.classList.add("mangaViewer_showThumbs");
+    thumbs.classList.add("laymic_showThumbs");
 
     const preference = this.createButton();
-    preference.classList.add("mangaViewer_showPreference");
+    preference.classList.add("laymic_showPreference");
     const preferenceIcon = this.createSvgUseElement(this.icons.preference);
     preference.appendChild(preferenceIcon);
 
     const close = this.createButton();
-    close.classList.add("mangaViewer_close");
+    close.classList.add("laymic_close");
     const closeIcon = this.createSvgUseElement(this.icons.close);
     close.appendChild(closeIcon);
 
@@ -241,10 +241,10 @@ export default class ViewerDOMBuilder {
       close
     ].forEach(btn => ctrlTopEl.appendChild(btn));
 
-    const nextPage = this.createButton("mangaViewer_pagination swiper-button-next");
-    const prevPage = this.createButton("mangaViewer_pagination swiper-button-prev");
+    const nextPage = this.createButton("laymic_pagination swiper-button-next");
+    const prevPage = this.createButton("laymic_pagination swiper-button-prev");
 
-    const uiButtons: MangaViewerUIButtons = {
+    const uiButtons: ViewerUIButtons = {
       close,
       thumbs,
       fullscreen,
@@ -255,7 +255,7 @@ export default class ViewerDOMBuilder {
     }
 
     const ctrlBottomEl = this.createDiv();
-    ctrlBottomEl.className = "mangaViewer_controller_bottom";
+    ctrlBottomEl.className = "laymic_controllerBottom";
 
     [
       ctrlTopEl,
@@ -297,7 +297,7 @@ export default class ViewerDOMBuilder {
     svgCtn.setAttributeNS(null, "version", "1.1");
     svgCtn.setAttribute("xmlns", SVG_NS);
     svgCtn.setAttribute("xmlns:xlink", SVG_XLINK_NS);
-    svgCtn.setAttribute("class", "mangaViewer_svg_container");
+    svgCtn.setAttribute("class", "laymic_svgContainer");
 
     const defs = document.createElementNS(SVG_NS, "defs");
 
@@ -358,13 +358,13 @@ export default class ViewerDOMBuilder {
   }
 
   createCheckBoxButton(label: string, className: string = ""): HTMLButtonElement {
-    const btn = this.createButton("mangaViewer_checkbox " + className);
+    const btn = this.createButton("laymic_checkbox " + className);
     const labelEl = this.createSpan();
-    labelEl.className = "mangaViewer_checkboxLabel";
+    labelEl.className = "laymic_checkboxLabel";
     labelEl.textContent = label;
 
     const wrapperEl = this.createDiv();
-    wrapperEl.className = "mangaViewer_iconWrapper";
+    wrapperEl.className = "laymic_iconWrapper";
 
     [
       this.createSvgUseElement(this.icons.checkboxOuter),
@@ -376,23 +376,26 @@ export default class ViewerDOMBuilder {
       labelEl,
     ].forEach(el => btn.appendChild(el));
 
-    btn.addEventListener("click", () => btn.classList.toggle(this.stateNames.active));
+    btn.addEventListener("click", e => {
+      btn.classList.toggle(this.stateNames.active);
+      e.stopPropagation();
+    });
     return btn;
   }
 
   createSelectButton(label: string, values: string[], className: string = ""): HTMLButtonElement {
-    const btn = this.createButton("mangaViewer_select " + className);
+    const btn = this.createButton("laymic_select " + className);
 
     const labelEl = this.createSpan();
-    labelEl.className = "mangaViewer_selectLabel";
+    labelEl.className = "laymic_selectLabel";
     labelEl.textContent = label;
 
     const wrapperEl = this.createDiv();
-    wrapperEl.className = "mangaViewer_selectWrapper";
+    wrapperEl.className = "laymic_selectWrapper";
 
     values.forEach((item, i) => {
       const el = this.createDiv();
-      el.className = "mangaViewer_selectItem mangaViewer_selectItem" + i;
+      el.className = "laymic_selectItem laymic_selectItem" + i;
       el.textContent = item;
       el.dataset.itemIdx = i.toString();
       wrapperEl.appendChild(el);
@@ -403,12 +406,9 @@ export default class ViewerDOMBuilder {
       labelEl,
     ].forEach(el => btn.appendChild(el));
 
-    btn.addEventListener("focus", () => {
-      btn.classList.add(this.stateNames.active);
-    })
-
-    btn.addEventListener("blur", () => {
-      btn.classList.remove(this.stateNames.active);
+    btn.addEventListener("click", e => {
+      btn.classList.toggle(this.stateNames.active);
+      e.stopPropagation();
     })
 
     return btn;

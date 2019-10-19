@@ -1,9 +1,9 @@
-import ViewerDOMBuilder from "#/builder";
+import DOMBuilder from "#/components/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
-export default class MangaViewerPreference {
-  private readonly PREFERENCE_KEY = "mangaViewer_preferenceData";
+export default class Preference {
+  private readonly PREFERENCE_KEY = "laymic_preferenceData";
   rootEl: HTMLElement;
   // preference el
   el: HTMLElement;
@@ -13,14 +13,14 @@ export default class MangaViewerPreference {
   stateNames: StateClassNames;
   // preference save data
   data: PreferenceData = this.loadPreferenceData();
-  constructor(builder: ViewerDOMBuilder, rootEl: HTMLElement, className?: string) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, className?: string) {
     const containerEl = builder.createDiv();
-    containerEl.className = (className) ? className : "mangaViewer_preference";
+    containerEl.className = (className) ? className : "laymic_preference";
 
     const wrapperEl = builder.createDiv();
-    wrapperEl.className = "mangaViewer_preferenceWrapper";
+    wrapperEl.className = "laymic_preferenceWrapper";
 
-    const preferenceBtnClass = "mangaViewer_preferenceButton";
+    const preferenceBtnClass = "laymic_preferenceButton";
     const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
 
     const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
@@ -77,7 +77,7 @@ export default class MangaViewerPreference {
     // 読み込んだpreference値を各ボタン状態に適用
     this.applyCurrentPreferenceValue();
     // 各種イベントをボタンに適用
-    this.applyButtonEventListeners();
+    this.applyEventListeners();
   }
 
   private get defaultPreferenceData(): PreferenceData {
@@ -133,7 +133,7 @@ export default class MangaViewerPreference {
   }
 
   private dispatchPreferenceUpdateEvent(detail: string = "") {
-    const ev = new CustomEvent("MangaViewerPreferenceUpdate", {
+    const ev = new CustomEvent("LaymicPreferenceUpdate", {
       detail
     });
 
@@ -225,7 +225,7 @@ export default class MangaViewerPreference {
    * 各種ボタンイベントを登録する
    * インスタンス生成時に一度だけ呼び出される
    */
-  private applyButtonEventListeners() {
+  private applyEventListeners() {
     this.buttons.isAutoFullscreen.addEventListener("click", () => {
       this.isAutoFullscreen = !this.isAutoFullscreen;
     });
@@ -298,10 +298,37 @@ export default class MangaViewerPreference {
           // 親要素がアクティブな時 === selectButtonが選択された時
           // この時だけ処理を動かす
           const isActive = parentEl.classList.contains(this.stateNames.active);
-          if (isActive) callback(e, el, els);
+          if (isActive) {
+            callback(e, el, els);
+          }
         }));
       }
     })
+
+    // preference wrapperのクリックイベント
+    this.wrapperEl.addEventListener("click", e => {
+      // セレクトボタン要素を全て非アクティブ化
+      this.deactivateSelectButtons();
+
+      // クリックイベントをpreference containerへ伝播させない
+      e.stopPropagation();
+    })
+
+    // preference containerのクリックイベント
+    this.el.addEventListener("click", () => {
+      this.deactivateSelectButtons();
+      this.rootEl.classList.remove(this.stateNames.showPreference);
+    })
+  }
+
+  /**
+   * 全てのセレクトボタンを非アクティブ状態にする
+   */
+  private deactivateSelectButtons() {
+    [
+      this.buttons.progressBarWidth,
+      this.buttons.paginationVisibility,
+    ].forEach(el => el.classList.remove(this.stateNames.active));
   }
 
   /**
@@ -310,7 +337,7 @@ export default class MangaViewerPreference {
    * @return    クラス名で抽出したElement配列
    */
   private getSelectItemEls(el: HTMLElement): Element[] {
-    const selectItemClass = "mangaViewer_selectItem";
+    const selectItemClass = "laymic_selectItem";
     return Array.from(el.getElementsByClassName(selectItemClass) || [])
   }
 }

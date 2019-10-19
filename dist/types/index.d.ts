@@ -1,3 +1,3 @@
-import MangaViewer from "#/core";
-import MangaViewerApplicator from "#/applicator";
-export { MangaViewer, MangaViewerApplicator };
+import Laymic from "#/components/core";
+import LaymicApplicator from "#/components/applicator";
+export { Laymic, LaymicApplicator };

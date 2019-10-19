@@ -1,7 +1,7 @@
-import ViewerDOMBuilder from "#/builder";
+import DOMBuilder from "#/components/builder";
 
 describe("builder class test", () => {
-  const builder = new ViewerDOMBuilder()
+  const builder = new DOMBuilder()
   it("createDiv test", () => {
     const div = builder.createDiv();
     expect(div instanceof HTMLDivElement).toBeTruthy();
@@ -49,10 +49,10 @@ describe("builder class test", () => {
     const active = builder.stateNames.active;
 
     expect(selectBtn.classList.contains(active)).toBeFalsy();
-    selectBtn.focus();
+    selectBtn.click();
     expect(selectBtn.classList.contains(active)).toBeTruthy();
 
-    selectBtn.blur();
+    selectBtn.click();
     expect(selectBtn.classList.contains(active)).toBeFalsy();
   })
 

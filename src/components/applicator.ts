@@ -1,6 +1,6 @@
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
-export default class MangaViewerApplicator {
+export default class LaymicApplicator {
   constructor(selector: string) {
     const elements = document.querySelectorAll(selector);
     Array.from(elements).forEach(el => {

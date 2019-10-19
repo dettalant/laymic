@@ -1,13 +1,13 @@
-export declare type MangaViewerPages = (string | HTMLElement)[];
+export declare type ViewerPages = (string | HTMLElement)[];
 export declare type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
 export declare type UIVisibility = "auto" | "visible" | "hidden";
-export interface MangaViewerOptions {
+export interface ViewerOptions {
     pageWidth?: number;
     pageHeight?: number;
     isLTR?: boolean;
     isVisiblePagination?: boolean;
     isFirstSlideEmpty?: boolean;
-    icons?: MangaViewerIcons;
+    icons?: ViewerIcons;
     vertPageMargin?: number;
     horizPageMargin?: number;
     viewerPadding?: number;
@@ -22,10 +22,10 @@ export interface PageRect extends PageSize {
     l: number;
     t: number;
 }
-export interface MangaViewerElements {
+export interface ViewerElements {
     rootEl: HTMLElement;
     swiperEl: HTMLElement;
-    buttons: MangaViewerUIButtons;
+    buttons: ViewerUIButtons;
     controllerEl: HTMLElement;
 }
 export interface IconData {
@@ -34,7 +34,7 @@ export interface IconData {
     viewBox: string;
     pathDs: string[];
 }
-export interface MangaViewerIcons {
+export interface ViewerIcons {
     close: IconData;
     fullscreen: IconData;
     exitFullscreen: IconData;
@@ -45,7 +45,7 @@ export interface MangaViewerIcons {
     checkboxOuter: IconData;
     checkboxInner: IconData;
 }
-export interface MangaViewerUIButtons {
+export interface ViewerUIButtons {
     close: HTMLButtonElement;
     fullscreen: HTMLButtonElement;
     preference: HTMLButtonElement;
@@ -54,7 +54,7 @@ export interface MangaViewerUIButtons {
     nextPage: HTMLButtonElement;
     prevPage: HTMLButtonElement;
 }
-export interface MangaViewerStates {
+export interface ViewerStates {
     viewerId: number;
     viewerPadding: number;
     pageSize: PageSize;

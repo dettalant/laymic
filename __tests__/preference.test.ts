@@ -1,11 +1,11 @@
-import MangaViewerPreference from "#/preference";
-import ViewerDOMBuilder from "#/builder";
+import Preference from "#/components/preference";
+import DOMBuilder from "#/components/builder";
 import { BarWidth, UIVisibility } from "#/interfaces";
 
 describe("preference class test", () => {
-  const builder = new ViewerDOMBuilder();
+  const builder = new DOMBuilder();
   const rootEl = builder.createDiv();
-  const preference = new MangaViewerPreference(builder, rootEl);
+  const preference = new Preference(builder, rootEl);
   it("save & load preference data", () => {
     preference["savePreferenceData"]();
     const data = preference["loadPreferenceData"]();
@@ -73,7 +73,7 @@ describe("preference class test", () => {
 
   it("dispatchPreferenceUpdateEvent test", done => {
     const preferenceTest = "preferenceTest";
-    preference.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e: CustomEvent<string>) => {
+    preference.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
       if (e.detail === preferenceTest) {
         expect(true).toBeTruthy();
         done();
@@ -97,7 +97,7 @@ describe("preference class test", () => {
 
     localStorage.setItem(key, JSON.stringify(data));
 
-    const preference2 = new MangaViewerPreference(builder, rootEl);
+    const preference2 = new Preference(builder, rootEl);
     const uiVisibilityValues: UIVisibility[] = [
       "auto",
       "hidden",

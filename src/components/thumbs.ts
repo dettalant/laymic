@@ -1,33 +1,33 @@
-import { MangaViewerPages, MangaViewerStates } from "#/interfaces";
-import ViewerDOMBuilder from "#/builder";
+import { ViewerPages, ViewerStates } from "#/interfaces";
+import DOMBuilder from "#/components/builder";
 
-export default class MangaViewerThumbnails {
-  state: MangaViewerStates
+export default class Thumbnails {
+  state: ViewerStates
   el: HTMLElement;
   wrapperEl: HTMLElement;
   thumbEls: HTMLElement[];
-  constructor(builder: ViewerDOMBuilder, pages: MangaViewerPages, state: MangaViewerStates, className?: string) {
+  constructor(builder: DOMBuilder, pages: ViewerPages, state: ViewerStates, className?: string) {
     const thumbsEl = builder.createDiv();
-    thumbsEl.className = (className) ? className : "mangaViewer_thumbs";
+    thumbsEl.className = (className) ? className : "laymic_thumbs";
     // 初期状態では表示しないようにしておく
     thumbsEl.style.display = "none";
 
     const wrapperEl = builder.createDiv();
-    wrapperEl.className = "mangaViewer_thumbsWrapper";
+    wrapperEl.className = "laymic_thumbsWrapper";
     const thumbEls = [];
     for (let p of pages) {
       let el: HTMLElement;
       if (p instanceof HTMLElement) {
-        p.classList.add("mangaViewer_slideThumb")
+        p.classList.add("laymic_slideThumb")
         el = p;
       } else {
         const img = new Image();
         img.dataset.src = p;
-        img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
+        img.className = "laymic_lazyload laymic_imgThumb";
         el = img;
       }
 
-      el.classList.add("mangaViewer_thumbItem");
+      el.classList.add("laymic_thumbItem");
       thumbEls.push(el);
       wrapperEl.appendChild(el);
     }
@@ -57,11 +57,11 @@ export default class MangaViewerThumbnails {
       const s = el.dataset.src;
       if (s) {
         // 読み込み中はクラス名を変更
-        el.classList.replace("mangaViewer_lazyload", "mangaViewer_lazyloading");
+        el.classList.replace("laymic_lazyload", "laymic_lazyloading");
 
         // 読み込みが終わるとクラス名を再変更
         el.addEventListener("load", () => {
-          el.classList.replace("mangaViewer_lazyloading", "mangaViewer_lazyloaded");
+          el.classList.replace("laymic_lazyloading", "laymic_lazyloaded");
         })
 
         el.src = s;

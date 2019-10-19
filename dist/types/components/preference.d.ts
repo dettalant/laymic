@@ -1,6 +1,6 @@
-import ViewerDOMBuilder from "#/builder";
+import DOMBuilder from "#/components/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
-export default class MangaViewerPreference {
+export default class Preference {
     private readonly PREFERENCE_KEY;
     rootEl: HTMLElement;
     el: HTMLElement;
@@ -8,7 +8,7 @@ export default class MangaViewerPreference {
     buttons: PreferenceButtons;
     stateNames: StateClassNames;
     data: PreferenceData;
-    constructor(builder: ViewerDOMBuilder, rootEl: HTMLElement, className?: string);
+    constructor(builder: DOMBuilder, rootEl: HTMLElement, className?: string);
     private readonly defaultPreferenceData;
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;
@@ -29,7 +29,11 @@ export default class MangaViewerPreference {
      * 各種ボタンイベントを登録する
      * インスタンス生成時に一度だけ呼び出される
      */
-    private applyButtonEventListeners;
+    private applyEventListeners;
+    /**
+     * 全てのセレクトボタンを非アクティブ状態にする
+     */
+    private deactivateSelectButtons;
     /**
      * 入力した要素内部にあるselectItem要素を配列として返す
      * @param  el selectButtonを想定した引数

@@ -1,11 +1,11 @@
-import { MangaViewerPages, MangaViewerStates } from "#/interfaces";
-import ViewerDOMBuilder from "#/builder";
-export default class MangaViewerThumbnails {
-    state: MangaViewerStates;
+import { ViewerPages, ViewerStates } from "#/interfaces";
+import DOMBuilder from "#/components/builder";
+export default class Thumbnails {
+    state: ViewerStates;
     el: HTMLElement;
     wrapperEl: HTMLElement;
     thumbEls: HTMLElement[];
-    constructor(builder: ViewerDOMBuilder, pages: MangaViewerPages, state: MangaViewerStates, className?: string);
+    constructor(builder: DOMBuilder, pages: ViewerPages, state: ViewerStates, className?: string);
     /**
      * 読み込み待ち状態のimg elementを全て読み込む
      * いわゆるlazyload処理

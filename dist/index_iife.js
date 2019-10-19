@@ -1,11 +1,11 @@
 /*!
- *   mangaViewer.js
+ *   laymic.js
  *
  * @author dettalant
  * @version v0.1.0
  * @license MIT License
  */
-var mangaViewer = (function (exports) {
+var laymic = (function (exports) {
   'use strict';
 
   /**
@@ -5200,28 +5200,28 @@ var mangaViewer = (function (exports) {
   // svg xlink namespace
   const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
   // mangaViewerで用いるDOMを生成するやつ
-  class ViewerDOMBuilder {
+  class DOMBuilder {
       constructor(icons) {
           // 使用するアイコンセット
           this.icons = this.defaultMangaViewerIcons;
           // uiボタンクラス名
-          this.uiButtonClass = "mangaViewer_uiButton";
+          this.uiButtonClass = "laymic_uiButton";
           this.stateNames = this.defaultStateClassNames;
           if (icons)
               this.icons = Object.assign(this.icons, icons);
       }
       get defaultStateClassNames() {
           return {
-              active: "is_active",
-              hidden: "is_hidden",
-              showThumbs: "is_showThumbs",
-              showPreference: "is_showPreference",
-              singleSlide: "is_singleSlide",
-              vertView: "is_vertView",
-              visibleUI: "is_visibleUI",
-              visiblePagination: "is_visiblePagination",
-              fullscreen: "is_fullscreen",
-              ltr: "is_ltr",
+              active: "laymic_isActive",
+              hidden: "laymic_isHidden",
+              showThumbs: "laymic_isShowThumbs",
+              showPreference: "laymic_isShowPreference",
+              singleSlide: "laymic_isSingleSlide",
+              vertView: "laymic_isVertView",
+              visibleUI: "laymic_isVisibleUI",
+              visiblePagination: "laymic_isVisiblePagination",
+              fullscreen: "laymic_isFullscreen",
+              ltr: "laymic_isLTR",
           };
       }
       /**
@@ -5231,7 +5231,7 @@ var mangaViewer = (function (exports) {
       get defaultMangaViewerIcons() {
           // material.io: close
           const close = {
-              id: "mangaViewer_svgClose",
+              id: "laymic_svgClose",
               className: "icon_close",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5240,7 +5240,7 @@ var mangaViewer = (function (exports) {
           };
           // material.io: fullscreen
           const fullscreen = {
-              id: "mangaViewer_svgFullscreen",
+              id: "laymic_svgFullscreen",
               className: "icon_fullscreen",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5249,7 +5249,7 @@ var mangaViewer = (function (exports) {
           };
           // material.io: fullscreen-exit
           const exitFullscreen = {
-              id: "mangaViewer_svgExitFullscreen",
+              id: "laymic_svgExitFullscreen",
               className: "icon_exitFullscreen",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5257,7 +5257,7 @@ var mangaViewer = (function (exports) {
               ]
           };
           const showThumbs = {
-              id: "mangaViewer_svgThumbs",
+              id: "laymic_svgThumbs",
               className: "icon_showThumbs",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5266,7 +5266,7 @@ var mangaViewer = (function (exports) {
           };
           // material.io: settings_applications(modified)
           const preference = {
-              id: "mangaViewer_svgPreference",
+              id: "laymic_svgPreference",
               className: "icon_showPreference",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5274,7 +5274,7 @@ var mangaViewer = (function (exports) {
               ]
           };
           const horizView = {
-              id: "mangaViewer_svgHorizView",
+              id: "laymic_svgHorizView",
               className: "icon_horizView",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5282,7 +5282,7 @@ var mangaViewer = (function (exports) {
               ]
           };
           const vertView = {
-              id: "mangaViewer_svgVertView",
+              id: "laymic_svgVertView",
               className: "icon_vertView",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5291,7 +5291,7 @@ var mangaViewer = (function (exports) {
           };
           // material.io: check_box(modified)
           const checkboxInner = {
-              id: "mangaViewer_svgCheckBoxInner",
+              id: "laymic_svgCheckBoxInner",
               className: "icon_checkBoxInner",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5300,7 +5300,7 @@ var mangaViewer = (function (exports) {
           };
           // material.io: check_box(modified)
           const checkboxOuter = {
-              id: "mangaViewer_svgCheckBoxOuter",
+              id: "laymic_svgCheckBoxOuter",
               className: "icon_checkBoxOuter",
               viewBox: "0 0 24 24",
               pathDs: [
@@ -5338,7 +5338,7 @@ var mangaViewer = (function (exports) {
           // 空の要素を一番目に入れる
           if (isFirstSlideEmpty) {
               const emptyEl = this.createDiv();
-              emptyEl.className = "swiper-slide mangaViewer_emptySlide";
+              emptyEl.className = "swiper-slide laymic_emptySlide";
               wrapperEl.appendChild(emptyEl);
           }
           for (let p of pages) {
@@ -5366,14 +5366,14 @@ var mangaViewer = (function (exports) {
        */
       createViewerController(id) {
           const ctrlEl = this.createDiv();
-          ctrlEl.className = "mangaViewer_controller";
+          ctrlEl.className = "laymic_controller";
           ctrlEl.id = id;
           const progressEl = this.createDiv();
-          progressEl.className = "swiper-pagination mangaViewer_progressbar";
+          progressEl.className = "swiper-pagination laymic_progressbar";
           const ctrlTopEl = this.createDiv();
-          ctrlTopEl.className = "mangaViewer_controller_top";
+          ctrlTopEl.className = "laymic_controllerTop";
           const direction = this.createButton();
-          direction.classList.add("mangaViewer_direction");
+          direction.classList.add("laymic_direction");
           [
               this.createSvgUseElement(this.icons.vertView),
               this.createSvgUseElement(this.icons.horizView),
@@ -5383,18 +5383,18 @@ var mangaViewer = (function (exports) {
               this.createSvgUseElement(this.icons.fullscreen),
               this.createSvgUseElement(this.icons.exitFullscreen),
           ].forEach(icon => fullscreen.appendChild(icon));
-          fullscreen.classList.add("mangaViewer_fullscreen");
+          fullscreen.classList.add("laymic_fullscreen");
           const thumbs = this.createButton();
           [
               this.createSvgUseElement(this.icons.showThumbs),
           ].forEach(icon => thumbs.appendChild(icon));
-          thumbs.classList.add("mangaViewer_showThumbs");
+          thumbs.classList.add("laymic_showThumbs");
           const preference = this.createButton();
-          preference.classList.add("mangaViewer_showPreference");
+          preference.classList.add("laymic_showPreference");
           const preferenceIcon = this.createSvgUseElement(this.icons.preference);
           preference.appendChild(preferenceIcon);
           const close = this.createButton();
-          close.classList.add("mangaViewer_close");
+          close.classList.add("laymic_close");
           const closeIcon = this.createSvgUseElement(this.icons.close);
           close.appendChild(closeIcon);
           [
@@ -5404,8 +5404,8 @@ var mangaViewer = (function (exports) {
               preference,
               close
           ].forEach(btn => ctrlTopEl.appendChild(btn));
-          const nextPage = this.createButton("mangaViewer_pagination swiper-button-next");
-          const prevPage = this.createButton("mangaViewer_pagination swiper-button-prev");
+          const nextPage = this.createButton("laymic_pagination swiper-button-next");
+          const prevPage = this.createButton("laymic_pagination swiper-button-prev");
           const uiButtons = {
               close,
               thumbs,
@@ -5416,7 +5416,7 @@ var mangaViewer = (function (exports) {
               prevPage
           };
           const ctrlBottomEl = this.createDiv();
-          ctrlBottomEl.className = "mangaViewer_controller_bottom";
+          ctrlBottomEl.className = "laymic_controllerBottom";
           [
               ctrlTopEl,
               ctrlBottomEl,
@@ -5452,7 +5452,7 @@ var mangaViewer = (function (exports) {
           svgCtn.setAttributeNS(null, "version", "1.1");
           svgCtn.setAttribute("xmlns", SVG_NS);
           svgCtn.setAttribute("xmlns:xlink", SVG_XLINK_NS);
-          svgCtn.setAttribute("class", "mangaViewer_svg_container");
+          svgCtn.setAttribute("class", "laymic_svgContainer");
           const defs = document.createElementNS(SVG_NS, "defs");
           Object.values(this.icons).forEach(icon => {
               if (!this.isIconData(icon)) {
@@ -5500,12 +5500,12 @@ var mangaViewer = (function (exports) {
           return document.createElement("p");
       }
       createCheckBoxButton(label, className = "") {
-          const btn = this.createButton("mangaViewer_checkbox " + className);
+          const btn = this.createButton("laymic_checkbox " + className);
           const labelEl = this.createSpan();
-          labelEl.className = "mangaViewer_checkboxLabel";
+          labelEl.className = "laymic_checkboxLabel";
           labelEl.textContent = label;
           const wrapperEl = this.createDiv();
-          wrapperEl.className = "mangaViewer_iconWrapper";
+          wrapperEl.className = "laymic_iconWrapper";
           [
               this.createSvgUseElement(this.icons.checkboxOuter),
               this.createSvgUseElement(this.icons.checkboxInner),
@@ -5514,19 +5514,22 @@ var mangaViewer = (function (exports) {
               wrapperEl,
               labelEl,
           ].forEach(el => btn.appendChild(el));
-          btn.addEventListener("click", () => btn.classList.toggle(this.stateNames.active));
+          btn.addEventListener("click", e => {
+              btn.classList.toggle(this.stateNames.active);
+              e.stopPropagation();
+          });
           return btn;
       }
       createSelectButton(label, values, className = "") {
-          const btn = this.createButton("mangaViewer_select " + className);
+          const btn = this.createButton("laymic_select " + className);
           const labelEl = this.createSpan();
-          labelEl.className = "mangaViewer_selectLabel";
+          labelEl.className = "laymic_selectLabel";
           labelEl.textContent = label;
           const wrapperEl = this.createDiv();
-          wrapperEl.className = "mangaViewer_selectWrapper";
+          wrapperEl.className = "laymic_selectWrapper";
           values.forEach((item, i) => {
               const el = this.createDiv();
-              el.className = "mangaViewer_selectItem mangaViewer_selectItem" + i;
+              el.className = "laymic_selectItem laymic_selectItem" + i;
               el.textContent = item;
               el.dataset.itemIdx = i.toString();
               wrapperEl.appendChild(el);
@@ -5535,11 +5538,9 @@ var mangaViewer = (function (exports) {
               wrapperEl,
               labelEl,
           ].forEach(el => btn.appendChild(el));
-          btn.addEventListener("focus", () => {
-              btn.classList.add(this.stateNames.active);
-          });
-          btn.addEventListener("blur", () => {
-              btn.classList.remove(this.stateNames.active);
+          btn.addEventListener("click", e => {
+              btn.classList.toggle(this.stateNames.active);
+              e.stopPropagation();
           });
           return btn;
       }
@@ -5556,16 +5557,16 @@ var mangaViewer = (function (exports) {
       }
   }
 
-  class MangaViewerPreference {
+  class Preference {
       constructor(builder, rootEl, className) {
-          this.PREFERENCE_KEY = "mangaViewer_preferenceData";
+          this.PREFERENCE_KEY = "laymic_preferenceData";
           // preference save data
           this.data = this.loadPreferenceData();
           const containerEl = builder.createDiv();
-          containerEl.className = (className) ? className : "mangaViewer_preference";
+          containerEl.className = (className) ? className : "laymic_preference";
           const wrapperEl = builder.createDiv();
-          wrapperEl.className = "mangaViewer_preferenceWrapper";
-          const preferenceBtnClass = "mangaViewer_preferenceButton";
+          wrapperEl.className = "laymic_preferenceWrapper";
+          const preferenceBtnClass = "laymic_preferenceButton";
           const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
           const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
           const progressBarWidths = [
@@ -5613,7 +5614,7 @@ var mangaViewer = (function (exports) {
           // 読み込んだpreference値を各ボタン状態に適用
           this.applyCurrentPreferenceValue();
           // 各種イベントをボタンに適用
-          this.applyButtonEventListeners();
+          this.applyEventListeners();
       }
       get defaultPreferenceData() {
           return {
@@ -5657,7 +5658,7 @@ var mangaViewer = (function (exports) {
           localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
       }
       dispatchPreferenceUpdateEvent(detail = "") {
-          const ev = new CustomEvent("MangaViewerPreferenceUpdate", {
+          const ev = new CustomEvent("LaymicPreferenceUpdate", {
               detail
           });
           this.rootEl.dispatchEvent(ev);
@@ -5732,7 +5733,7 @@ var mangaViewer = (function (exports) {
        * 各種ボタンイベントを登録する
        * インスタンス生成時に一度だけ呼び出される
        */
-      applyButtonEventListeners() {
+      applyEventListeners() {
           this.buttons.isAutoFullscreen.addEventListener("click", () => {
               this.isAutoFullscreen = !this.isAutoFullscreen;
           });
@@ -5801,11 +5802,33 @@ var mangaViewer = (function (exports) {
                       // 親要素がアクティブな時 === selectButtonが選択された時
                       // この時だけ処理を動かす
                       const isActive = parentEl.classList.contains(this.stateNames.active);
-                      if (isActive)
+                      if (isActive) {
                           callback(e, el, els);
+                      }
                   }));
               }
           });
+          // preference wrapperのクリックイベント
+          this.wrapperEl.addEventListener("click", e => {
+              // セレクトボタン要素を全て非アクティブ化
+              this.deactivateSelectButtons();
+              // クリックイベントをpreference containerへ伝播させない
+              e.stopPropagation();
+          });
+          // preference containerのクリックイベント
+          this.el.addEventListener("click", () => {
+              this.deactivateSelectButtons();
+              this.rootEl.classList.remove(this.stateNames.showPreference);
+          });
+      }
+      /**
+       * 全てのセレクトボタンを非アクティブ状態にする
+       */
+      deactivateSelectButtons() {
+          [
+              this.buttons.progressBarWidth,
+              this.buttons.paginationVisibility,
+          ].forEach(el => el.classList.remove(this.stateNames.active));
       }
       /**
        * 入力した要素内部にあるselectItem要素を配列として返す
@@ -5813,33 +5836,33 @@ var mangaViewer = (function (exports) {
        * @return    クラス名で抽出したElement配列
        */
       getSelectItemEls(el) {
-          const selectItemClass = "mangaViewer_selectItem";
+          const selectItemClass = "laymic_selectItem";
           return Array.from(el.getElementsByClassName(selectItemClass) || []);
       }
   }
 
-  class MangaViewerThumbnails {
+  class Thumbnails {
       constructor(builder, pages, state, className) {
           const thumbsEl = builder.createDiv();
-          thumbsEl.className = (className) ? className : "mangaViewer_thumbs";
+          thumbsEl.className = (className) ? className : "laymic_thumbs";
           // 初期状態では表示しないようにしておく
           thumbsEl.style.display = "none";
           const wrapperEl = builder.createDiv();
-          wrapperEl.className = "mangaViewer_thumbsWrapper";
+          wrapperEl.className = "laymic_thumbsWrapper";
           const thumbEls = [];
           for (let p of pages) {
               let el;
               if (p instanceof HTMLElement) {
-                  p.classList.add("mangaViewer_slideThumb");
+                  p.classList.add("laymic_slideThumb");
                   el = p;
               }
               else {
                   const img = new Image();
                   img.dataset.src = p;
-                  img.className = "mangaViewer_lazyload mangaViewer_imgThumb";
+                  img.className = "laymic_lazyload laymic_imgThumb";
                   el = img;
               }
-              el.classList.add("mangaViewer_thumbItem");
+              el.classList.add("laymic_thumbItem");
               thumbEls.push(el);
               wrapperEl.appendChild(el);
           }
@@ -5864,10 +5887,10 @@ var mangaViewer = (function (exports) {
               const s = el.dataset.src;
               if (s) {
                   // 読み込み中はクラス名を変更
-                  el.classList.replace("mangaViewer_lazyload", "mangaViewer_lazyloading");
+                  el.classList.replace("laymic_lazyload", "laymic_lazyloading");
                   // 読み込みが終わるとクラス名を再変更
                   el.addEventListener("load", () => {
-                      el.classList.replace("mangaViewer_lazyloading", "mangaViewer_lazyloaded");
+                      el.classList.replace("laymic_lazyloading", "laymic_lazyloaded");
                   });
                   el.src = s;
               }
@@ -5896,11 +5919,11 @@ var mangaViewer = (function (exports) {
   }
 
   Swiper.use([keyboard, pagination, lazy]);
-  class MangaViewer {
+  class Laymic {
       constructor(pages, options = {}) {
           // mangaViewer内部で用いるステートまとめ
           this.state = this.defaultMangaViewerStates;
-          const builder = new ViewerDOMBuilder(options.icons);
+          const builder = new DOMBuilder(options.icons);
           const rootEl = builder.createDiv();
           this.stateNames = builder.stateNames;
           if (this.state.viewerId === 0) {
@@ -5941,7 +5964,7 @@ var mangaViewer = (function (exports) {
               const src = getBeginningSrc(pages);
               this.setPageSizeFromImgPath(src);
           }
-          this.preference = new MangaViewerPreference(builder, rootEl);
+          this.preference = new Preference(builder, rootEl);
           // 省略表記だとバグが起きそうなので
           // undefinedでないかだけ確認する
           if (options.isLTR !== void 0)
@@ -5962,13 +5985,13 @@ var mangaViewer = (function (exports) {
           else if (typeof options.progressBarWidth === "string" && options.progressBarWidth !== "auto") {
               this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
           }
-          this.thumbs = new MangaViewerThumbnails(builder, pages, this.state);
+          this.thumbs = new Thumbnails(builder, pages, this.state);
           rootEl.style.display = "none";
-          rootEl.classList.add("mangaViewer_root", this.stateNames.visibleUI);
+          rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
           if (this.state.isLTR)
               rootEl.classList.add(this.stateNames.ltr);
           const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
-          const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "mangaViewer_mainGallery", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
+          const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "laymic_slider", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
           [
               controllerEl,
               swiperEl,
@@ -6005,14 +6028,14 @@ var mangaViewer = (function (exports) {
        * @return ビューワーID文字列
        */
       get mangaViewerId() {
-          return "mangaViewer" + this.state.viewerId;
+          return "laymic" + this.state.viewerId;
       }
       /**
        * インスタンスごとに固有のビューワーコントローラーIDを返す
        * @return ビューワーコントローラーID文字列
        */
       get mangaViewerControllerId() {
-          return "mangaViewerController" + this.state.viewerId;
+          return "laymicController" + this.state.viewerId;
       }
       /**
        * swiper-containerの要素サイズを返す
@@ -6167,9 +6190,6 @@ var mangaViewer = (function (exports) {
               this.swiper.slideTo(i);
               this.el.rootEl.classList.remove(this.stateNames.showThumbs);
           }));
-          this.preference.el.addEventListener("click", () => {
-              this.el.rootEl.classList.remove(this.stateNames.showPreference);
-          });
           // 全画面化ボタンのクリックイベント
           this.el.buttons.fullscreen.addEventListener("click", () => {
               this.fullscreenHandler();
@@ -6238,11 +6258,9 @@ var mangaViewer = (function (exports) {
           Array.from(this.el.controllerEl.children).concat([
               // サムネイル表示中のサムネイル格納コンテナ
               this.thumbs.wrapperEl,
-              // 設定表示中の設定格納コンテナ
-              this.preference.wrapperEl,
           ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
-          this.el.rootEl.addEventListener("MangaViewerPreferenceUpdate", ((e) => {
+          this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => {
               if (e.detail === "progressBarWidth") {
                   // progressBarWidth数値を取得する
                   const w = this.getBarWidth(this.preference.progressBarWidth);
@@ -6663,7 +6681,7 @@ var mangaViewer = (function (exports) {
 
   // 複数ビューワーを一括登録したり、
   // html側から情報を読み取ってビューワー登録したりするためのclass
-  class MangaViewerApplicator {
+  class LaymicApplicator {
       constructor(selector) {
           const elements = document.querySelectorAll(selector);
           Array.from(elements).forEach(el => {
@@ -6674,8 +6692,8 @@ var mangaViewer = (function (exports) {
       }
   }
 
-  exports.MangaViewer = MangaViewer;
-  exports.MangaViewerApplicator = MangaViewerApplicator;
+  exports.Laymic = Laymic;
+  exports.LaymicApplicator = LaymicApplicator;
 
   return exports;
 
