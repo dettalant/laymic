@@ -100,7 +100,7 @@ export default class Laymic {
       this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
     }
 
-    this.thumbs = new Thumbnails(builder, pages, this.state);
+    this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
 
     rootEl.style.display = "none";
     rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
@@ -332,11 +332,6 @@ export default class Laymic {
       this.hideViewerUI();
     })
 
-    // サムネイル表示中オーバーレイ要素でのクリックイベント
-    this.thumbs.el.addEventListener("click", () => {
-      this.el.rootEl.classList.remove(this.stateNames.showThumbs);
-    });
-
     // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
     this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
@@ -388,13 +383,13 @@ export default class Laymic {
         }
       })
 
-      el.addEventListener("mousemove", rafThrottle((e) => {
+      el.addEventListener("mousemove", rafThrottle(e => {
         this.slideMouseHoverHandler(e);
       }))
 
       // マウスホイールでのイベント
       // swiper純正のマウスホイール処理は動作がすっとろいので自作
-      el.addEventListener("wheel", rafThrottle((e) => {
+      el.addEventListener("wheel", rafThrottle(e => {
         // 上下ホイール判定
         // || RTL時の左右ホイール判定
         // || LTR時の左右ホイール判定
@@ -417,10 +412,7 @@ export default class Laymic {
 
     // ユーザビリティのため「クリックしても何も起きない」
     // 場所ではイベント伝播を停止させる
-    Array.from(this.el.controllerEl.children).concat([
-      // サムネイル表示中のサムネイル格納コンテナ
-      this.thumbs.wrapperEl,
-    ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
+    Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
     // カスタムイベント登録
     this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {

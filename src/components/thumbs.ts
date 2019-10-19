@@ -1,12 +1,14 @@
-import { ViewerPages, ViewerStates } from "#/interfaces";
+import { ViewerPages, ViewerStates, StateClassNames } from "#/interfaces";
 import DOMBuilder from "#/components/builder";
 
 export default class Thumbnails {
-  state: ViewerStates
+  state: ViewerStates;
+  stateNames: StateClassNames;
+  rootEl: HTMLElement;
   el: HTMLElement;
   wrapperEl: HTMLElement;
   thumbEls: HTMLElement[];
-  constructor(builder: DOMBuilder, pages: ViewerPages, state: ViewerStates, className?: string) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates, className?: string) {
     const thumbsEl = builder.createDiv();
     thumbsEl.className = (className) ? className : "laymic_thumbs";
     // 初期状態では表示しないようにしておく
@@ -38,10 +40,14 @@ export default class Thumbnails {
     this.wrapperEl = wrapperEl;
     this.thumbEls = thumbEls
     this.state = state;
+    this.rootEl = rootEl;
+    this.stateNames = builder.stateNames;
 
     this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
     this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
     this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+
+    this.applyEventListeners();
   }
 
   /**
@@ -89,5 +95,20 @@ export default class Thumbnails {
       ? thumbsWrapperWidth + "px"
       : "";
     this.wrapperEl.style.width = widthStyleStr;
+  }
+
+  /**
+   * 各種イベントリスナーの登録
+   */
+  private applyEventListeners() {
+    // サムネイルwrapperクリック時にサムネイル表示が消えないようにする
+    this.wrapperEl.addEventListener("click", e => {
+      e.stopPropagation();
+    });
+
+    // サムネイル表示中オーバーレイ要素でのクリックイベント
+    this.el.addEventListener("click", () => {
+      this.rootEl.classList.remove(this.stateNames.showThumbs);
+    });
   }
 }

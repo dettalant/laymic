@@ -40,7 +40,8 @@ describe("thumbs class test", () => {
     isMobile: false,
   };
 
-  const thumbs = new Thumbnails(builder, testPics, state);
+  const rootEl = builder.createDiv();
+  const thumbs = new Thumbnails(builder, rootEl, testPics, state);
 
   it("revealImgs test", () => {
     thumbs.thumbEls.forEach(el => {

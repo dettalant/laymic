@@ -5842,7 +5842,7 @@ var laymic = (function (exports) {
   }
 
   class Thumbnails {
-      constructor(builder, pages, state, className) {
+      constructor(builder, rootEl, pages, state, className) {
           const thumbsEl = builder.createDiv();
           thumbsEl.className = (className) ? className : "laymic_thumbs";
           // 初期状態では表示しないようにしておく
@@ -5871,9 +5871,12 @@ var laymic = (function (exports) {
           this.wrapperEl = wrapperEl;
           this.thumbEls = thumbEls;
           this.state = state;
+          this.rootEl = rootEl;
+          this.stateNames = builder.stateNames;
           this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
           this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
           this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+          this.applyEventListeners();
       }
       /**
        * 読み込み待ち状態のimg elementを全て読み込む
@@ -5915,6 +5918,19 @@ var laymic = (function (exports) {
               ? thumbsWrapperWidth + "px"
               : "";
           this.wrapperEl.style.width = widthStyleStr;
+      }
+      /**
+       * 各種イベントリスナーの登録
+       */
+      applyEventListeners() {
+          // サムネイルwrapperクリック時にサムネイル表示が消えないようにする
+          this.wrapperEl.addEventListener("click", e => {
+              e.stopPropagation();
+          });
+          // サムネイル表示中オーバーレイ要素でのクリックイベント
+          this.el.addEventListener("click", () => {
+              this.rootEl.classList.remove(this.stateNames.showThumbs);
+          });
       }
   }
 
@@ -5985,7 +6001,7 @@ var laymic = (function (exports) {
           else if (typeof options.progressBarWidth === "string" && options.progressBarWidth !== "auto") {
               this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
           }
-          this.thumbs = new Thumbnails(builder, pages, this.state);
+          this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
           rootEl.style.display = "none";
           rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
           if (this.state.isLTR)
@@ -6180,10 +6196,6 @@ var laymic = (function (exports) {
               this.el.rootEl.classList.add(this.stateNames.showThumbs);
               this.hideViewerUI();
           });
-          // サムネイル表示中オーバーレイ要素でのクリックイベント
-          this.thumbs.el.addEventListener("click", () => {
-              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
-          });
           // サムネイルのクリックイベント
           // 各サムネイルとswiper各スライドとを紐づける
           this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
@@ -6228,12 +6240,12 @@ var laymic = (function (exports) {
                       this.toggleViewerUI();
                   }
               });
-              el.addEventListener("mousemove", rafThrottle((e) => {
+              el.addEventListener("mousemove", rafThrottle(e => {
                   this.slideMouseHoverHandler(e);
               }));
               // マウスホイールでのイベント
               // swiper純正のマウスホイール処理は動作がすっとろいので自作
-              el.addEventListener("wheel", rafThrottle((e) => {
+              el.addEventListener("wheel", rafThrottle(e => {
                   // 上下ホイール判定
                   // || RTL時の左右ホイール判定
                   // || LTR時の左右ホイール判定
@@ -6255,10 +6267,7 @@ var laymic = (function (exports) {
           });
           // ユーザビリティのため「クリックしても何も起きない」
           // 場所ではイベント伝播を停止させる
-          Array.from(this.el.controllerEl.children).concat([
-              // サムネイル表示中のサムネイル格納コンテナ
-              this.thumbs.wrapperEl,
-          ]).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
+          Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
           this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => {
               if (e.detail === "progressBarWidth") {
