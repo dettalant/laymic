@@ -1,6 +1,6 @@
-import { ViewerDOMBuilder } from "#/builder";
+import ViewerDOMBuilder from "#/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
-export declare class MangaViewerPreference {
+export default class MangaViewerPreference {
     private readonly PREFERENCE_KEY;
     rootEl: HTMLElement;
     el: HTMLElement;

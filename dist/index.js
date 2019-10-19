@@ -7,6 +7,8 @@
  */
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
 /**
  * SSR Window 1.0.1
  * Better handling for window object in SSR environment
@@ -5896,17 +5898,11 @@ class MangaViewerThumbnails {
 
 Swiper.use([keyboard, pagination, lazy]);
 class MangaViewer {
-    constructor(query, pages, options = {}) {
+    constructor(pages, options = {}) {
         // mangaViewer内部で用いるステートまとめ
         this.state = this.defaultMangaViewerStates;
-        const rootEl = (typeof query === "string")
-            ? document.querySelector(query)
-            : query;
-        if (!(rootEl instanceof HTMLElement))
-            throw new Error("rootElの取得に失敗");
-        if (rootEl.parentNode)
-            rootEl.parentNode.removeChild(rootEl);
         const builder = new ViewerDOMBuilder(options.icons);
+        const rootEl = builder.createDiv();
         this.stateNames = builder.stateNames;
         if (this.state.viewerId === 0) {
             // 一つのページにつき一度だけの処理
@@ -6666,4 +6662,18 @@ class MangaViewer {
     }
 }
 
-module.exports = MangaViewer;
+// 複数ビューワーを一括登録したり、
+// html側から情報を読み取ってビューワー登録したりするためのclass
+class MangaViewerApplicator {
+    constructor(selector) {
+        const elements = document.querySelectorAll(selector);
+        Array.from(elements).forEach(el => {
+            console.log(el);
+            if (el.parentNode)
+                el.parentNode.removeChild(el);
+        });
+    }
+}
+
+exports.MangaViewer = MangaViewer;
+exports.MangaViewerApplicator = MangaViewerApplicator;

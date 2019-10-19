@@ -1,7 +1,7 @@
 import { MangaViewerPages, MangaViewerStates } from "#/interfaces";
-import { ViewerDOMBuilder } from "#/builder";
+import ViewerDOMBuilder from "#/builder";
 
-export class MangaViewerThumbnails {
+export default class MangaViewerThumbnails {
   state: MangaViewerStates
   el: HTMLElement;
   wrapperEl: HTMLElement;

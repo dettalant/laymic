@@ -1,5 +1,5 @@
 import { MangaViewerIcons, MangaViewerUIButtons, StateClassNames } from "#/interfaces";
-export declare class ViewerDOMBuilder {
+export default class ViewerDOMBuilder {
     private icons;
     private readonly uiButtonClass;
     readonly stateNames: StateClassNames;

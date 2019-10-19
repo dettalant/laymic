@@ -1,5 +1,5 @@
-import { MangaViewerThumbnails } from "#/thumbs";
-import { ViewerDOMBuilder } from "#/builder";
+import MangaViewerThumbnails from "#/thumbs";
+import ViewerDOMBuilder from "#/builder";
 
 describe("thumbs class test", () => {
   const builder = new ViewerDOMBuilder();

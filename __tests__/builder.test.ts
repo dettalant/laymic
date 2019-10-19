@@ -1,4 +1,4 @@
-import { ViewerDOMBuilder } from "#/builder";
+import ViewerDOMBuilder from "#/builder";
 
 describe("builder class test", () => {
   const builder = new ViewerDOMBuilder()
@@ -92,7 +92,7 @@ describe("builder class test", () => {
     expect(defs.tagName.toLowerCase()).toBe("defs");
     Array.from(defs.children).forEach(el => {
       expect(el.tagName.toLowerCase()).toBe("symbol");
-      
+
       Array.from(el.children).forEach(path => {
         expect(path.tagName.toLowerCase()).toBe("path");
       })

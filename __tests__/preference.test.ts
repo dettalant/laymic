@@ -1,5 +1,5 @@
-import { MangaViewerPreference } from "#/preference";
-import { ViewerDOMBuilder } from "#/builder";
+import MangaViewerPreference from "#/preference";
+import ViewerDOMBuilder from "#/builder";
 import { BarWidth, UIVisibility } from "#/interfaces";
 
 describe("preference class test", () => {
