@@ -1,3 +1,7 @@
+import Laymic from "#/components/core";
 export default class LaymicApplicator {
-    constructor(selector: string);
+    laymicMap: Map<string, Laymic>;
+    constructor(selector?: string);
+    open(viewerId: string): void;
+    close(viewerId: string): void;
 }

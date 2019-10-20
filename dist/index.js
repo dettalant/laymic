@@ -5345,7 +5345,7 @@ class DOMBuilder {
         for (let p of pages) {
             const divEl = this.createDiv();
             divEl.className = "swiper-slide";
-            if (p instanceof HTMLElement) {
+            if (p instanceof Element) {
                 divEl.appendChild(p);
             }
             else {
@@ -5948,16 +5948,17 @@ class Laymic {
             const svgCtn = builder.createSVGIcons();
             document.body.appendChild(svgCtn);
         }
-        const parseHtmlElement = (queryStr) => {
-            const baseEl = document.querySelector(queryStr);
-            if (!baseEl)
-                throw new Error("pages引数のquery stringが不正");
-            const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el);
-            return result;
-        };
-        if (typeof pages === "string") {
-            pages = parseHtmlElement(pages);
-        }
+        // const parseHtmlElement = (queryStr: string): ViewerPages => {
+        //   const baseEl = document.querySelector(queryStr);
+        //   if (!baseEl) throw new Error("pages引数のquery stringが不正");
+        //
+        //   const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el);
+        //   return result;
+        // }
+        //
+        // if (typeof pages === "string") {
+        //   pages = parseHtmlElement(pages);
+        // }
         if (options.pageWidth && options.pageHeight) {
             const [pw, ph] = [options.pageWidth, options.pageHeight];
             this.setPageSize(pw, ph);
@@ -5994,6 +5995,8 @@ class Laymic {
             this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
         if (options.viewerPadding !== void 0)
             this.state.viewerPadding = options.viewerPadding;
+        if (options.isInstantOpen !== void 0)
+            this.state.isInstantOpen = options.isInstantOpen;
         if (options.isVisiblePagination)
             rootEl.classList.add(this.stateNames.visiblePagination);
         if (this.preference.progressBarWidth !== "auto") {
@@ -6030,7 +6033,7 @@ class Laymic {
             this.enableVerticalView();
         // location.hashにmangaViewerIdと同値が指定されている場合は
         // 即座に開く
-        if (location.hash === "#" + this.mangaViewerId) {
+        if (this.state.isInstantOpen && location.hash === "#" + this.mangaViewerId) {
             this.open(true);
         }
         // 各種イベントの停止
@@ -6104,6 +6107,7 @@ class Laymic {
             thumbItemGap: 16,
             thumbsWrapperPadding: 16,
             isMobile: isExistTouchEvent(),
+            isInstantOpen: true,
         };
     }
     get mainSwiperHorizViewConf() {
@@ -6327,8 +6331,10 @@ class Laymic {
             this.swiper.lazy.load();
         }
         // 履歴を追加せずにhash値を書き換える
-        const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
-        location.replace(newUrl);
+        if (this.state.isInstantOpen) {
+            const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
+            location.replace(newUrl);
+        }
     }
     /**
      * オーバーレイ表示を閉じる
@@ -6341,7 +6347,9 @@ class Laymic {
         }
         // オーバーレイ下要素のスクロール再開
         this.enableBodyScroll();
-        if (location.hash && isHashChange) {
+        if (this.state.isInstantOpen
+            && location.hash
+            && isHashChange) {
             // 履歴を残さずhashを削除する
             location.replace(location.href.split("#")[0]);
         }
@@ -6692,13 +6700,54 @@ class Laymic {
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
 class LaymicApplicator {
-    constructor(selector) {
-        const elements = document.querySelectorAll(selector);
-        Array.from(elements).forEach(el => {
-            console.log(el);
+    constructor(selector = ".laymic_template") {
+        // laymic instanceを格納するMap object
+        this.laymicMap = new Map();
+        // laymic templateの配列
+        const elements = Array.from(document.querySelectorAll(selector) || []);
+        // laymic展開イベントを登録するopener配列
+        const openers = Array.from(document.querySelectorAll(".laymic_opener") || []);
+        // templateになるhtml要素から必要な情報を抜き出す
+        elements.forEach(el => {
+            if (!(el instanceof HTMLElement))
+                return;
+            const viewerId = el.dataset.viewerId || "noname";
+            const pages = Array.from(el.children).map(childEl => {
+                let result = childEl;
+                if (childEl instanceof HTMLImageElement) {
+                    const src = childEl.dataset.src || childEl.src || "";
+                    result = src;
+                }
+                return result;
+            });
+            const options = {};
+            this.laymicMap.set(viewerId, new Laymic(pages, options));
+            // 用をなしたテンプレート要素を削除
             if (el.parentNode)
                 el.parentNode.removeChild(el);
         });
+        // openerのdata-for属性がlaymic viewerIdと紐付いている場合
+        // クリック時に当該viewerを展開するイベントを登録する
+        openers.forEach(el => {
+            if (!(el instanceof HTMLElement))
+                return;
+            const dataFor = el.dataset.for || "noname";
+            if (!this.laymicMap.has(dataFor))
+                return;
+            el.addEventListener("click", () => {
+                this.open(dataFor);
+            });
+        });
+    }
+    open(viewerId) {
+        const laymic = this.laymicMap.get(viewerId);
+        if (laymic)
+            laymic.open();
+    }
+    close(viewerId) {
+        const laymic = this.laymicMap.get(viewerId);
+        if (laymic)
+            laymic.close();
     }
 }
 

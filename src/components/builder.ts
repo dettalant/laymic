@@ -1,4 +1,5 @@
 import {
+  ViewerPages,
   ViewerIcons,
   ViewerUIButtons,
   IconData,
@@ -149,7 +150,7 @@ export default class DOMBuilder {
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(id: string, className: string,  pages: (string | HTMLElement)[], isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
+  createSwiperContainer(id: string, className: string,  pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container " + className;
     swiperEl.id = id;
@@ -170,7 +171,7 @@ export default class DOMBuilder {
       const divEl = this.createDiv();
       divEl.className = "swiper-slide";
 
-      if (p instanceof HTMLElement) {
+      if (p instanceof Element) {
         divEl.appendChild(p);
       } else {
         const imgEl = new Image();

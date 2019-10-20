@@ -1,4 +1,4 @@
-import { ViewerIcons, ViewerUIButtons, StateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerIcons, ViewerUIButtons, StateClassNames } from "#/interfaces";
 export default class DOMBuilder {
     private icons;
     private readonly uiButtonClass;
@@ -18,7 +18,7 @@ export default class DOMBuilder {
      * @param  isLTR     左から右に流れる形式を取るならtrue
      * @return           swiper-container要素
      */
-    createSwiperContainer(id: string, className: string, pages: (string | HTMLElement)[], isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement;
+    createSwiperContainer(id: string, className: string, pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement;
     /**
      * 漫画ビューワーコントローラー要素を返す
      * @param  id    要素のid名となる文字列

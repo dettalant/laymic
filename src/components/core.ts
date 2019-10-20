@@ -15,7 +15,7 @@ import Thumbnails from "#/components/thumbs";
 import {
   ViewerPages,
   ViewerElements,
-  ViewerOptions,
+  LaymicOptions,
   ViewerStates,
   PageRect,
   StateClassNames,
@@ -29,7 +29,7 @@ export default class Laymic {
   el: ViewerElements;
   // mangaViewer内部で用いるステートまとめ
   state: ViewerStates = this.defaultMangaViewerStates;
-  initOptions: ViewerOptions;
+  initOptions: LaymicOptions;
   // ステート変化に用いるクラス名まとめ
   stateNames: StateClassNames;
   preference: Preference;
@@ -37,7 +37,7 @@ export default class Laymic {
   // swiper instance
   swiper: Swiper;
 
-  constructor(pages: ViewerPages | string, options: ViewerOptions = {}) {
+  constructor(pages: ViewerPages, options: LaymicOptions = {}) {
     const builder = new DOMBuilder(options.icons);
     const rootEl = builder.createDiv();
     this.stateNames = builder.stateNames;
@@ -48,24 +48,24 @@ export default class Laymic {
       document.body.appendChild(svgCtn);
     }
 
-    const parseHtmlElement = (queryStr: string): (string | HTMLElement)[] => {
-      const baseEl = document.querySelector(queryStr);
-      if (!baseEl) throw new Error("pages引数のquery stringが不正");
-
-      const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el as HTMLElement);
-      return result;
-    }
-
-    if (typeof pages === "string") {
-      pages = parseHtmlElement(pages);
-    }
+    // const parseHtmlElement = (queryStr: string): ViewerPages => {
+    //   const baseEl = document.querySelector(queryStr);
+    //   if (!baseEl) throw new Error("pages引数のquery stringが不正");
+    //
+    //   const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el);
+    //   return result;
+    // }
+    //
+    // if (typeof pages === "string") {
+    //   pages = parseHtmlElement(pages);
+    // }
 
     if (options.pageWidth && options.pageHeight) {
       const [pw, ph] = [options.pageWidth, options.pageHeight]
       this.setPageSize(pw, ph);
     } else {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-      const getBeginningSrc = (pages: (string | HTMLElement)[]): string => {
+      const getBeginningSrc = (pages: ViewerPages): string => {
         let result = "";
         for (let p of pages) {
           if (typeof p === "string") {
@@ -92,6 +92,7 @@ export default class Laymic {
     if (options.horizPageMargin !== void 0) this.state.horizPageMargin = options.horizPageMargin;
     if (options.isFirstSlideEmpty !== void 0) this.state.isFirstSlideEmpty = options.isFirstSlideEmpty;
     if (options.viewerPadding !== void 0) this.state.viewerPadding = options.viewerPadding;
+    if (options.isInstantOpen !== void 0) this.state.isInstantOpen = options.isInstantOpen;
     if (options.isVisiblePagination) rootEl.classList.add(this.stateNames.visiblePagination);
 
     if (this.preference.progressBarWidth !== "auto") {
@@ -140,7 +141,7 @@ export default class Laymic {
 
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
-    if (location.hash === "#" + this.mangaViewerId) {
+    if (this.state.isInstantOpen && location.hash === "#" + this.mangaViewerId) {
       this.open(true);
     }
 
@@ -230,6 +231,7 @@ export default class Laymic {
       thumbItemGap: 16,
       thumbsWrapperPadding: 16,
       isMobile: isExistTouchEvent(),
+      isInstantOpen: true,
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
@@ -478,8 +480,10 @@ export default class Laymic {
     }
 
     // 履歴を追加せずにhash値を書き換える
-    const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
-    location.replace(newUrl);
+    if (this.state.isInstantOpen) {
+      const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
+      location.replace(newUrl);
+    }
   }
 
   /**
@@ -496,7 +500,10 @@ export default class Laymic {
     // オーバーレイ下要素のスクロール再開
     this.enableBodyScroll();
 
-    if (location.hash && isHashChange) {
+    if (this.state.isInstantOpen
+      && location.hash
+      && isHashChange
+    ) {
       // 履歴を残さずhashを削除する
       location.replace(location.href.split("#")[0]);
     }

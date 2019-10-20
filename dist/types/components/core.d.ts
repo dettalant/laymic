@@ -1,16 +1,16 @@
 import { Swiper } from "swiper/js/swiper.esm";
 import Preference from "#/components/preference";
 import Thumbnails from "#/components/thumbs";
-import { ViewerPages, ViewerElements, ViewerOptions, ViewerStates, StateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates, StateClassNames } from "#/interfaces";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;
-    initOptions: ViewerOptions;
+    initOptions: LaymicOptions;
     stateNames: StateClassNames;
     preference: Preference;
     thumbs: Thumbnails;
     swiper: Swiper;
-    constructor(pages: ViewerPages | string, options?: ViewerOptions);
+    constructor(pages: ViewerPages, options?: LaymicOptions);
     /**
      * インスタンスごとに固有のビューワーIDを返す
      * @return ビューワーID文字列

@@ -1,7 +1,7 @@
-export declare type ViewerPages = (string | HTMLElement)[];
+export declare type ViewerPages = (string | Element)[];
 export declare type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
 export declare type UIVisibility = "auto" | "visible" | "hidden";
-export interface ViewerOptions {
+export interface LaymicOptions {
     pageWidth?: number;
     pageHeight?: number;
     isLTR?: boolean;
@@ -12,6 +12,7 @@ export interface ViewerOptions {
     horizPageMargin?: number;
     viewerPadding?: number;
     progressBarWidth?: BarWidth;
+    isInstantOpen?: boolean;
     viewerDirection?: "vertical" | "horizontal";
 }
 export interface PageSize {
@@ -71,6 +72,7 @@ export interface ViewerStates {
     thumbItemGap: number;
     thumbsWrapperPadding: number;
     isMobile: boolean;
+    isInstantOpen: boolean;
 }
 export interface PreferenceData {
     isAutoFullscreen: boolean;

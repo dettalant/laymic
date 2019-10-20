@@ -1,9 +1,9 @@
-export type ViewerPages = (string | HTMLElement)[];
+export type ViewerPages = (string | Element)[];
 
 export type BarWidth = "auto" | "none" | "tint" | "medium" | "bold";
 export type UIVisibility = "auto" | "visible" | "hidden";
 
-export interface ViewerOptions {
+export interface LaymicOptions {
   // ページ横幅
   pageWidth?: number,
   // ページの縦幅
@@ -24,6 +24,9 @@ export interface ViewerOptions {
   // swiper-container周囲の余白ピクセル数値
   viewerPadding?: number,
   progressBarWidth?: BarWidth,
+  // ページ読み込み直後にビューワーを開く機能
+  // trueならば有効化、falseならば無効化
+  isInstantOpen?: boolean,
   // ビューワーで読み進める方向のデフォルト値
   // ユーザー設定がなされていればそちらを優先
   viewerDirection?: "vertical" | "horizontal",
@@ -107,6 +110,7 @@ export interface ViewerStates {
   thumbItemGap: number,
   thumbsWrapperPadding: number,
   isMobile: boolean,
+  isInstantOpen: boolean,
 }
 
 export interface PreferenceData {
