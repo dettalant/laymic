@@ -16,18 +16,21 @@ describe("utils function test", () => {
     const ns = "http://www.w3.org/2000/svg";
     const div = document.createElement("div");
     const svg = document.createElementNS(ns, "svg");
-    const data = [
-      div,
-      div,
-      div
+    const trueData = [
+      [div, div, div],
     ];
-    expect(isHTMLElementArray(data)).toBeTruthy();
+    trueData.forEach(data => expect(isHTMLElementArray(data)).toBeTruthy());
 
     const falseData = [
-      div,
-      svg
+      [ div, svg ],
+      [ svg ],
+      [ 1, div ],
+      [ 1, 3 ],
+      [ "a", "b" ],
+      [ 1, "a" ],
+      [],
     ];
 
-    expect(isHTMLElementArray(falseData)).toBeFalsy();
+    falseData.forEach(data => expect(isHTMLElementArray(data)).toBeFalsy());
   })
 })

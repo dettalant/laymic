@@ -17,6 +17,15 @@ export default class LaymicApplicator {
       if (!(el instanceof HTMLElement)) return;
 
       const viewerId = el.dataset.viewerId || "noname";
+      const pageWidth = parseInt(el.dataset.pageWidth || "", 10);
+      const pageHeight = parseInt(el.dataset.pageHeight || "", 10);
+      const options: LaymicOptions = {
+        viewerId
+      };
+
+      if (isFinite(pageWidth)) options.pageWidth = pageWidth;
+      if (isFinite(pageHeight)) options.pageHeight = pageHeight;
+
       const pages: ViewerPages = Array.from(el.children).map(childEl => {
         let result: Element | string = childEl;
         if (childEl instanceof HTMLImageElement) {
@@ -27,9 +36,6 @@ export default class LaymicApplicator {
         return result;
       });
 
-      const options: LaymicOptions = {
-        viewerId
-      };
 
       this.laymicMap.set(viewerId, new Laymic(pages, options))
 
