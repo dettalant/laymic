@@ -12,16 +12,6 @@ export default class Laymic {
     swiper: Swiper;
     constructor(pages: ViewerPages, options?: LaymicOptions);
     /**
-     * インスタンスごとに固有のビューワーIDを返す
-     * @return ビューワーID文字列
-     */
-    private readonly mangaViewerId;
-    /**
-     * インスタンスごとに固有のビューワーコントローラーIDを返す
-     * @return ビューワーコントローラーID文字列
-     */
-    private readonly mangaViewerControllerId;
-    /**
      * swiper-containerの要素サイズを返す
      * @return 要素サイズオブジェクト
      */

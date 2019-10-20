@@ -5321,16 +5321,14 @@ var laymic = (function (exports) {
       }
       /**
        * swiper-container要素を返す
-       * @param  id        要素のid名となる文字列
        * @param  className 要素のclass名として付記される文字列
        * @param  pages     要素が内包することになるimg src配列
        * @param  isLTR     左から右に流れる形式を取るならtrue
        * @return           swiper-container要素
        */
-      createSwiperContainer(id, className, pages, isLTR, isFirstSlideEmpty) {
+      createSwiperContainer(className, pages, isLTR, isFirstSlideEmpty) {
           const swiperEl = this.createDiv();
           swiperEl.className = "swiper-container " + className;
-          swiperEl.id = id;
           swiperEl.dir = (isLTR) ? "" : "rtl";
           const wrapperEl = this.createDiv();
           wrapperEl.className = "swiper-wrapper";
@@ -5364,10 +5362,9 @@ var laymic = (function (exports) {
        * @param  isLTR 左から右に流れる形式を取るならtrue
        * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
        */
-      createViewerController(id) {
+      createViewerController() {
           const ctrlEl = this.createDiv();
           ctrlEl.className = "laymic_controller";
-          ctrlEl.id = id;
           const progressEl = this.createDiv();
           progressEl.className = "swiper-pagination laymic_progressbar";
           const ctrlTopEl = this.createDiv();
@@ -5942,7 +5939,7 @@ var laymic = (function (exports) {
           const builder = new DOMBuilder(options.icons);
           const rootEl = builder.createDiv();
           this.stateNames = builder.stateNames;
-          if (this.state.viewerId === 0) {
+          if (this.state.viewerIdx === 0) {
               // 一つのページにつき一度だけの処理
               const svgCtn = builder.createSVGIcons();
               document.body.appendChild(svgCtn);
@@ -5999,6 +5996,9 @@ var laymic = (function (exports) {
               this.state.viewerPadding = options.viewerPadding;
           if (options.isInstantOpen !== void 0)
               this.state.isInstantOpen = options.isInstantOpen;
+          // ここからは省略表記で存在確認
+          if (options.viewerId)
+              this.state.viewerId = options.viewerId;
           if (options.isVisiblePagination)
               rootEl.classList.add(this.stateNames.visiblePagination);
           if (this.preference.progressBarWidth !== "auto") {
@@ -6008,12 +6008,13 @@ var laymic = (function (exports) {
               this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
           }
           this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
+          // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
           rootEl.style.display = "none";
           rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
           if (this.state.isLTR)
               rootEl.classList.add(this.stateNames.ltr);
-          const [controllerEl, uiButtons] = builder.createViewerController(this.mangaViewerControllerId);
-          const swiperEl = builder.createSwiperContainer(this.mangaViewerId, "laymic_slider", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
+          const [controllerEl, uiButtons] = builder.createViewerController();
+          const swiperEl = builder.createSwiperContainer("laymic_slider", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
           [
               controllerEl,
               swiperEl,
@@ -6035,7 +6036,7 @@ var laymic = (function (exports) {
               this.enableVerticalView();
           // location.hashにmangaViewerIdと同値が指定されている場合は
           // 即座に開く
-          if (this.state.isInstantOpen && location.hash === "#" + this.mangaViewerId) {
+          if (this.state.isInstantOpen && location.hash === "#" + this.state.viewerId) {
               this.open(true);
           }
           // 各種イベントの停止
@@ -6044,20 +6045,6 @@ var laymic = (function (exports) {
           this.initOptions = options;
           // DEBUG: デバッグ用の仮関数
           this.debugFunction();
-      }
-      /**
-       * インスタンスごとに固有のビューワーIDを返す
-       * @return ビューワーID文字列
-       */
-      get mangaViewerId() {
-          return "laymic" + this.state.viewerId;
-      }
-      /**
-       * インスタンスごとに固有のビューワーコントローラーIDを返す
-       * @return ビューワーコントローラーID文字列
-       */
-      get mangaViewerControllerId() {
-          return "laymicController" + this.state.viewerId;
       }
       /**
        * swiper-containerの要素サイズを返す
@@ -6082,6 +6069,7 @@ var laymic = (function (exports) {
               w: 720,
               h: 1024
           };
+          const viewerIdx = viewerCnt();
           return {
               viewerPadding: 10,
               // デフォルト値としてウィンドウ幅を指定
@@ -6091,8 +6079,9 @@ var laymic = (function (exports) {
                   w: iw,
                   h: ih,
               },
+              viewerId: "laymic" + viewerIdx,
               // インスタンスごとに固有のid数字
-              viewerId: viewerCnt(),
+              viewerIdx,
               pageSize,
               thresholdWidth: pageSize.w,
               pageAspect: {
@@ -6334,7 +6323,7 @@ var laymic = (function (exports) {
           }
           // 履歴を追加せずにhash値を書き換える
           if (this.state.isInstantOpen) {
-              const newUrl = location.href.split("#")[0] + "#" + this.mangaViewerId;
+              const newUrl = location.href.split("#")[0] + "#" + this.state.viewerId;
               location.replace(newUrl);
           }
       }
@@ -6722,7 +6711,9 @@ var laymic = (function (exports) {
                   }
                   return result;
               });
-              const options = {};
+              const options = {
+                  viewerId
+              };
               this.laymicMap.set(viewerId, new Laymic(pages, options));
               // 用をなしたテンプレート要素を削除
               if (el.parentNode)

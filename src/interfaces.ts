@@ -30,6 +30,7 @@ export interface LaymicOptions {
   // ビューワーで読み進める方向のデフォルト値
   // ユーザー設定がなされていればそちらを優先
   viewerDirection?: "vertical" | "horizontal",
+  viewerId?: string,
 }
 
 export interface PageSize {
@@ -93,8 +94,10 @@ export interface ViewerUIButtons {
 
 // mangaViewer内部で用いるステートまとめ
 export interface ViewerStates {
-  // インスタンスごとに固有のid数字
-  viewerId: number,
+  // インスタンス識別に用いる文字列
+  viewerId: string,
+  // インスタンスごとに固有の数字
+  viewerIdx: number,
   viewerPadding: number,
   pageSize: PageSize,
   pageAspect: PageSize,

@@ -27,7 +27,9 @@ export default class LaymicApplicator {
         return result;
       });
 
-      const options: LaymicOptions = {};
+      const options: LaymicOptions = {
+        viewerId
+      };
 
       this.laymicMap.set(viewerId, new Laymic(pages, options))
 

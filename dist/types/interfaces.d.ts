@@ -14,6 +14,7 @@ export interface LaymicOptions {
     progressBarWidth?: BarWidth;
     isInstantOpen?: boolean;
     viewerDirection?: "vertical" | "horizontal";
+    viewerId?: string;
 }
 export interface PageSize {
     w: number;
@@ -56,7 +57,8 @@ export interface ViewerUIButtons {
     prevPage: HTMLButtonElement;
 }
 export interface ViewerStates {
-    viewerId: number;
+    viewerId: string;
+    viewerIdx: number;
     viewerPadding: number;
     pageSize: PageSize;
     pageAspect: PageSize;

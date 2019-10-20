@@ -144,16 +144,14 @@ export default class DOMBuilder {
 
   /**
    * swiper-container要素を返す
-   * @param  id        要素のid名となる文字列
    * @param  className 要素のclass名として付記される文字列
    * @param  pages     要素が内包することになるimg src配列
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(id: string, className: string,  pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
+  createSwiperContainer(className: string,  pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container " + className;
-    swiperEl.id = id;
     swiperEl.dir = (isLTR) ? "" : "rtl";
 
     const wrapperEl = this.createDiv();
@@ -193,11 +191,9 @@ export default class DOMBuilder {
    * @param  isLTR 左から右に流れる形式を取るならtrue
    * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
-  createViewerController(id: string): [HTMLElement, ViewerUIButtons] {
+  createViewerController(): [HTMLElement, ViewerUIButtons] {
     const ctrlEl = this.createDiv();
     ctrlEl.className = "laymic_controller";
-    ctrlEl.id = id;
-
     const progressEl = this.createDiv();
     progressEl.className = "swiper-pagination laymic_progressbar";
 
