@@ -5979,7 +5979,10 @@ var laymic = (function (exports) {
                   return result;
               };
               const src = getBeginningSrc(pages);
-              this.setPageSizeFromImgPath(src);
+              if (src !== "") {
+                  // 画像src取得に失敗した場合は処理を行わない
+                  this.setPageSizeFromImgPath(src);
+              }
           }
           this.preference = new Preference(builder, rootEl);
           // 省略表記だとバグが起きそうなので
