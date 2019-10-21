@@ -1,4 +1,4 @@
-import { calcGCD, viewerCnt, isHTMLElementArray } from "#/utils"
+import { calcGCD, viewerCnt, isHTMLElementArray, isBarWidth } from "#/utils"
 
 describe("utils function test", () => {
   it("calcGCD test", () => {
@@ -19,7 +19,6 @@ describe("utils function test", () => {
     const trueData = [
       [div, div, div],
     ];
-    trueData.forEach(data => expect(isHTMLElementArray(data)).toBeTruthy());
 
     const falseData = [
       [ div, svg ],
@@ -31,6 +30,41 @@ describe("utils function test", () => {
       [],
     ];
 
-    falseData.forEach(data => expect(isHTMLElementArray(data)).toBeFalsy());
+    for (let data of trueData) {
+      expect(isHTMLElementArray(data)).toBeTruthy();
+    }
+
+    for (let data of falseData) {
+      expect(isHTMLElementArray(data)).toBeFalsy();
+    }
+  })
+
+  it("isBarWidth test", () => {
+    const trueData = [
+      "auto",
+      "none",
+      "tint",
+      "medium",
+      "bold"
+    ];
+
+    const falseData = [
+      "ttt",
+      "",
+      [],
+      1,
+      NaN,
+      true,
+      false,
+      {},
+    ];
+
+    for (let data of trueData) {
+      expect(isBarWidth(data)).toBeTruthy();
+    }
+
+    for (let data of falseData) {
+      expect(isBarWidth(data)).toBeFalsy();
+    }
   })
 })

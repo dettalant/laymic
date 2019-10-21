@@ -1,3 +1,4 @@
+import { BarWidth } from "#/interfaces";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -42,3 +43,5 @@ export declare const isExistTouchEvent: () => boolean;
  */
 export declare const rafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => (this: T, ev: E) => void;
 export declare const isHTMLElementArray: (array: any) => array is HTMLElement[];
+export declare const isBarWidth: (s: any) => s is BarWidth;
+export declare const toBoolean: (s: string) => boolean;

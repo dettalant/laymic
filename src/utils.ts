@@ -1,3 +1,4 @@
+import { BarWidth } from "#/interfaces";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -97,3 +98,13 @@ export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
 
   return bool;
 }
+
+export const isBarWidth = (s: any): s is BarWidth => {
+  return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
+}
+
+export const toBoolean = (s: string): boolean => s.toLowerCase() === "true";
+
+// export const isUIVisibility = (s: any): s is UIVisibility => {
+//   return s === "auto" || s === "visible" || s === "hidden";
+// }

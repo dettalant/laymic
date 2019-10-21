@@ -1,12 +1,13 @@
 import Laymic from "#/components/core";
 import { ViewerPages, LaymicOptions } from "#/interfaces";
+import { isBarWidth, toBoolean } from "#/utils";
 
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
 export default class LaymicApplicator {
   // laymic instanceを格納するMap object
   laymicMap: Map<string, Laymic> = new Map();
-  constructor(selector: string = ".laymic_template") {
+  constructor(selector: string = ".laymic_template", initOptions: LaymicOptions = {}) {
     // laymic templateの配列
     const elements = Array.from(document.querySelectorAll(selector) || []);
     // laymic展開イベントを登録するopener配列
@@ -17,14 +18,44 @@ export default class LaymicApplicator {
       if (!(el instanceof HTMLElement)) return;
 
       const viewerId = el.dataset.viewerId || "noname";
-      const pageWidth = parseInt(el.dataset.pageWidth || "", 10);
-      const pageHeight = parseInt(el.dataset.pageHeight || "", 10);
-      const options: LaymicOptions = {
-        viewerId
-      };
+      const progressBarWidth = (isBarWidth(el.dataset.progressBarWidth))
+        ? el.dataset.progressBarWidth
+        : undefined;
+      const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
+      const isFirstSlideEmpty = (toBoolean(el.dataset.isFirstSlideEmpty || ""))
+        ? true
+        : undefined;
+      const isVisiblePagination = (toBoolean(el.dataset.isVisiblePagination || ""))
+        ? true
+        : undefined;
+      const isInstantOpen = ((el.dataset.isInstantOpen || "").toLowerCase() === "false")
+        ? false
+        : undefined;
+      const isLTR = (el.dir === "ltr") ? true : undefined;
+      const options: LaymicOptions = Object.assign(initOptions, {
+        viewerId,
+        progressBarWidth,
+        viewerDirection,
+        isFirstSlideEmpty,
+        isInstantOpen,
+        isVisiblePagination,
+        isLTR,
+      });
 
-      if (isFinite(pageWidth)) options.pageWidth = pageWidth;
-      if (isFinite(pageHeight)) options.pageHeight = pageHeight;
+      {
+        // わかりやすくスコープを分けておく
+        const pageWidth = parseInt(el.dataset.pageWidth || "", 10);
+        const pageHeight = parseInt(el.dataset.pageHeight || "", 10);
+        const vertPageMargin = parseInt(el.dataset.vertPageMargin || "", 10);
+        const horizPageMargin = parseInt(el.dataset.horizPageMargin || "", 10);
+        const viewerPadding = parseInt(el.dataset.viewerPadding || "", 10);
+
+        if (isFinite(pageWidth)) options.pageWidth = pageWidth;
+        if (isFinite(pageHeight)) options.pageHeight = pageHeight;
+        if (isFinite(vertPageMargin)) options.vertPageMargin = vertPageMargin;
+        if (isFinite(horizPageMargin)) options.horizPageMargin = horizPageMargin;
+        if (isFinite(viewerPadding)) options.viewerPadding = viewerPadding;
+      }
 
       const pages: ViewerPages = Array.from(el.children).map(childEl => {
         let result: Element | string = childEl;

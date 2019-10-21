@@ -5183,7 +5183,7 @@ const rafThrottle = function (callback) {
 };
 const isHTMLElementArray = (array) => {
     let bool = true;
-    if (Array.isArray(array)) {
+    if (Array.isArray(array) && array.length > 0) {
         array.forEach(v => {
             const b = v instanceof HTMLElement;
             if (!b)
@@ -5195,6 +5195,13 @@ const isHTMLElementArray = (array) => {
     }
     return bool;
 };
+const isBarWidth = (s) => {
+    return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
+};
+const toBoolean = (s) => s.toLowerCase() === "true";
+// export const isUIVisibility = (s: any): s is UIVisibility => {
+//   return s === "auto" || s === "visible" || s === "hidden";
+// }
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -6692,7 +6699,7 @@ class Laymic {
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
 class LaymicApplicator {
-    constructor(selector = ".laymic_template") {
+    constructor(selector = ".laymic_template", initOptions = {}) {
         // laymic instanceを格納するMap object
         this.laymicMap = new Map();
         // laymic templateの配列
@@ -6704,6 +6711,47 @@ class LaymicApplicator {
             if (!(el instanceof HTMLElement))
                 return;
             const viewerId = el.dataset.viewerId || "noname";
+            const progressBarWidth = (isBarWidth(el.dataset.progressBarWidth))
+                ? el.dataset.progressBarWidth
+                : undefined;
+            const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
+            const isFirstSlideEmpty = (toBoolean(el.dataset.isFirstSlideEmpty || ""))
+                ? true
+                : undefined;
+            const isVisiblePagination = (toBoolean(el.dataset.isVisiblePagination || ""))
+                ? true
+                : undefined;
+            const isInstantOpen = ((el.dataset.isInstantOpen || "").toLowerCase() === "false")
+                ? false
+                : undefined;
+            const isLTR = (el.dir === "ltr") ? true : undefined;
+            const options = Object.assign(initOptions, {
+                viewerId,
+                progressBarWidth,
+                viewerDirection,
+                isFirstSlideEmpty,
+                isInstantOpen,
+                isVisiblePagination,
+                isLTR,
+            });
+            {
+                // わかりやすくスコープを分けておく
+                const pageWidth = parseInt(el.dataset.pageWidth || "", 10);
+                const pageHeight = parseInt(el.dataset.pageHeight || "", 10);
+                const vertPageMargin = parseInt(el.dataset.vertPageMargin || "", 10);
+                const horizPageMargin = parseInt(el.dataset.horizPageMargin || "", 10);
+                const viewerPadding = parseInt(el.dataset.viewerPadding || "", 10);
+                if (isFinite(pageWidth))
+                    options.pageWidth = pageWidth;
+                if (isFinite(pageHeight))
+                    options.pageHeight = pageHeight;
+                if (isFinite(vertPageMargin))
+                    options.vertPageMargin = vertPageMargin;
+                if (isFinite(horizPageMargin))
+                    options.horizPageMargin = horizPageMargin;
+                if (isFinite(viewerPadding))
+                    options.viewerPadding = viewerPadding;
+            }
             const pages = Array.from(el.children).map(childEl => {
                 let result = childEl;
                 if (childEl instanceof HTMLImageElement) {
@@ -6712,9 +6760,6 @@ class LaymicApplicator {
                 }
                 return result;
             });
-            const options = {
-                viewerId
-            };
             this.laymicMap.set(viewerId, new Laymic(pages, options));
             // 用をなしたテンプレート要素を削除
             if (el.parentNode)
