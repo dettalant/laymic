@@ -1,4 +1,4 @@
-import { calcGCD, viewerCnt, isHTMLElementArray, isBarWidth } from "#/utils"
+import { calcGCD, viewerCnt, isHTMLElementArray, isBarWidth, excludeHashLocation } from "#/utils"
 
 describe("utils function test", () => {
   it("calcGCD test", () => {
@@ -65,6 +65,19 @@ describe("utils function test", () => {
 
     for (let data of falseData) {
       expect(isBarWidth(data)).toBeFalsy();
+    }
+  })
+
+  it("excludeHashLocation test", () => {
+    const hashStrs = [
+      "excludeHashLocationTest",
+      "1234",
+      "#",
+    ]
+    for (let str of hashStrs) {
+      location.hash = str;
+      const isSameString = location.href.split("#")[0] === excludeHashLocation();
+      expect(isSameString).toBeTruthy();
     }
   })
 })

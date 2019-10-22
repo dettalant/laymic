@@ -105,6 +105,8 @@ export const isBarWidth = (s: any): s is BarWidth => {
 
 export const toBoolean = (s: string): boolean => s.toLowerCase() === "true";
 
+export const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
+
 // export const isUIVisibility = (s: any): s is UIVisibility => {
 //   return s === "auto" || s === "visible" || s === "hidden";
 // }

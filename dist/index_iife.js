@@ -5198,6 +5198,7 @@ var laymic = (function (exports) {
       return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
   };
   const toBoolean = (s) => s.toLowerCase() === "true";
+  const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
   // export const isUIVisibility = (s: any): s is UIVisibility => {
   //   return s === "auto" || s === "visible" || s === "hidden";
   // }
@@ -6330,9 +6331,8 @@ var laymic = (function (exports) {
           }
           // 履歴を追加せずにhash値を書き換える
           if (this.state.isInstantOpen) {
-              const newUrl = location.href.split("#")[0] + "#" + this.state.viewerId;
+              const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
               window.location.replace(newUrl);
-              // location.hash = "#" + this.state.viewerId;
           }
       }
       /**
@@ -6350,9 +6350,8 @@ var laymic = (function (exports) {
               && location.hash
               && isHashChange) {
               // 履歴を残さずhashを削除する
-              const newUrl = location.href.split("#")[0] + "#";
+              const newUrl = excludeHashLocation() + "#";
               window.location.replace(newUrl);
-              // location.hash = "";
           }
       }
       switchSingleSlideState() {

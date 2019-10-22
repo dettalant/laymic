@@ -5199,6 +5199,7 @@ const isBarWidth = (s) => {
     return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
 };
 const toBoolean = (s) => s.toLowerCase() === "true";
+const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
 // export const isUIVisibility = (s: any): s is UIVisibility => {
 //   return s === "auto" || s === "visible" || s === "hidden";
 // }
@@ -6331,9 +6332,8 @@ class Laymic {
         }
         // 履歴を追加せずにhash値を書き換える
         if (this.state.isInstantOpen) {
-            const newUrl = location.href.split("#")[0] + "#" + this.state.viewerId;
+            const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
             window.location.replace(newUrl);
-            // location.hash = "#" + this.state.viewerId;
         }
     }
     /**
@@ -6351,9 +6351,8 @@ class Laymic {
             && location.hash
             && isHashChange) {
             // 履歴を残さずhashを削除する
-            const newUrl = location.href.split("#")[0] + "#";
+            const newUrl = excludeHashLocation() + "#";
             window.location.replace(newUrl);
-            // location.hash = "";
         }
     }
     switchSingleSlideState() {

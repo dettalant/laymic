@@ -8,6 +8,7 @@ import {
   readImage,
   isExistTouchEvent,
   rafThrottle,
+  excludeHashLocation,
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
 import Preference from "#/components/preference";
@@ -472,7 +473,7 @@ export default class Laymic {
 
     // 履歴を追加せずにhash値を書き換える
     if (this.state.isInstantOpen) {
-      const newUrl = location.href.split("#")[0] + "#" + this.state.viewerId;
+      const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
       window.location.replace(newUrl);
     }
   }
@@ -496,7 +497,7 @@ export default class Laymic {
       && isHashChange
     ) {
       // 履歴を残さずhashを削除する
-      const newUrl = location.href.split("#")[0] + "#";
+      const newUrl = excludeHashLocation() + "#";
       window.location.replace(newUrl);
     }
   }
