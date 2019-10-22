@@ -473,7 +473,7 @@ export default class Laymic {
     // 履歴を追加せずにhash値を書き換える
     if (this.state.isInstantOpen) {
       const newUrl = location.href.split("#")[0] + "#" + this.state.viewerId;
-      location.replace(newUrl);
+      window.location.replace(newUrl);
     }
   }
 
@@ -496,7 +496,8 @@ export default class Laymic {
       && isHashChange
     ) {
       // 履歴を残さずhashを削除する
-      location.replace(location.href.split("#")[0]);
+      const newUrl = location.href.split("#")[0] + "#";
+      window.location.replace(newUrl);
     }
   }
   private switchSingleSlideState() {
