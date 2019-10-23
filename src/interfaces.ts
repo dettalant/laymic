@@ -138,9 +138,7 @@ export interface PreferenceData {
   paginationVisibility: UIVisibility
 }
 
-export type PreferenceButtons = {
-  [P in keyof PreferenceData]: HTMLButtonElement
-}
+export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>
 
 export interface LaymicStateClassNames {
   active: string,
@@ -155,9 +153,7 @@ export interface LaymicStateClassNames {
   ltr: string,
 }
 
-export type LaymicUIButtonClassNames = {
-  [K in keyof ViewerUIButtons]: string
-}
+export type LaymicUIButtonClassNames = Record<keyof ViewerUIButtons, string>
 
 export interface LaymicSVGClassNames {
   container: string,
@@ -216,21 +212,3 @@ export interface LaymicClassNames {
   thumbs: LaymicThumbsClassNames,
   preference: LaymicPreferenceClassNames,
 }
-
-// export interface LaymicClassNames {
-//   root: string,
-//   checkbox: string,
-//   checkboxLabel: string,
-//   select: string,
-//   selectWrapper: string,
-//   selectLabel: string,
-//   iconWrapper: string,
-//   emptySlide: string,
-//   uiButton: string,
-//   progressbar: string,
-//   controller: string,
-//   controllerTop: string,
-//   directionBtn: string,
-//   fullscreenBtn: string,
-//   thumbsBtn: string,
-// }

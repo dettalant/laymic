@@ -6265,6 +6265,9 @@ class Laymic {
      */
     applyEventListeners() {
         const stateNames = this.builder.stateNames;
+        this.el.buttons.help.addEventListener("click", () => {
+            console.log("help button click");
+        });
         // 縦読み/横読み切り替えボタン
         this.el.buttons.direction.addEventListener("click", () => {
             if (!this.state.isVertView) {

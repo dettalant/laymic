@@ -55,10 +55,6 @@ export const isExistTouchEvent = (): boolean => {
   return "ontouchmove" in window;
 }
 
-// export const isExistPointerEvent = (): boolean => {
-//   return "onpointerup" in window;
-// }
-
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。
@@ -108,7 +104,3 @@ export const compareString = <T, U>(s: string, cmp: string, success: T, failed?:
 }
 
 export const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
-
-// export const isUIVisibility = (s: any): s is UIVisibility => {
-//   return s === "auto" || s === "visible" || s === "hidden";
-// }
