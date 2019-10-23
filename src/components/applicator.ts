@@ -1,20 +1,24 @@
 import Laymic from "#/components/core";
-import { ViewerPages, LaymicOptions } from "#/interfaces";
-import { isBarWidth, toBoolean } from "#/utils";
+import { ViewerPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces";
+import { isBarWidth, compareString } from "#/utils";
 
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
 export default class LaymicApplicator {
   // laymic instanceを格納するMap object
   laymicMap: Map<string, Laymic> = new Map();
-  constructor(selector: string = ".laymic_template", initOptions: LaymicOptions = {}) {
+  constructor(selector: string | LaymicApplicatorOptions = ".laymic_template", laymicOptions: LaymicOptions = {}) {
+    const applicatorOptions = (typeof selector === "string")
+      ? Object.assign(this.defaultLaymicApplicatorOptions, {templateSelector: selector})
+      : Object.assign(this.defaultLaymicApplicatorOptions, selector);
+
     // laymic templateの配列
-    const elements = Array.from(document.querySelectorAll(selector) || []);
+    const elements = Array.from(document.querySelectorAll(applicatorOptions.templateSelector) || []);
     // laymic展開イベントを登録するopener配列
-    const openers = Array.from(document.querySelectorAll(".laymic_opener") || []);
+    const openers = Array.from(document.querySelectorAll(applicatorOptions.openerSelector) || []);
 
     // templateになるhtml要素から必要な情報を抜き出す
-    elements.forEach(el => this.applyLaymicInstance(el, initOptions));
+    elements.forEach(el => this.applyLaymicInstance(el, laymicOptions));
 
     // openerのdata-for属性がlaymic viewerIdと紐付いている場合
     // クリック時に当該viewerを展開するイベントを登録する
@@ -30,6 +34,14 @@ export default class LaymicApplicator {
     })
   }
 
+  private get defaultLaymicApplicatorOptions(): LaymicApplicatorOptions {
+    return {
+      templateSelector: ".laymic_template",
+      openerSelector: ".laymic_opener",
+      defaultViewerId: "laymic",
+    }
+  }
+
   private applyLaymicInstance(el: Element, initOptions: LaymicOptions) {
     if (!(el instanceof HTMLElement)) return;
 
@@ -38,16 +50,11 @@ export default class LaymicApplicator {
       ? el.dataset.progressBarWidth
       : undefined;
     const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
-    const isFirstSlideEmpty = (toBoolean(el.dataset.isFirstSlideEmpty || ""))
-      ? true
-      : undefined;
-    const isVisiblePagination = (toBoolean(el.dataset.isVisiblePagination || ""))
-      ? true
-      : undefined;
-    const isInstantOpen = ((el.dataset.isInstantOpen || "").toLowerCase() === "false")
-      ? false
-      : undefined;
-    const isLTR = (el.dir === "ltr") ? true : undefined;
+
+    const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
+    const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
+    const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
+    const isLTR = compareString(el.dir, "ltr", true);
     const options: LaymicOptions = Object.assign(initOptions, {
       viewerId,
       progressBarWidth,

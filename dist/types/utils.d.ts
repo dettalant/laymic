@@ -44,5 +44,5 @@ export declare const isExistTouchEvent: () => boolean;
 export declare const rafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => (this: T, ev: E) => void;
 export declare const isHTMLElementArray: (array: any) => array is HTMLElement[];
 export declare const isBarWidth: (s: any) => s is BarWidth;
-export declare const toBoolean: (s: string) => boolean;
+export declare const compareString: <T, U>(s: string, cmp: string, success: T, failed?: U | undefined) => T | U | undefined;
 export declare const excludeHashLocation: () => string;

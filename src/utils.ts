@@ -103,7 +103,9 @@ export const isBarWidth = (s: any): s is BarWidth => {
   return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
 }
 
-export const toBoolean = (s: string): boolean => s.toLowerCase() === "true";
+export const compareString = <T, U>(s: string, cmp: string, success: T, failed?: U): T | U | undefined => {
+  return s.toLowerCase() === cmp.toLowerCase() ? success : failed;
+}
 
 export const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
 

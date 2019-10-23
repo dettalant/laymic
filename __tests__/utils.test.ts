@@ -1,15 +1,23 @@
-import { calcGCD, viewerCnt, isHTMLElementArray, isBarWidth, excludeHashLocation } from "#/utils"
+import { calcGCD, viewerCnt, isHTMLElementArray, isBarWidth, excludeHashLocation, compareString } from "#/utils"
 
 describe("utils function test", () => {
   it("calcGCD test", () => {
-    const [w, h] = [1920, 1080];
-    const gcd = calcGCD(w, h);
-    expect(gcd).toBe(120);
+    const data = [
+      [1920, 1080, 120],
+      [1024, 768, 256],
+      [450, 800, 50],
+      [123, 456, 3],
+    ]
+    for (const [w, h, success] of data) {
+      const gcd = calcGCD(w, h);
+      expect(gcd).toBe(success);
+    }
   })
 
   it("viewerCnt test", () => {
     expect(viewerCnt()).toBe(0);
     expect(viewerCnt()).toBe(1);
+    expect(viewerCnt()).toBe(2);
   })
 
   it("isHTMLElementArray test", () => {
@@ -30,11 +38,11 @@ describe("utils function test", () => {
       [],
     ];
 
-    for (let data of trueData) {
+    for (const data of trueData) {
       expect(isHTMLElementArray(data)).toBeTruthy();
     }
 
-    for (let data of falseData) {
+    for (const data of falseData) {
       expect(isHTMLElementArray(data)).toBeFalsy();
     }
   })
@@ -59,11 +67,11 @@ describe("utils function test", () => {
       {},
     ];
 
-    for (let data of trueData) {
+    for (const data of trueData) {
       expect(isBarWidth(data)).toBeTruthy();
     }
 
-    for (let data of falseData) {
+    for (const data of falseData) {
       expect(isBarWidth(data)).toBeFalsy();
     }
   })
@@ -74,10 +82,45 @@ describe("utils function test", () => {
       "1234",
       "#",
     ]
-    for (let str of hashStrs) {
+    for (const str of hashStrs) {
       location.hash = str;
       const isSameString = location.href.split("#")[0] === excludeHashLocation();
       expect(isSameString).toBeTruthy();
+    }
+  })
+
+  it("compareString test", () => {
+    type compareStringData = [string, string, any];
+    const trueData: compareStringData[] = [
+      ["true", "true", true],
+      ["false", "false", false],
+      ["a", "a", "abc"],
+      ["1", "1", 10]
+    ]
+
+    const falseData: compareStringData[] = [
+      ["true", "false", true],
+      ["false", "true", false],
+      ["a", "b", "abc"],
+      ["1", "2", 10],
+    ]
+
+    // 成功時はsuccessの値を返す
+    for (const [s, cmp, success] of trueData) {
+      const value = compareString(s, cmp, success);
+      expect(value).toBe(success)
+    }
+
+    // デフォルトの失敗時はundefinedを返す
+    for (const [s, cmp, success] of falseData) {
+      const value = compareString(s, cmp, success);
+      expect(value).toBeUndefined();
+    }
+
+    // 失敗時の返り値をnullとした場合
+    for (const [s, cmp, success] of falseData) {
+      const value = compareString(s, cmp, success, null);
+      expect(value).toBeNull();
     }
   })
 })

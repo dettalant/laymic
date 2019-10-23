@@ -129,6 +129,16 @@ export default class DOMBuilder {
       ]
     };
 
+    const showHelp = {
+      id: "laymic_svgShowHelp",
+      className: "icon_showHelp",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M12 6.4a3.2 3.2 0 00-3.2 3.2h1.6c0-.88.72-1.6 1.6-1.6.88 0 1.6.72 1.6 1.6 0 .44-.176.84-.472 1.128l-.992 1.008A3.22 3.22 0 0011.2 14v.4h1.6c0-1.2.36-1.68.936-2.264l.72-.736a2.545 2.545 0 00.744-1.8A3.2 3.2 0 0012 6.4zm-.8 9.6v1.6h1.6V16z",
+        "M12 3a9 9 0 00-9 9 9 9 0 009 9 9 9 0 009-9 9 9 0 00-9-9zm0 1.445A7.555 7.555 0 0119.555 12 7.555 7.555 0 0112 19.555 7.555 7.555 0 014.445 12 7.555 7.555 0 0112 4.445z"
+      ]
+    }
+
     return {
       close,
       fullscreen,
@@ -139,6 +149,7 @@ export default class DOMBuilder {
       vertView,
       checkboxInner,
       checkboxOuter,
+      showHelp,
     }
   }
 
@@ -160,8 +171,7 @@ export default class DOMBuilder {
     // isFirstSlideEmpty引数がtrueならば
     // 空の要素を一番目に入れる
     if (isFirstSlideEmpty) {
-      const emptyEl = this.createDiv();
-      emptyEl.className = "swiper-slide laymic_emptySlide";
+      const emptyEl = this.createEmptySlideEl();
       wrapperEl.appendChild(emptyEl);
     }
 
@@ -230,7 +240,13 @@ export default class DOMBuilder {
     const closeIcon = this.createSvgUseElement(this.icons.close);
     close.appendChild(closeIcon);
 
+    const help = this.createButton();
+    help.classList.add("laymic_showHelp");
+    const helpIcon = this.createSvgUseElement(this.icons.showHelp);
+    help.appendChild(helpIcon);
+
     [
+      help,
       direction,
       thumbs,
       fullscreen,
@@ -242,6 +258,7 @@ export default class DOMBuilder {
     const prevPage = this.createButton("laymic_pagination swiper-button-prev");
 
     const uiButtons: ViewerUIButtons = {
+      help,
       close,
       thumbs,
       fullscreen,
@@ -369,8 +386,8 @@ export default class DOMBuilder {
     ].forEach(el => wrapperEl.appendChild(el));
 
     [
-      wrapperEl,
       labelEl,
+      wrapperEl,
     ].forEach(el => btn.appendChild(el));
 
     btn.addEventListener("click", e => {
@@ -399,8 +416,8 @@ export default class DOMBuilder {
     });
 
     [
-      wrapperEl,
       labelEl,
+      wrapperEl,
     ].forEach(el => btn.appendChild(el));
 
     btn.addEventListener("click", e => {
@@ -409,6 +426,12 @@ export default class DOMBuilder {
     })
 
     return btn;
+  }
+
+  createEmptySlideEl(): HTMLElement {
+    const emptyEl = this.createDiv();
+    emptyEl.className = "swiper-slide laymic_emptySlide";
+    return emptyEl;
   }
 
   /**

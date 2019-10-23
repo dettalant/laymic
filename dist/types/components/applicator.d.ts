@@ -1,8 +1,9 @@
 import Laymic from "#/components/core";
-import { LaymicOptions } from "#/interfaces";
+import { LaymicOptions, LaymicApplicatorOptions } from "#/interfaces";
 export default class LaymicApplicator {
     laymicMap: Map<string, Laymic>;
-    constructor(selector?: string, initOptions?: LaymicOptions);
+    constructor(selector?: string | LaymicApplicatorOptions, laymicOptions?: LaymicOptions);
+    private readonly defaultLaymicApplicatorOptions;
     private applyLaymicInstance;
     open(viewerId: string): void;
     close(viewerId: string): void;

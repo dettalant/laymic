@@ -37,6 +37,7 @@ export default class Laymic {
   thumbs: Thumbnails;
   // swiper instance
   swiper: Swiper;
+  builder: DOMBuilder;
 
   constructor(pages: ViewerPages, options: LaymicOptions = {}) {
     const builder = new DOMBuilder(options.icons);
@@ -48,18 +49,6 @@ export default class Laymic {
       const svgCtn = builder.createSVGIcons();
       document.body.appendChild(svgCtn);
     }
-
-    // const parseHtmlElement = (queryStr: string): ViewerPages => {
-    //   const baseEl = document.querySelector(queryStr);
-    //   if (!baseEl) throw new Error("pages引数のquery stringが不正");
-    //
-    //   const result = Array.from(baseEl.children).map(el => (el instanceof HTMLImageElement) ? el.dataset.src || el.src : el);
-    //   return result;
-    // }
-    //
-    // if (typeof pages === "string") {
-    //   pages = parseHtmlElement(pages);
-    // }
 
     if (options.pageWidth && options.pageHeight) {
       const [pw, ph] = [options.pageWidth, options.pageHeight]
@@ -155,9 +144,7 @@ export default class Laymic {
 
     // 初期化引数を保管
     this.initOptions = options;
-
-    // DEBUG: デバッグ用の仮関数
-    this.debugFunction();
+    this.builder = builder;
   }
 
   /**
@@ -215,7 +202,8 @@ export default class Laymic {
       },
       isLTR: false,
       isVertView: false,
-      isFirstSlideEmpty: false,
+      // 空白をつけた左始めがデフォルト設定
+      isFirstSlideEmpty: true,
       vertPageMargin: 10,
       horizPageMargin: 0,
       progressBarWidth: this.getBarWidth(),
@@ -233,9 +221,6 @@ export default class Laymic {
       slidesPerView: 2,
       slidesPerGroup: 2,
     };
-
-
-    this.switchSingleSlideState();
 
     return {
       direction: "horizontal",
@@ -444,14 +429,19 @@ export default class Laymic {
   public open(isDisableFullscreen: boolean = false) {
     const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
 
+    // ページ読み込み後一度目の展開時にのみtrue
+    const isInitialOpen = this.el.rootEl.style.display === "none";
+
     // display:none状態の場合にそれを解除する
-    // 主にページ読み込み後一度目の展開でだけ動く部分
-    if (this.el.rootEl.style.display === "none") {
-      this.el.rootEl.style.display = "";
-    }
+    // でだけ動く部分
+    if (isInitialOpen) this.el.rootEl.style.display = "";
 
     // swiper表示更新
     this.viewUpdate();
+
+    if (isInitialOpen) {
+      this.switchSingleSlideState();
+    }
 
     // オーバーレイ要素の表示
     this.showRootEl();
@@ -501,15 +491,6 @@ export default class Laymic {
       window.location.replace(newUrl);
     }
   }
-  private switchSingleSlideState() {
-    const rootEl = this.el.rootEl;
-    const state = this.stateNames.singleSlide;
-    if (this.state.thresholdWidth <= window.innerWidth) {
-      rootEl.classList.remove(state);
-    } else {
-      rootEl.classList.add(state);
-    }
-  }
 
   /**
    * 縦読み表示へと切り替える
@@ -518,11 +499,12 @@ export default class Laymic {
     this.state.isVertView = true;
     this.el.rootEl.classList.add(this.stateNames.vertView);
 
+    if (this.state.isFirstSlideEmpty) {
+      this.removeFirstEmptySlide();
+    }
+
     // 一番目に空要素を入れる設定の場合はindex数値を1増やす
-    const activeIdx = this.swiper.activeIndex;
-    const idx = (this.state.isFirstSlideEmpty && activeIdx !== 0)
-      ? activeIdx - 1
-      : activeIdx;
+    const idx = this.swiper.activeIndex;
 
     // 読み進めたページ数を引き継ぐ
     const conf = Object.assign(this.mainSwiperVertViewConf, {
@@ -543,11 +525,12 @@ export default class Laymic {
     this.state.isVertView = false;
     this.el.rootEl.classList.remove(this.stateNames.vertView);
 
+    if (this.state.isFirstSlideEmpty) {
+      this.prependFirstEmptySlide();
+    }
+
     // 一番目に空要素を入れる設定の場合はindex数値を1増やす
-    const activeIdx = this.swiper.activeIndex;
-    const idx = (this.state.isFirstSlideEmpty)
-      ? activeIdx + 1
-      : activeIdx;
+    const idx = this.swiper.activeIndex;
 
     // 読み進めたページ数を引き継ぐ
     const conf = Object.assign(this.mainSwiperHorizViewConf, {
@@ -560,6 +543,64 @@ export default class Laymic {
 
     this.viewUpdate();
   }
+
+  /**
+   * 画面幅に応じて、横読み時の
+   * 「1p表示 <-> 2p表示」を切り替える
+   */
+  private switchSingleSlideState() {
+    const rootEl = this.el.rootEl;
+    const state = this.stateNames.singleSlide;
+    const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
+
+    if (this.state.thresholdWidth <= window.innerWidth) {
+      // 横読み時2p表示
+      rootEl.classList.remove(state);
+
+      if (isFirstSlideEmpty && this.swiper) this.prependFirstEmptySlide();
+    } else {
+      // 横読み時1p表示
+      rootEl.classList.add(state);
+
+      if (isFirstSlideEmpty && this.swiper) this.removeFirstEmptySlide();
+    }
+  }
+
+  /**
+   * 1p目空スライドを削除する
+   */
+  private removeFirstEmptySlide() {
+    if (this.swiper.slides.length === 0) return;
+    const firstSlide: HTMLElement = this.swiper.slides[0];
+    const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+
+    if (hasEmptySlide) {
+      this.swiper.removeSlide(0);
+      // swiper側の更新も一応かけておく
+      this.swiper.updateSlides();
+      this.swiper.updateProgress();
+    }
+  }
+
+  /**
+   * 空スライドを1p目に追加する
+   * 重複して追加しないように、空スライドが存在しない場合のみ追加する
+   */
+  private prependFirstEmptySlide() {
+    if (this.swiper.slides.length === 0) return;
+
+    const firstSlide: HTMLElement = this.swiper.slides[0];
+    const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+
+    if (!hasEmptySlide) {
+      const emptyEl = this.builder.createEmptySlideEl()
+      this.swiper.prependSlide(emptyEl);
+      // swiper側の更新も一応かけておく
+      this.swiper.updateSlides();
+      this.swiper.updateProgress();
+    }
+  }
+
   /**
    * 入力したMouseEventが
    * mangaViewer画面のクリックポイントに重なっているかを返す
@@ -674,10 +715,16 @@ export default class Laymic {
     }
   }
 
+  /**
+   * ビューワー操作UIをトグルさせる
+   */
   private toggleViewerUI() {
     this.el.rootEl.classList.toggle(this.stateNames.visibleUI);
   }
 
+  /**
+   * ビューワー操作UIを非表示化する
+   */
   private hideViewerUI() {
     const stateName = this.stateNames.visibleUI;
     if (this.el.rootEl.classList.contains(stateName)) {
@@ -857,26 +904,5 @@ export default class Laymic {
     }
 
     return width;
-  }
-
-  private debugFunction() {
-    // thresholdWidth
-    const tw = this.state.thresholdWidth;
-    // window.innerWidth
-    const iw = window.innerWidth;
-
-    const div = document.createElement("div");
-    [
-      "　",
-      "-----デバッグ用ここから-----",
-      `tw: ${tw}, iw: ${iw}`,
-      "　"
-    ].forEach(s => {
-      const p = document.createElement("p");
-      p.textContent = s;
-      div.appendChild(p);
-    });
-
-    this.preference.wrapperEl.appendChild(div);
   }
 }

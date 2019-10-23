@@ -16,6 +16,11 @@ export interface LaymicOptions {
     viewerDirection?: "vertical" | "horizontal";
     viewerId?: string;
 }
+export interface LaymicApplicatorOptions {
+    templateSelector: string;
+    openerSelector: string;
+    defaultViewerId: string;
+}
 export interface PageSize {
     w: number;
     h: number;
@@ -46,8 +51,10 @@ export interface ViewerIcons {
     horizView: IconData;
     checkboxOuter: IconData;
     checkboxInner: IconData;
+    showHelp: IconData;
 }
 export interface ViewerUIButtons {
+    help: HTMLButtonElement;
     close: HTMLButtonElement;
     fullscreen: HTMLButtonElement;
     preference: HTMLButtonElement;

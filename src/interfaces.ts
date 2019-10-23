@@ -33,6 +33,15 @@ export interface LaymicOptions {
   viewerId?: string,
 }
 
+export interface LaymicApplicatorOptions {
+  // .laymic_template
+  templateSelector: string,
+  // .laymic_opener
+  openerSelector: string,
+  // laymic
+  defaultViewerId: string
+}
+
 export interface PageSize {
   // width
   w: number,
@@ -77,10 +86,12 @@ export interface ViewerIcons {
   horizView: IconData,
   checkboxOuter: IconData,
   checkboxInner: IconData,
+  showHelp: IconData,
 }
 
 // mangaViewer UI要素として組み込むボタン要素まとめ
 export interface ViewerUIButtons {
+  help: HTMLButtonElement,
   close: HTMLButtonElement,
   fullscreen: HTMLButtonElement,
   preference: HTMLButtonElement,

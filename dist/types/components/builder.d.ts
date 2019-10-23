@@ -52,6 +52,7 @@ export default class DOMBuilder {
     createParagraph(): HTMLParagraphElement;
     createCheckBoxButton(label: string, className?: string): HTMLButtonElement;
     createSelectButton(label: string, values: string[], className?: string): HTMLButtonElement;
+    createEmptySlideEl(): HTMLElement;
     /**
      * IconData形式のオブジェクトであるかを判別する
      * type guard用の関数

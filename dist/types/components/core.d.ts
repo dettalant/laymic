@@ -1,4 +1,5 @@
 import { Swiper } from "swiper/js/swiper.esm";
+import DOMBuilder from "#/components/builder";
 import Preference from "#/components/preference";
 import Thumbnails from "#/components/thumbs";
 import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates, StateClassNames } from "#/interfaces";
@@ -10,6 +11,7 @@ export default class Laymic {
     preference: Preference;
     thumbs: Thumbnails;
     swiper: Swiper;
+    builder: DOMBuilder;
     constructor(pages: ViewerPages, options?: LaymicOptions);
     /**
      * swiper-containerの要素サイズを返す
@@ -37,7 +39,6 @@ export default class Laymic {
      * オーバーレイ表示を閉じる
      */
     close(isHashChange?: boolean): void;
-    private switchSingleSlideState;
     /**
      * 縦読み表示へと切り替える
      */
@@ -46,6 +47,20 @@ export default class Laymic {
      * 横読み表示へと切り替える
      */
     private disableVerticalView;
+    /**
+     * 画面幅に応じて、横読み時の
+     * 「1p表示 <-> 2p表示」を切り替える
+     */
+    private switchSingleSlideState;
+    /**
+     * 1p目空スライドを削除する
+     */
+    private removeFirstEmptySlide;
+    /**
+     * 空スライドを1p目に追加する
+     * 重複して追加しないように、空スライドが存在しない場合のみ追加する
+     */
+    private prependFirstEmptySlide;
     /**
      * 入力したMouseEventが
      * mangaViewer画面のクリックポイントに重なっているかを返す
@@ -72,7 +87,13 @@ export default class Laymic {
      */
     private slideMouseHoverHandler;
     private changePaginationVisibility;
+    /**
+     * ビューワー操作UIをトグルさせる
+     */
     private toggleViewerUI;
+    /**
+     * ビューワー操作UIを非表示化する
+     */
     private hideViewerUI;
     /**
      * mangaViewer表示を更新する
@@ -127,5 +148,4 @@ export default class Laymic {
      * @return          対応する数値
      */
     private getBarWidth;
-    private debugFunction;
 }
