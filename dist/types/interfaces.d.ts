@@ -7,7 +7,9 @@ export interface LaymicOptions {
     isLTR?: boolean;
     isVisiblePagination?: boolean;
     isFirstSlideEmpty?: boolean;
-    icons?: ViewerIcons;
+    icons?: Partial<ViewerIcons>;
+    classNames?: Partial<LaymicClassNames>;
+    stateNames?: Partial<LaymicStateClassNames>;
     vertPageMargin?: number;
     horizPageMargin?: number;
     viewerPadding?: number;
@@ -92,7 +94,7 @@ export interface PreferenceData {
 export declare type PreferenceButtons = {
     [P in keyof PreferenceData]: HTMLButtonElement;
 };
-export interface StateClassNames {
+export interface LaymicStateClassNames {
     active: string;
     hidden: string;
     singleSlide: string;
@@ -103,4 +105,58 @@ export interface StateClassNames {
     visiblePagination: string;
     vertView: string;
     ltr: string;
+}
+export declare type LaymicUIButtonClassNames = {
+    [K in keyof ViewerUIButtons]: string;
+};
+export interface LaymicSVGClassNames {
+    container: string;
+    icon: string;
+    defaultProp: string;
+}
+export interface LaymicControllerClassNames {
+    controller: string;
+    controllerTop: string;
+    controllerBottom: string;
+    progressbar: string;
+}
+export interface LaymicCheckboxClassNames {
+    container: string;
+    label: string;
+}
+export interface LaymicSelectClassNames {
+    container: string;
+    label: string;
+    wrapper: string;
+    item: string;
+}
+export interface LaymicThumbsClassNames {
+    container: string;
+    wrapper: string;
+    item: string;
+    imgThumb: string;
+    slideThumb: string;
+    lazyload: string;
+    lazyloading: string;
+    lazyloaded: string;
+}
+export interface LaymicPreferenceClassNames {
+    container: string;
+    wrapper: string;
+    button: string;
+}
+export interface LaymicClassNames {
+    root: string;
+    slider: string;
+    emptySlide: string;
+    uiButton: string;
+    pagination: string;
+    iconWrapper: string;
+    controller: LaymicControllerClassNames;
+    buttons: LaymicUIButtonClassNames;
+    svg: LaymicSVGClassNames;
+    checkbox: LaymicCheckboxClassNames;
+    select: LaymicSelectClassNames;
+    thumbs: LaymicThumbsClassNames;
+    preference: LaymicPreferenceClassNames;
 }

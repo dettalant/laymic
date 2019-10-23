@@ -16,7 +16,11 @@ export interface LaymicOptions {
   // 表紙ページを単独表示することを想定
   isFirstSlideEmpty?: boolean,
   // アイコンを別のものに変更する
-  icons?: ViewerIcons,
+  icons?: Partial<ViewerIcons>,
+  // 各種クラス名を別のものに変更する
+  classNames?: Partial<LaymicClassNames>,
+  // state変化用クラス名を別のものに変更する
+  stateNames?: Partial<LaymicStateClassNames>,
   // 縦読み時のページ間余白ピクセル数値
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
@@ -138,7 +142,7 @@ export type PreferenceButtons = {
   [P in keyof PreferenceData]: HTMLButtonElement
 }
 
-export interface StateClassNames {
+export interface LaymicStateClassNames {
   active: string,
   hidden: string,
   singleSlide: string,
@@ -150,3 +154,83 @@ export interface StateClassNames {
   vertView: string,
   ltr: string,
 }
+
+export type LaymicUIButtonClassNames = {
+  [K in keyof ViewerUIButtons]: string
+}
+
+export interface LaymicSVGClassNames {
+  container: string,
+  icon: string,
+  defaultProp: string,
+}
+
+export interface LaymicControllerClassNames {
+  controller: string,
+  controllerTop: string,
+  controllerBottom: string,
+  progressbar: string,
+}
+
+export interface LaymicCheckboxClassNames {
+  container: string,
+  label: string
+}
+
+export interface LaymicSelectClassNames {
+  container: string,
+  label: string,
+  wrapper: string,
+  item: string,
+}
+
+export interface LaymicThumbsClassNames {
+  container: string,
+  wrapper: string,
+  item: string,
+  imgThumb: string,
+  slideThumb: string,
+  lazyload: string,
+  lazyloading: string,
+  lazyloaded: string,
+}
+
+export interface LaymicPreferenceClassNames {
+  container: string,
+  wrapper: string,
+  button: string,
+}
+
+export interface LaymicClassNames {
+  root: string,
+  slider: string,
+  emptySlide: string,
+  uiButton: string,
+  pagination: string,
+  iconWrapper: string,
+  controller: LaymicControllerClassNames,
+  buttons: LaymicUIButtonClassNames,
+  svg: LaymicSVGClassNames,
+  checkbox: LaymicCheckboxClassNames,
+  select: LaymicSelectClassNames,
+  thumbs: LaymicThumbsClassNames,
+  preference: LaymicPreferenceClassNames,
+}
+
+// export interface LaymicClassNames {
+//   root: string,
+//   checkbox: string,
+//   checkboxLabel: string,
+//   select: string,
+//   selectWrapper: string,
+//   selectLabel: string,
+//   iconWrapper: string,
+//   emptySlide: string,
+//   uiButton: string,
+//   progressbar: string,
+//   controller: string,
+//   controllerTop: string,
+//   directionBtn: string,
+//   fullscreenBtn: string,
+//   thumbsBtn: string,
+// }

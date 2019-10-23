@@ -2,12 +2,11 @@ import { Swiper } from "swiper/js/swiper.esm";
 import DOMBuilder from "#/components/builder";
 import Preference from "#/components/preference";
 import Thumbnails from "#/components/thumbs";
-import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates, StateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;
     initOptions: LaymicOptions;
-    stateNames: StateClassNames;
     preference: Preference;
     thumbs: Thumbnails;
     swiper: Swiper;

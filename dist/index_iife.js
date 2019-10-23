@@ -5211,16 +5211,77 @@ var laymic = (function (exports) {
   const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
   // mangaViewerで用いるDOMを生成するやつ
   class DOMBuilder {
-      constructor(icons) {
+      constructor(icons, classNames, stateNames) {
           // 使用するアイコンセット
           this.icons = this.defaultMangaViewerIcons;
-          // uiボタンクラス名
-          this.uiButtonClass = "laymic_uiButton";
-          this.stateNames = this.defaultStateClassNames;
+          this.classNames = this.defaultLaymicClassNames;
+          this.stateNames = this.defaultLaymicStateClassNames;
           if (icons)
               this.icons = Object.assign(this.icons, icons);
+          if (classNames)
+              this.classNames = Object.assign(this.classNames, classNames);
+          if (stateNames)
+              this.stateNames = Object.assign(this.stateNames, stateNames);
       }
-      get defaultStateClassNames() {
+      get defaultLaymicClassNames() {
+          return {
+              root: "laymic_root",
+              slider: "laymic_slider",
+              // uiボタンクラス名
+              uiButton: "laymic_uiButton",
+              // 空スライドクラス名
+              emptySlide: "laymic_emptySlide",
+              pagination: "laymic_pagination",
+              iconWrapper: "laymic_iconWrapper",
+              controller: {
+                  controller: "laymic_controller",
+                  controllerTop: "laymic_controllerTop",
+                  controllerBottom: "laymic_controllerBottom",
+                  progressbar: "laymic_progressbar",
+              },
+              buttons: {
+                  direction: "laymic_direction",
+                  fullscreen: "laymic_fullscreen",
+                  thumbs: "laymic_showThumbs",
+                  preference: "laymic_showPreference",
+                  close: "laymic_close",
+                  help: "laymic_showHelp",
+                  nextPage: "laymic_paginationNext",
+                  prevPage: "laymic_paginationPrev",
+              },
+              svg: {
+                  icon: "laymic_svgIcon",
+                  defaultProp: "laymic_svgDefaultProp",
+                  container: "laymic_svgContainer",
+              },
+              checkbox: {
+                  container: "laymic_checkbox",
+                  label: "laymic_checkboxLabel",
+              },
+              select: {
+                  container: "laymic_select",
+                  label: "laymic_selectLabel",
+                  wrapper: "laymic_selectWrapper",
+                  item: "laymic_selectItem",
+              },
+              thumbs: {
+                  container: "laymic_thumbs",
+                  wrapper: "laymic_thumbsWrapper",
+                  item: "laymic_thumbItem",
+                  slideThumb: "laymic_slideThumb",
+                  imgThumb: "laymic_imgThumb",
+                  lazyload: "laymic_lazyload",
+                  lazyloading: "laymic_lazyloading",
+                  lazyloaded: "laymic_lazyloaded",
+              },
+              preference: {
+                  container: "laymic_preference",
+                  wrapper: "laymic_preferenceWrapper",
+                  button: "laymic_preferenceButton",
+              }
+          };
+      }
+      get defaultLaymicStateClassNames() {
           return {
               active: "laymic_isActive",
               hidden: "laymic_isHidden",
@@ -5317,6 +5378,7 @@ var laymic = (function (exports) {
                   "M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
               ]
           };
+          // material.io: help(modified)
           const showHelp = {
               id: "laymic_svgShowHelp",
               className: "icon_showHelp",
@@ -5346,9 +5408,9 @@ var laymic = (function (exports) {
        * @param  isLTR     左から右に流れる形式を取るならtrue
        * @return           swiper-container要素
        */
-      createSwiperContainer(className, pages, isLTR, isFirstSlideEmpty) {
+      createSwiperContainer(pages, isLTR, isFirstSlideEmpty) {
           const swiperEl = this.createDiv();
-          swiperEl.className = "swiper-container " + className;
+          swiperEl.className = "swiper-container " + this.classNames.slider;
           swiperEl.dir = (isLTR) ? "" : "rtl";
           const wrapperEl = this.createDiv();
           wrapperEl.className = "swiper-wrapper";
@@ -5382,14 +5444,16 @@ var laymic = (function (exports) {
        * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
        */
       createViewerController() {
+          const btnClassNames = this.classNames.buttons;
+          const ctrlClassNames = this.classNames.controller;
           const ctrlEl = this.createDiv();
-          ctrlEl.className = "laymic_controller";
+          ctrlEl.className = ctrlClassNames.controller;
           const progressEl = this.createDiv();
-          progressEl.className = "swiper-pagination laymic_progressbar";
+          progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
           const ctrlTopEl = this.createDiv();
-          ctrlTopEl.className = "laymic_controllerTop";
+          ctrlTopEl.className = ctrlClassNames.controllerTop;
           const direction = this.createButton();
-          direction.classList.add("laymic_direction");
+          direction.classList.add(btnClassNames.direction);
           [
               this.createSvgUseElement(this.icons.vertView),
               this.createSvgUseElement(this.icons.horizView),
@@ -5399,22 +5463,22 @@ var laymic = (function (exports) {
               this.createSvgUseElement(this.icons.fullscreen),
               this.createSvgUseElement(this.icons.exitFullscreen),
           ].forEach(icon => fullscreen.appendChild(icon));
-          fullscreen.classList.add("laymic_fullscreen");
+          fullscreen.classList.add(btnClassNames.fullscreen);
           const thumbs = this.createButton();
           [
               this.createSvgUseElement(this.icons.showThumbs),
           ].forEach(icon => thumbs.appendChild(icon));
-          thumbs.classList.add("laymic_showThumbs");
+          thumbs.classList.add(btnClassNames.thumbs);
           const preference = this.createButton();
-          preference.classList.add("laymic_showPreference");
+          preference.classList.add(btnClassNames.preference);
           const preferenceIcon = this.createSvgUseElement(this.icons.preference);
           preference.appendChild(preferenceIcon);
           const close = this.createButton();
-          close.classList.add("laymic_close");
+          close.classList.add(btnClassNames.close);
           const closeIcon = this.createSvgUseElement(this.icons.close);
           close.appendChild(closeIcon);
           const help = this.createButton();
-          help.classList.add("laymic_showHelp");
+          help.classList.add(btnClassNames.help);
           const helpIcon = this.createSvgUseElement(this.icons.showHelp);
           help.appendChild(helpIcon);
           [
@@ -5425,8 +5489,9 @@ var laymic = (function (exports) {
               preference,
               close
           ].forEach(btn => ctrlTopEl.appendChild(btn));
-          const nextPage = this.createButton("laymic_pagination swiper-button-next");
-          const prevPage = this.createButton("laymic_pagination swiper-button-prev");
+          const paginationClass = this.classNames.pagination;
+          const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
+          const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
           const uiButtons = {
               help,
               close,
@@ -5438,7 +5503,7 @@ var laymic = (function (exports) {
               prevPage
           };
           const ctrlBottomEl = this.createDiv();
-          ctrlBottomEl.className = "laymic_controllerBottom";
+          ctrlBottomEl.className = ctrlClassNames.controllerBottom;
           [
               ctrlTopEl,
               ctrlBottomEl,
@@ -5455,11 +5520,12 @@ var laymic = (function (exports) {
        * @return           SVGElement
        */
       createSvgUseElement(icon) {
+          const svgClassNames = this.classNames.svg;
           const svgEl = document.createElementNS(SVG_NS, "svg");
-          svgEl.setAttribute("class", "svg_icon " + icon.className);
+          svgEl.setAttribute("class", `${svgClassNames.icon} ${icon.className}`);
           svgEl.setAttribute("role", "img");
           const useEl = document.createElementNS(SVG_NS, "use");
-          useEl.setAttribute("class", "svg_default_prop");
+          useEl.setAttribute("class", svgClassNames.defaultProp);
           useEl.setAttributeNS(SVG_XLINK_NS, "xlink:href", "#" + icon.id);
           svgEl.appendChild(useEl);
           return svgEl;
@@ -5474,7 +5540,7 @@ var laymic = (function (exports) {
           svgCtn.setAttributeNS(null, "version", "1.1");
           svgCtn.setAttribute("xmlns", SVG_NS);
           svgCtn.setAttribute("xmlns:xlink", SVG_XLINK_NS);
-          svgCtn.setAttribute("class", "laymic_svgContainer");
+          svgCtn.setAttribute("class", this.classNames.svg.container);
           const defs = document.createElementNS(SVG_NS, "defs");
           Object.values(this.icons).forEach(icon => {
               if (!this.isIconData(icon)) {
@@ -5509,7 +5575,7 @@ var laymic = (function (exports) {
        * 空のbutton要素を返す
        * @return button要素
        */
-      createButton(className = this.uiButtonClass) {
+      createButton(className = this.classNames.uiButton) {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = className;
@@ -5522,12 +5588,13 @@ var laymic = (function (exports) {
           return document.createElement("p");
       }
       createCheckBoxButton(label, className = "") {
-          const btn = this.createButton("laymic_checkbox " + className);
+          const checkboxClassNames = this.classNames.checkbox;
+          const btn = this.createButton(`${checkboxClassNames.container} ${className}`);
           const labelEl = this.createSpan();
-          labelEl.className = "laymic_checkboxLabel";
+          labelEl.className = checkboxClassNames.label;
           labelEl.textContent = label;
           const wrapperEl = this.createDiv();
-          wrapperEl.className = "laymic_iconWrapper";
+          wrapperEl.className = this.classNames.iconWrapper;
           [
               this.createSvgUseElement(this.icons.checkboxOuter),
               this.createSvgUseElement(this.icons.checkboxInner),
@@ -5543,15 +5610,16 @@ var laymic = (function (exports) {
           return btn;
       }
       createSelectButton(label, values, className = "") {
-          const btn = this.createButton("laymic_select " + className);
+          const selectClassNames = this.classNames.select;
+          const btn = this.createButton(`${selectClassNames.container} ${className}`);
           const labelEl = this.createSpan();
-          labelEl.className = "laymic_selectLabel";
+          labelEl.className = selectClassNames.label;
           labelEl.textContent = label;
           const wrapperEl = this.createDiv();
-          wrapperEl.className = "laymic_selectWrapper";
+          wrapperEl.className = selectClassNames.wrapper;
           values.forEach((item, i) => {
               const el = this.createDiv();
-              el.className = "laymic_selectItem laymic_selectItem" + i;
+              el.className = `${selectClassNames.item} ${selectClassNames.item + i}`;
               el.textContent = item;
               el.dataset.itemIdx = i.toString();
               wrapperEl.appendChild(el);
@@ -5568,7 +5636,7 @@ var laymic = (function (exports) {
       }
       createEmptySlideEl() {
           const emptyEl = this.createDiv();
-          emptyEl.className = "swiper-slide laymic_emptySlide";
+          emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
           return emptyEl;
       }
       /**
@@ -5585,15 +5653,17 @@ var laymic = (function (exports) {
   }
 
   class Preference {
-      constructor(builder, rootEl, className) {
+      constructor(builder, rootEl) {
           this.PREFERENCE_KEY = "laymic_preferenceData";
           // preference save data
           this.data = this.loadPreferenceData();
+          this.builder = builder;
           const containerEl = builder.createDiv();
-          containerEl.className = (className) ? className : "laymic_preference";
+          const preferenceClassNames = this.builder.classNames.preference;
+          containerEl.className = preferenceClassNames.container;
           const wrapperEl = builder.createDiv();
-          wrapperEl.className = "laymic_preferenceWrapper";
-          const preferenceBtnClass = "laymic_preferenceButton";
+          wrapperEl.className = preferenceClassNames.wrapper;
+          const preferenceBtnClass = preferenceClassNames.button;
           const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
           const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
           const progressBarWidths = [
@@ -5637,7 +5707,6 @@ var laymic = (function (exports) {
               progressBarWidth,
               paginationVisibility,
           };
-          this.stateNames = builder.stateNames;
           // 読み込んだpreference値を各ボタン状態に適用
           this.applyCurrentPreferenceValue();
           // 各種イベントをボタンに適用
@@ -5713,7 +5782,7 @@ var laymic = (function (exports) {
        */
       applyCurrentPreferenceValue() {
           const { isAutoFullscreen, isEnableTapSlidePage, paginationVisibility, progressBarWidth, } = this.buttons;
-          const { active } = this.stateNames;
+          const { active } = this.builder.stateNames;
           if (this.isAutoFullscreen) {
               isAutoFullscreen.classList.add(active);
           }
@@ -5828,7 +5897,7 @@ var laymic = (function (exports) {
                   els.forEach(el => el.addEventListener("click", e => {
                       // 親要素がアクティブな時 === selectButtonが選択された時
                       // この時だけ処理を動かす
-                      const isActive = parentEl.classList.contains(this.stateNames.active);
+                      const isActive = parentEl.classList.contains(this.builder.stateNames.active);
                       if (isActive) {
                           callback(e, el, els);
                       }
@@ -5845,7 +5914,7 @@ var laymic = (function (exports) {
           // preference containerのクリックイベント
           this.el.addEventListener("click", () => {
               this.deactivateSelectButtons();
-              this.rootEl.classList.remove(this.stateNames.showPreference);
+              this.rootEl.classList.remove(this.builder.stateNames.showPreference);
           });
       }
       /**
@@ -5855,7 +5924,7 @@ var laymic = (function (exports) {
           [
               this.buttons.progressBarWidth,
               this.buttons.paginationVisibility,
-          ].forEach(el => el.classList.remove(this.stateNames.active));
+          ].forEach(el => el.classList.remove(this.builder.stateNames.active));
       }
       /**
        * 入力した要素内部にあるselectItem要素を配列として返す
@@ -5863,33 +5932,35 @@ var laymic = (function (exports) {
        * @return    クラス名で抽出したElement配列
        */
       getSelectItemEls(el) {
-          const selectItemClass = "laymic_selectItem";
+          const selectItemClass = this.builder.classNames.select.item;
           return Array.from(el.getElementsByClassName(selectItemClass) || []);
       }
   }
 
   class Thumbnails {
-      constructor(builder, rootEl, pages, state, className) {
+      constructor(builder, rootEl, pages, state) {
+          this.builder = builder;
+          const thumbsClassNames = this.builder.classNames.thumbs;
           const thumbsEl = builder.createDiv();
-          thumbsEl.className = (className) ? className : "laymic_thumbs";
+          thumbsEl.className = thumbsClassNames.container;
           // 初期状態では表示しないようにしておく
           thumbsEl.style.display = "none";
           const wrapperEl = builder.createDiv();
-          wrapperEl.className = "laymic_thumbsWrapper";
+          wrapperEl.className = thumbsClassNames.wrapper;
           const thumbEls = [];
           for (let p of pages) {
               let el;
-              if (p instanceof HTMLElement) {
-                  p.classList.add("laymic_slideThumb");
-                  el = p;
-              }
-              else {
+              if (typeof p === "string") {
                   const img = new Image();
                   img.dataset.src = p;
-                  img.className = "laymic_lazyload laymic_imgThumb";
+                  img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
                   el = img;
               }
-              el.classList.add("laymic_thumbItem");
+              else {
+                  p.classList.add(thumbsClassNames.slideThumb);
+                  el = p;
+              }
+              el.classList.add(thumbsClassNames.item);
               thumbEls.push(el);
               wrapperEl.appendChild(el);
           }
@@ -5899,7 +5970,6 @@ var laymic = (function (exports) {
           this.thumbEls = thumbEls;
           this.state = state;
           this.rootEl = rootEl;
-          this.stateNames = builder.stateNames;
           this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
           this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
           this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
@@ -5910,6 +5980,7 @@ var laymic = (function (exports) {
        * いわゆるlazyload処理
        */
       revealImgs() {
+          const { lazyload, lazyloading, lazyloaded } = this.builder.classNames.thumbs;
           this.thumbEls.forEach(el => {
               if (!(el instanceof HTMLImageElement)) {
                   return;
@@ -5917,10 +5988,10 @@ var laymic = (function (exports) {
               const s = el.dataset.src;
               if (s) {
                   // 読み込み中はクラス名を変更
-                  el.classList.replace("laymic_lazyload", "laymic_lazyloading");
+                  el.classList.replace(lazyload, lazyloading);
                   // 読み込みが終わるとクラス名を再変更
                   el.addEventListener("load", () => {
-                      el.classList.replace("laymic_lazyloading", "laymic_lazyloaded");
+                      el.classList.replace(lazyloading, lazyloaded);
                   });
                   el.src = s;
               }
@@ -5956,7 +6027,8 @@ var laymic = (function (exports) {
           });
           // サムネイル表示中オーバーレイ要素でのクリックイベント
           this.el.addEventListener("click", () => {
-              this.rootEl.classList.remove(this.stateNames.showThumbs);
+              const showThumbs = this.builder.stateNames.showThumbs;
+              this.rootEl.classList.remove(showThumbs);
           });
       }
   }
@@ -5966,9 +6038,10 @@ var laymic = (function (exports) {
       constructor(pages, options = {}) {
           // mangaViewer内部で用いるステートまとめ
           this.state = this.defaultMangaViewerStates;
-          const builder = new DOMBuilder(options.icons);
+          const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
           const rootEl = builder.createDiv();
-          this.stateNames = builder.stateNames;
+          const { stateNames, classNames } = builder;
+          this.builder = builder;
           if (this.state.viewerIdx === 0) {
               // 一つのページにつき一度だけの処理
               const svgCtn = builder.createSVGIcons();
@@ -6019,7 +6092,7 @@ var laymic = (function (exports) {
           if (options.viewerId)
               this.state.viewerId = options.viewerId;
           if (options.isVisiblePagination)
-              rootEl.classList.add(this.stateNames.visiblePagination);
+              rootEl.classList.add(stateNames.visiblePagination);
           if (this.preference.progressBarWidth !== "auto") {
               this.state.progressBarWidth = this.getBarWidth(this.preference.progressBarWidth);
           }
@@ -6029,11 +6102,11 @@ var laymic = (function (exports) {
           this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
           // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
           rootEl.style.display = "none";
-          rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
+          rootEl.classList.add(classNames.root, stateNames.visibleUI);
           if (this.state.isLTR)
-              rootEl.classList.add(this.stateNames.ltr);
+              rootEl.classList.add(stateNames.ltr);
           const [controllerEl, uiButtons] = builder.createViewerController();
-          const swiperEl = builder.createSwiperContainer("laymic_slider", pages, this.state.isLTR, this.state.isFirstSlideEmpty);
+          const swiperEl = builder.createSwiperContainer(pages, this.state.isLTR, this.state.isFirstSlideEmpty);
           [
               controllerEl,
               swiperEl,
@@ -6062,7 +6135,6 @@ var laymic = (function (exports) {
           this.applyEventListeners();
           // 初期化引数を保管
           this.initOptions = options;
-          this.builder = builder;
       }
       /**
        * swiper-containerの要素サイズを返す
@@ -6191,6 +6263,7 @@ var laymic = (function (exports) {
        * インスタンス生成時に一度だけ呼び出されることを想定
        */
       applyEventListeners() {
+          const stateNames = this.builder.stateNames;
           // 縦読み/横読み切り替えボタン
           this.el.buttons.direction.addEventListener("click", () => {
               if (!this.state.isVertView) {
@@ -6207,14 +6280,14 @@ var laymic = (function (exports) {
                   this.thumbs.el.style.display = "";
                   this.thumbs.revealImgs();
               }
-              this.el.rootEl.classList.add(this.stateNames.showThumbs);
+              this.el.rootEl.classList.add(stateNames.showThumbs);
               this.hideViewerUI();
           });
           // サムネイルのクリックイベント
           // 各サムネイルとswiper各スライドとを紐づける
           this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
               this.swiper.slideTo(i);
-              this.el.rootEl.classList.remove(this.stateNames.showThumbs);
+              this.el.rootEl.classList.remove(stateNames.showThumbs);
           }));
           // 全画面化ボタンのクリックイベント
           this.el.buttons.fullscreen.addEventListener("click", () => {
@@ -6222,7 +6295,7 @@ var laymic = (function (exports) {
           });
           // 設定ボタンのクリックイベント
           this.el.buttons.preference.addEventListener("click", () => {
-              this.el.rootEl.classList.toggle(this.stateNames.showPreference);
+              this.el.rootEl.classList.toggle(stateNames.showPreference);
               // NOTE: 暫定でUIを閉じておく
               this.hideViewerUI();
           });
@@ -6299,7 +6372,7 @@ var laymic = (function (exports) {
                   // isVisiblePagination
                   const isVP = this.initOptions.isVisiblePagination;
                   const isVisible = pv === "visible" || pv !== "hidden" && isVP;
-                  const vpClass = this.stateNames.visiblePagination;
+                  const vpClass = stateNames.visiblePagination;
                   if (isVisible) {
                       this.el.rootEl.classList.add(vpClass);
                   }
@@ -6372,8 +6445,9 @@ var laymic = (function (exports) {
        * 縦読み表示へと切り替える
        */
       enableVerticalView() {
+          const vertView = this.builder.stateNames.vertView;
           this.state.isVertView = true;
-          this.el.rootEl.classList.add(this.stateNames.vertView);
+          this.el.rootEl.classList.add(vertView);
           if (this.state.isFirstSlideEmpty) {
               this.removeFirstEmptySlide();
           }
@@ -6392,8 +6466,9 @@ var laymic = (function (exports) {
        * 横読み表示へと切り替える
        */
       disableVerticalView() {
+          const vertView = this.builder.stateNames.vertView;
           this.state.isVertView = false;
-          this.el.rootEl.classList.remove(this.stateNames.vertView);
+          this.el.rootEl.classList.remove(vertView);
           if (this.state.isFirstSlideEmpty) {
               this.prependFirstEmptySlide();
           }
@@ -6414,7 +6489,7 @@ var laymic = (function (exports) {
        */
       switchSingleSlideState() {
           const rootEl = this.el.rootEl;
-          const state = this.stateNames.singleSlide;
+          const state = this.builder.stateNames.singleSlide;
           const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
           if (this.state.thresholdWidth <= window.innerWidth) {
               // 横読み時2p表示
@@ -6436,7 +6511,8 @@ var laymic = (function (exports) {
           if (this.swiper.slides.length === 0)
               return;
           const firstSlide = this.swiper.slides[0];
-          const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+          const emptySlide = this.builder.classNames.emptySlide;
+          const hasEmptySlide = firstSlide.classList.contains(emptySlide);
           if (hasEmptySlide) {
               this.swiper.removeSlide(0);
               // swiper側の更新も一応かけておく
@@ -6452,7 +6528,8 @@ var laymic = (function (exports) {
           if (this.swiper.slides.length === 0)
               return;
           const firstSlide = this.swiper.slides[0];
-          const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+          const emptySlide = this.builder.classNames.emptySlide;
+          const hasEmptySlide = firstSlide.classList.contains(emptySlide);
           if (!hasEmptySlide) {
               const emptyEl = this.builder.createEmptySlideEl();
               this.swiper.prependSlide(emptyEl);
@@ -6528,7 +6605,7 @@ var laymic = (function (exports) {
       slideMouseHoverHandler(e) {
           const [isNextClick, isPrevClick] = this.getClickPoint(e);
           const { nextPage, prevPage } = this.el.buttons;
-          const active = this.stateNames.active;
+          const active = this.builder.stateNames.active;
           const { controllerEl, swiperEl } = this.el;
           const setCursorStyle = (isPointer) => {
               const cursor = (isPointer) ? "pointer" : "";
@@ -6553,7 +6630,7 @@ var laymic = (function (exports) {
           }
       }
       changePaginationVisibility() {
-          const hidden = this.stateNames.hidden;
+          const hidden = this.builder.stateNames.hidden;
           const { prevPage, nextPage } = this.el.buttons;
           const { isBeginning, isEnd } = this.swiper;
           if (isBeginning) {
@@ -6573,13 +6650,13 @@ var laymic = (function (exports) {
        * ビューワー操作UIをトグルさせる
        */
       toggleViewerUI() {
-          this.el.rootEl.classList.toggle(this.stateNames.visibleUI);
+          this.el.rootEl.classList.toggle(this.builder.stateNames.visibleUI);
       }
       /**
        * ビューワー操作UIを非表示化する
        */
       hideViewerUI() {
-          const stateName = this.stateNames.visibleUI;
+          const stateName = this.builder.stateNames.visibleUI;
           if (this.el.rootEl.classList.contains(stateName)) {
               this.el.rootEl.classList.remove(stateName);
           }
@@ -6606,7 +6683,7 @@ var laymic = (function (exports) {
           // フルスクリーン切り替え後に呼び出される関数
           const postToggleFullscreen = () => {
               const isFullscreen = document.fullscreenElement;
-              const fsClass = this.stateNames.fullscreen;
+              const fsClass = this.builder.stateNames.fullscreen;
               if (isFullscreen) {
                   // 全画面有効時
                   this.el.rootEl.classList.add(fsClass);

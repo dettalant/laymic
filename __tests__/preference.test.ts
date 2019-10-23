@@ -121,7 +121,7 @@ describe("preference class test", () => {
     const progressbarIdx = barWidthValues.indexOf(pbwValue);
     const paginationIdx = uiVisibilityValues.indexOf(pvValue);
 
-    const active = preference2.stateNames.active;
+    const active = preference2.builder.stateNames.active;
 
     preference2["applyCurrentPreferenceValue"]();
 

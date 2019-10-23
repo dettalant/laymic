@@ -1,14 +1,14 @@
 import DOMBuilder from "#/components/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
 export default class Preference {
     private readonly PREFERENCE_KEY;
     rootEl: HTMLElement;
     el: HTMLElement;
     wrapperEl: HTMLElement;
     buttons: PreferenceButtons;
-    stateNames: StateClassNames;
+    builder: DOMBuilder;
     data: PreferenceData;
-    constructor(builder: DOMBuilder, rootEl: HTMLElement, className?: string);
+    constructor(builder: DOMBuilder, rootEl: HTMLElement);
     private readonly defaultPreferenceData;
     isAutoFullscreen: boolean;
     isEnableTapSlidePage: boolean;

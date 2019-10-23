@@ -3,7 +3,8 @@ import {
   ViewerIcons,
   ViewerUIButtons,
   IconData,
-  StateClassNames
+  LaymicClassNames,
+  LaymicStateClassNames
 } from "#/interfaces";
 
 // svg namespace
@@ -15,14 +16,78 @@ const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 export default class DOMBuilder {
   // 使用するアイコンセット
   private icons: ViewerIcons = this.defaultMangaViewerIcons;
-  // uiボタンクラス名
-  private readonly uiButtonClass = "laymic_uiButton";
-  readonly stateNames = this.defaultStateClassNames;
-  constructor(icons?: ViewerIcons) {
+  readonly classNames = this.defaultLaymicClassNames;
+  readonly stateNames = this.defaultLaymicStateClassNames;
+  constructor(
+    icons?: Partial<ViewerIcons>,
+    classNames?: Partial<LaymicClassNames>,
+    stateNames?: Partial<LaymicStateClassNames>
+  ) {
     if (icons) this.icons = Object.assign(this.icons, icons);
+    if (classNames) this.classNames = Object.assign(this.classNames, classNames);
+    if (stateNames) this.stateNames = Object.assign(this.stateNames, stateNames);
   }
 
-  private get defaultStateClassNames(): StateClassNames {
+  private get defaultLaymicClassNames(): LaymicClassNames {
+    return {
+      root: "laymic_root",
+      slider: "laymic_slider",
+      // uiボタンクラス名
+      uiButton: "laymic_uiButton",
+      // 空スライドクラス名
+      emptySlide: "laymic_emptySlide",
+      pagination: "laymic_pagination",
+      iconWrapper: "laymic_iconWrapper",
+      controller: {
+        controller: "laymic_controller",
+        controllerTop: "laymic_controllerTop",
+        controllerBottom: "laymic_controllerBottom",
+        progressbar: "laymic_progressbar",
+      },
+      buttons: {
+        direction: "laymic_direction",
+        fullscreen: "laymic_fullscreen",
+        thumbs: "laymic_showThumbs",
+        preference: "laymic_showPreference",
+        close: "laymic_close",
+        help: "laymic_showHelp",
+        nextPage: "laymic_paginationNext",
+        prevPage: "laymic_paginationPrev",
+      },
+      svg: {
+        icon: "laymic_svgIcon",
+        defaultProp: "laymic_svgDefaultProp",
+        container: "laymic_svgContainer",
+      },
+      checkbox: {
+        container: "laymic_checkbox",
+        label: "laymic_checkboxLabel",
+      },
+      select: {
+        container: "laymic_select",
+        label: "laymic_selectLabel",
+        wrapper: "laymic_selectWrapper",
+        item: "laymic_selectItem",
+      },
+      thumbs: {
+        container: "laymic_thumbs",
+        wrapper: "laymic_thumbsWrapper",
+        item: "laymic_thumbItem",
+        slideThumb: "laymic_slideThumb",
+        imgThumb: "laymic_imgThumb",
+        lazyload: "laymic_lazyload",
+        lazyloading: "laymic_lazyloading",
+        lazyloaded: "laymic_lazyloaded",
+      },
+      preference: {
+        container: "laymic_preference",
+        wrapper: "laymic_preferenceWrapper",
+        button: "laymic_preferenceButton",
+      }
+    }
+  }
+
+  private get defaultLaymicStateClassNames(): LaymicStateClassNames {
     return {
       active: "laymic_isActive",
       hidden: "laymic_isHidden",
@@ -129,6 +194,7 @@ export default class DOMBuilder {
       ]
     };
 
+    // material.io: help(modified)
     const showHelp = {
       id: "laymic_svgShowHelp",
       className: "icon_showHelp",
@@ -160,9 +226,9 @@ export default class DOMBuilder {
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(className: string,  pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
+  createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
     const swiperEl = this.createDiv();
-    swiperEl.className = "swiper-container " + className;
+    swiperEl.className = "swiper-container " + this.classNames.slider;
     swiperEl.dir = (isLTR) ? "" : "rtl";
 
     const wrapperEl = this.createDiv();
@@ -202,16 +268,18 @@ export default class DOMBuilder {
    * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
   createViewerController(): [HTMLElement, ViewerUIButtons] {
+    const btnClassNames = this.classNames.buttons
+    const ctrlClassNames = this.classNames.controller;
     const ctrlEl = this.createDiv();
-    ctrlEl.className = "laymic_controller";
+    ctrlEl.className = ctrlClassNames.controller;
     const progressEl = this.createDiv();
-    progressEl.className = "swiper-pagination laymic_progressbar";
+    progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
 
     const ctrlTopEl = this.createDiv();
-    ctrlTopEl.className = "laymic_controllerTop";
+    ctrlTopEl.className = ctrlClassNames.controllerTop;
 
     const direction = this.createButton();
-    direction.classList.add("laymic_direction");
+    direction.classList.add(btnClassNames.direction);
     [
       this.createSvgUseElement(this.icons.vertView),
       this.createSvgUseElement(this.icons.horizView),
@@ -222,26 +290,26 @@ export default class DOMBuilder {
       this.createSvgUseElement(this.icons.fullscreen),
       this.createSvgUseElement(this.icons.exitFullscreen),
     ].forEach(icon => fullscreen.appendChild(icon));
-    fullscreen.classList.add("laymic_fullscreen");
+    fullscreen.classList.add(btnClassNames.fullscreen);
 
     const thumbs = this.createButton();
     [
       this.createSvgUseElement(this.icons.showThumbs),
     ].forEach(icon => thumbs.appendChild(icon));
-    thumbs.classList.add("laymic_showThumbs");
+    thumbs.classList.add(btnClassNames.thumbs);
 
     const preference = this.createButton();
-    preference.classList.add("laymic_showPreference");
+    preference.classList.add(btnClassNames.preference);
     const preferenceIcon = this.createSvgUseElement(this.icons.preference);
     preference.appendChild(preferenceIcon);
 
     const close = this.createButton();
-    close.classList.add("laymic_close");
+    close.classList.add(btnClassNames.close);
     const closeIcon = this.createSvgUseElement(this.icons.close);
     close.appendChild(closeIcon);
 
     const help = this.createButton();
-    help.classList.add("laymic_showHelp");
+    help.classList.add(btnClassNames.help);
     const helpIcon = this.createSvgUseElement(this.icons.showHelp);
     help.appendChild(helpIcon);
 
@@ -254,8 +322,9 @@ export default class DOMBuilder {
       close
     ].forEach(btn => ctrlTopEl.appendChild(btn));
 
-    const nextPage = this.createButton("laymic_pagination swiper-button-next");
-    const prevPage = this.createButton("laymic_pagination swiper-button-prev");
+    const paginationClass = this.classNames.pagination
+    const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
+    const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
 
     const uiButtons: ViewerUIButtons = {
       help,
@@ -269,7 +338,7 @@ export default class DOMBuilder {
     }
 
     const ctrlBottomEl = this.createDiv();
-    ctrlBottomEl.className = "laymic_controllerBottom";
+    ctrlBottomEl.className = ctrlClassNames.controllerBottom;
 
     [
       ctrlTopEl,
@@ -289,12 +358,13 @@ export default class DOMBuilder {
    * @return           SVGElement
    */
   private createSvgUseElement(icon: IconData): SVGElement {
+    const svgClassNames = this.classNames.svg;
     const svgEl = document.createElementNS(SVG_NS, "svg");
-    svgEl.setAttribute("class", "svg_icon " + icon.className);
+    svgEl.setAttribute("class", `${svgClassNames.icon} ${icon.className}`);
     svgEl.setAttribute("role", "img");
 
     const useEl = document.createElementNS(SVG_NS, "use");
-    useEl.setAttribute("class", "svg_default_prop");
+    useEl.setAttribute("class", svgClassNames.defaultProp);
     useEl.setAttributeNS(SVG_XLINK_NS, "xlink:href", "#" + icon.id);
     svgEl.appendChild(useEl);
 
@@ -311,7 +381,7 @@ export default class DOMBuilder {
     svgCtn.setAttributeNS(null, "version", "1.1");
     svgCtn.setAttribute("xmlns", SVG_NS);
     svgCtn.setAttribute("xmlns:xlink", SVG_XLINK_NS);
-    svgCtn.setAttribute("class", "laymic_svgContainer");
+    svgCtn.setAttribute("class", this.classNames.svg.container);
 
     const defs = document.createElementNS(SVG_NS, "defs");
 
@@ -356,7 +426,7 @@ export default class DOMBuilder {
    * 空のbutton要素を返す
    * @return button要素
    */
-  createButton(className: string = this.uiButtonClass): HTMLButtonElement {
+  createButton(className: string = this.classNames.uiButton): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = className;
@@ -372,13 +442,14 @@ export default class DOMBuilder {
   }
 
   createCheckBoxButton(label: string, className: string = ""): HTMLButtonElement {
-    const btn = this.createButton("laymic_checkbox " + className);
+    const checkboxClassNames = this.classNames.checkbox
+    const btn = this.createButton(`${checkboxClassNames.container} ${className}`);
     const labelEl = this.createSpan();
-    labelEl.className = "laymic_checkboxLabel";
+    labelEl.className = checkboxClassNames.label;
     labelEl.textContent = label;
 
     const wrapperEl = this.createDiv();
-    wrapperEl.className = "laymic_iconWrapper";
+    wrapperEl.className = this.classNames.iconWrapper;
 
     [
       this.createSvgUseElement(this.icons.checkboxOuter),
@@ -398,18 +469,20 @@ export default class DOMBuilder {
   }
 
   createSelectButton(label: string, values: string[], className: string = ""): HTMLButtonElement {
-    const btn = this.createButton("laymic_select " + className);
+    const selectClassNames = this.classNames.select;
+    const btn = this.createButton(`${selectClassNames.container} ${className}`);
 
     const labelEl = this.createSpan();
-    labelEl.className = "laymic_selectLabel";
+    labelEl.className = selectClassNames.label;
     labelEl.textContent = label;
 
     const wrapperEl = this.createDiv();
-    wrapperEl.className = "laymic_selectWrapper";
+    wrapperEl.className = selectClassNames.wrapper;
 
     values.forEach((item, i) => {
       const el = this.createDiv();
-      el.className = "laymic_selectItem laymic_selectItem" + i;
+      el.className =  `${selectClassNames.item} ${selectClassNames.item + i}`;
+
       el.textContent = item;
       el.dataset.itemIdx = i.toString();
       wrapperEl.appendChild(el);
@@ -430,7 +503,7 @@ export default class DOMBuilder {
 
   createEmptySlideEl(): HTMLElement {
     const emptyEl = this.createDiv();
-    emptyEl.className = "swiper-slide laymic_emptySlide";
+    emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
     return emptyEl;
   }
 

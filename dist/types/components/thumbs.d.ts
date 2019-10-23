@@ -1,13 +1,13 @@
-import { ViewerPages, ViewerStates, StateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerStates } from "#/interfaces";
 import DOMBuilder from "#/components/builder";
 export default class Thumbnails {
     state: ViewerStates;
-    stateNames: StateClassNames;
+    builder: DOMBuilder;
     rootEl: HTMLElement;
     el: HTMLElement;
     wrapperEl: HTMLElement;
-    thumbEls: HTMLElement[];
-    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates, className?: string);
+    thumbEls: Element[];
+    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates);
     /**
      * 読み込み待ち状態のimg elementを全て読み込む
      * いわゆるlazyload処理

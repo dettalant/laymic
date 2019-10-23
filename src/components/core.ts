@@ -19,7 +19,6 @@ import {
   LaymicOptions,
   ViewerStates,
   PageRect,
-  StateClassNames,
   BarWidth
 } from "#/interfaces";
 
@@ -31,8 +30,6 @@ export default class Laymic {
   // mangaViewer内部で用いるステートまとめ
   state: ViewerStates = this.defaultMangaViewerStates;
   initOptions: LaymicOptions;
-  // ステート変化に用いるクラス名まとめ
-  stateNames: StateClassNames;
   preference: Preference;
   thumbs: Thumbnails;
   // swiper instance
@@ -40,9 +37,10 @@ export default class Laymic {
   builder: DOMBuilder;
 
   constructor(pages: ViewerPages, options: LaymicOptions = {}) {
-    const builder = new DOMBuilder(options.icons);
+    const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
     const rootEl = builder.createDiv();
-    this.stateNames = builder.stateNames;
+    const {stateNames, classNames} = builder;
+    this.builder = builder;
 
     if (this.state.viewerIdx === 0) {
       // 一つのページにつき一度だけの処理
@@ -88,7 +86,7 @@ export default class Laymic {
     if (options.isInstantOpen !== void 0) this.state.isInstantOpen = options.isInstantOpen;
     // ここからは省略表記で存在確認
     if (options.viewerId) this.state.viewerId = options.viewerId;
-    if (options.isVisiblePagination) rootEl.classList.add(this.stateNames.visiblePagination);
+    if (options.isVisiblePagination) rootEl.classList.add(stateNames.visiblePagination);
 
     if (this.preference.progressBarWidth !== "auto") {
       this.state.progressBarWidth = this.getBarWidth(this.preference.progressBarWidth);
@@ -99,12 +97,11 @@ export default class Laymic {
     this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
-    rootEl.classList.add("laymic_root", this.stateNames.visibleUI);
-    if (this.state.isLTR) rootEl.classList.add(this.stateNames.ltr);
+    rootEl.classList.add(classNames.root, stateNames.visibleUI);
+    if (this.state.isLTR) rootEl.classList.add(stateNames.ltr);
 
     const [controllerEl, uiButtons] = builder.createViewerController();
     const swiperEl = builder.createSwiperContainer(
-      "laymic_slider",
       pages,
       this.state.isLTR,
       this.state.isFirstSlideEmpty
@@ -144,7 +141,6 @@ export default class Laymic {
 
     // 初期化引数を保管
     this.initOptions = options;
-    this.builder = builder;
   }
 
   /**
@@ -289,6 +285,7 @@ export default class Laymic {
    * インスタンス生成時に一度だけ呼び出されることを想定
    */
   private applyEventListeners() {
+    const stateNames = this.builder.stateNames;
     // 縦読み/横読み切り替えボタン
     this.el.buttons.direction.addEventListener("click", () => {
       if (!this.state.isVertView) {
@@ -306,7 +303,7 @@ export default class Laymic {
         this.thumbs.el.style.display = "";
         this.thumbs.revealImgs();
       }
-      this.el.rootEl.classList.add(this.stateNames.showThumbs);
+      this.el.rootEl.classList.add(stateNames.showThumbs);
 
       this.hideViewerUI();
     })
@@ -315,7 +312,7 @@ export default class Laymic {
     // 各サムネイルとswiper各スライドとを紐づける
     this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
       this.swiper.slideTo(i);
-      this.el.rootEl.classList.remove(this.stateNames.showThumbs);
+      this.el.rootEl.classList.remove(stateNames.showThumbs);
     }));
 
     // 全画面化ボタンのクリックイベント
@@ -325,7 +322,7 @@ export default class Laymic {
 
     // 設定ボタンのクリックイベント
     this.el.buttons.preference.addEventListener("click", () => {
-      this.el.rootEl.classList.toggle(this.stateNames.showPreference);
+      this.el.rootEl.classList.toggle(stateNames.showPreference);
       // NOTE: 暫定でUIを閉じておく
       this.hideViewerUI();
     })
@@ -409,7 +406,7 @@ export default class Laymic {
         // isVisiblePagination
         const isVP = this.initOptions.isVisiblePagination;
         const isVisible = pv === "visible" || pv !== "hidden" && isVP;
-        const vpClass = this.stateNames.visiblePagination;
+        const vpClass = stateNames.visiblePagination;
 
         if (isVisible) {
           this.el.rootEl.classList.add(vpClass);
@@ -496,8 +493,9 @@ export default class Laymic {
    * 縦読み表示へと切り替える
    */
   private enableVerticalView() {
+    const vertView = this.builder.stateNames.vertView;
     this.state.isVertView = true;
-    this.el.rootEl.classList.add(this.stateNames.vertView);
+    this.el.rootEl.classList.add(vertView);
 
     if (this.state.isFirstSlideEmpty) {
       this.removeFirstEmptySlide();
@@ -522,8 +520,9 @@ export default class Laymic {
    * 横読み表示へと切り替える
    */
   private disableVerticalView() {
+    const vertView = this.builder.stateNames.vertView;
     this.state.isVertView = false;
-    this.el.rootEl.classList.remove(this.stateNames.vertView);
+    this.el.rootEl.classList.remove(vertView);
 
     if (this.state.isFirstSlideEmpty) {
       this.prependFirstEmptySlide();
@@ -550,7 +549,7 @@ export default class Laymic {
    */
   private switchSingleSlideState() {
     const rootEl = this.el.rootEl;
-    const state = this.stateNames.singleSlide;
+    const state = this.builder.stateNames.singleSlide;
     const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
 
     if (this.state.thresholdWidth <= window.innerWidth) {
@@ -572,7 +571,8 @@ export default class Laymic {
   private removeFirstEmptySlide() {
     if (this.swiper.slides.length === 0) return;
     const firstSlide: HTMLElement = this.swiper.slides[0];
-    const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+    const emptySlide = this.builder.classNames.emptySlide;
+    const hasEmptySlide = firstSlide.classList.contains(emptySlide);
 
     if (hasEmptySlide) {
       this.swiper.removeSlide(0);
@@ -590,7 +590,8 @@ export default class Laymic {
     if (this.swiper.slides.length === 0) return;
 
     const firstSlide: HTMLElement = this.swiper.slides[0];
-    const hasEmptySlide = firstSlide.classList.contains("laymic_emptySlide");
+    const emptySlide = this.builder.classNames.emptySlide;
+    const hasEmptySlide = firstSlide.classList.contains(emptySlide);
 
     if (!hasEmptySlide) {
       const emptyEl = this.builder.createEmptySlideEl()
@@ -672,7 +673,7 @@ export default class Laymic {
   private slideMouseHoverHandler(e: MouseEvent) {
     const [isNextClick, isPrevClick] = this.getClickPoint(e);
     const {nextPage, prevPage} = this.el.buttons;
-    const active = this.stateNames.active;
+    const active = this.builder.stateNames.active;
     const {controllerEl, swiperEl} = this.el;
 
     const setCursorStyle = (isPointer: boolean) => {
@@ -698,7 +699,7 @@ export default class Laymic {
   }
 
   private changePaginationVisibility() {
-    const hidden = this.stateNames.hidden;
+    const hidden = this.builder.stateNames.hidden;
     const {prevPage, nextPage} = this.el.buttons;
     const {isBeginning, isEnd} = this.swiper;
 
@@ -719,14 +720,14 @@ export default class Laymic {
    * ビューワー操作UIをトグルさせる
    */
   private toggleViewerUI() {
-    this.el.rootEl.classList.toggle(this.stateNames.visibleUI);
+    this.el.rootEl.classList.toggle(this.builder.stateNames.visibleUI);
   }
 
   /**
    * ビューワー操作UIを非表示化する
    */
   private hideViewerUI() {
-    const stateName = this.stateNames.visibleUI;
+    const stateName = this.builder.stateNames.visibleUI;
     if (this.el.rootEl.classList.contains(stateName)) {
       this.el.rootEl.classList.remove(stateName);
     }
@@ -753,7 +754,7 @@ export default class Laymic {
     // フルスクリーン切り替え後に呼び出される関数
     const postToggleFullscreen = () => {
       const isFullscreen = document.fullscreenElement;
-      const fsClass = this.stateNames.fullscreen;
+      const fsClass = this.builder.stateNames.fullscreen;
       if (isFullscreen) {
         // 全画面有効時
         this.el.rootEl.classList.add(fsClass);

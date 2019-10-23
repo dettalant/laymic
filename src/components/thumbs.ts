@@ -1,35 +1,38 @@
-import { ViewerPages, ViewerStates, StateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerStates } from "#/interfaces";
 import DOMBuilder from "#/components/builder";
 
 export default class Thumbnails {
   state: ViewerStates;
-  stateNames: StateClassNames;
+  builder: DOMBuilder;
   rootEl: HTMLElement;
   el: HTMLElement;
   wrapperEl: HTMLElement;
-  thumbEls: HTMLElement[];
-  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates, className?: string) {
+  thumbEls: Element[];
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates) {
+    this.builder = builder;
+    const thumbsClassNames = this.builder.classNames.thumbs;
     const thumbsEl = builder.createDiv();
-    thumbsEl.className = (className) ? className : "laymic_thumbs";
+    thumbsEl.className = thumbsClassNames.container;
     // 初期状態では表示しないようにしておく
     thumbsEl.style.display = "none";
 
     const wrapperEl = builder.createDiv();
-    wrapperEl.className = "laymic_thumbsWrapper";
+    wrapperEl.className = thumbsClassNames.wrapper;
+
     const thumbEls = [];
     for (let p of pages) {
-      let el: HTMLElement;
-      if (p instanceof HTMLElement) {
-        p.classList.add("laymic_slideThumb")
-        el = p;
-      } else {
+      let el: Element;
+      if (typeof p === "string") {
         const img = new Image();
         img.dataset.src = p;
-        img.className = "laymic_lazyload laymic_imgThumb";
+        img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
         el = img;
+      } else {
+        p.classList.add(thumbsClassNames.slideThumb)
+        el = p;
       }
 
-      el.classList.add("laymic_thumbItem");
+      el.classList.add(thumbsClassNames.item);
       thumbEls.push(el);
       wrapperEl.appendChild(el);
     }
@@ -41,7 +44,6 @@ export default class Thumbnails {
     this.thumbEls = thumbEls
     this.state = state;
     this.rootEl = rootEl;
-    this.stateNames = builder.stateNames;
 
     this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
     this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
@@ -55,6 +57,7 @@ export default class Thumbnails {
    * いわゆるlazyload処理
    */
   revealImgs() {
+    const {lazyload, lazyloading, lazyloaded} = this.builder.classNames.thumbs;
     this.thumbEls.forEach(el => {
       if (!(el instanceof HTMLImageElement)) {
         return;
@@ -63,11 +66,11 @@ export default class Thumbnails {
       const s = el.dataset.src;
       if (s) {
         // 読み込み中はクラス名を変更
-        el.classList.replace("laymic_lazyload", "laymic_lazyloading");
+        el.classList.replace(lazyload, lazyloading);
 
         // 読み込みが終わるとクラス名を再変更
         el.addEventListener("load", () => {
-          el.classList.replace("laymic_lazyloading", "laymic_lazyloaded");
+          el.classList.replace(lazyloading, lazyloaded);
         })
 
         el.src = s;
@@ -108,7 +111,8 @@ export default class Thumbnails {
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
     this.el.addEventListener("click", () => {
-      this.rootEl.classList.remove(this.stateNames.showThumbs);
+      const showThumbs = this.builder.stateNames.showThumbs
+      this.rootEl.classList.remove(showThumbs);
     });
   }
 }

@@ -1,5 +1,5 @@
 import DOMBuilder from "#/components/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, StateClassNames, UIVisibility } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
 export default class Preference {
@@ -10,17 +10,19 @@ export default class Preference {
   // preference wrapper el
   wrapperEl: HTMLElement;
   buttons: PreferenceButtons;
-  stateNames: StateClassNames;
+  builder: DOMBuilder;
   // preference save data
   data: PreferenceData = this.loadPreferenceData();
-  constructor(builder: DOMBuilder, rootEl: HTMLElement, className?: string) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement) {
+    this.builder = builder;
     const containerEl = builder.createDiv();
-    containerEl.className = (className) ? className : "laymic_preference";
+    const preferenceClassNames = this.builder.classNames.preference;
+    containerEl.className = preferenceClassNames.container;
 
     const wrapperEl = builder.createDiv();
-    wrapperEl.className = "laymic_preferenceWrapper";
+    wrapperEl.className = preferenceClassNames.wrapper;
 
-    const preferenceBtnClass = "laymic_preferenceButton";
+    const preferenceBtnClass = preferenceClassNames.button;
     const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
 
     const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
@@ -72,7 +74,6 @@ export default class Preference {
       progressBarWidth,
       paginationVisibility,
     };
-    this.stateNames = builder.stateNames;
 
     // 読み込んだpreference値を各ボタン状態に適用
     this.applyCurrentPreferenceValue();
@@ -174,7 +175,7 @@ export default class Preference {
 
     const {
       active
-    } = this.stateNames;
+    } = this.builder.stateNames;
 
     if (this.isAutoFullscreen) {
       isAutoFullscreen.classList.add(active);
@@ -297,7 +298,7 @@ export default class Preference {
         els.forEach(el => el.addEventListener("click", e => {
           // 親要素がアクティブな時 === selectButtonが選択された時
           // この時だけ処理を動かす
-          const isActive = parentEl.classList.contains(this.stateNames.active);
+          const isActive = parentEl.classList.contains(this.builder.stateNames.active);
           if (isActive) {
             callback(e, el, els);
           }
@@ -317,7 +318,7 @@ export default class Preference {
     // preference containerのクリックイベント
     this.el.addEventListener("click", () => {
       this.deactivateSelectButtons();
-      this.rootEl.classList.remove(this.stateNames.showPreference);
+      this.rootEl.classList.remove(this.builder.stateNames.showPreference);
     })
   }
 
@@ -328,7 +329,7 @@ export default class Preference {
     [
       this.buttons.progressBarWidth,
       this.buttons.paginationVisibility,
-    ].forEach(el => el.classList.remove(this.stateNames.active));
+    ].forEach(el => el.classList.remove(this.builder.stateNames.active));
   }
 
   /**
@@ -337,7 +338,7 @@ export default class Preference {
    * @return    クラス名で抽出したElement配列
    */
   private getSelectItemEls(el: HTMLElement): Element[] {
-    const selectItemClass = "laymic_selectItem";
+    const selectItemClass = this.builder.classNames.select.item;
     return Array.from(el.getElementsByClassName(selectItemClass) || [])
   }
 }
