@@ -1,6 +1,5 @@
 import DOMBuilder from "#/components/builder"
 import { vertHelpImg, horizHelpImg } from "#/components/helpImg";
-import { compareString } from "#/utils";
 
 export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
@@ -55,7 +54,7 @@ export default class LaymicHelp {
 
   private loadIsDisplayedData() {
     const isDisplayedStr = localStorage.getItem(this.ISDISPLAYED_KEY) || "";
-    if (compareString(isDisplayedStr, "true", true)) {
+    if (isDisplayedStr === "true") {
       this._isDisplayed = true;
     }
   }
@@ -69,11 +68,11 @@ export default class LaymicHelp {
     localStorage.setItem(this.ISDISPLAYED_KEY, "true");
   }
 
-  private showHelp() {
+  showHelp() {
     this.rootEl.classList.add(this.builder.stateNames.showHelp);
   }
 
-  private hideHelp() {
+  hideHelp() {
     this.rootEl.classList.remove(this.builder.stateNames.showHelp);
     this.isHelpDisplayed = true;
   }

@@ -10,7 +10,7 @@ export default class LaymicHelp {
     private loadIsDisplayedData;
     private readonly isDisplayed;
     private isHelpDisplayed;
-    private showHelp;
-    private hideHelp;
+    showHelp(): void;
+    hideHelp(): void;
     private applyEventListeners;
 }

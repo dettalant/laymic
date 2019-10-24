@@ -27,6 +27,11 @@ export default class Laymic {
     private readonly mainSwiperHorizViewConf;
     private readonly mainSwiperVertViewConf;
     /**
+     * 横読み2p表示するか否かの判定を行う
+     * @return  2p表示する解像度ならばtrue
+     */
+    private readonly isDoubleSlideHorizView;
+    /**
      * 各種イベントの登録
      * インスタンス生成時に一度だけ呼び出されることを想定
      */
@@ -144,10 +149,4 @@ export default class Laymic {
      * @param src 画像path
      */
     private setPageSizeFromImgPath;
-    /**
-     * BarWidthの値から進捗バー幅数値を取得する
-     * @param  widthStr BarWidth値
-     * @return          対応する数値
-     */
-    private getBarWidth;
 }

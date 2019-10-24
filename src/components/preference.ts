@@ -12,7 +12,7 @@ export default class LaymicPreference {
   buttons: PreferenceButtons;
   builder: DOMBuilder;
   // preference save data
-  data: PreferenceData = this.loadPreferenceData();
+  data: PreferenceData = this.defaultPreferenceData;
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     this.builder = builder;
     const containerEl = builder.createDiv();
@@ -74,9 +74,6 @@ export default class LaymicPreference {
       progressBarWidth,
       paginationVisibility,
     };
-
-    // 読み込んだpreference値を各ボタン状態に適用
-    this.applyCurrentPreferenceValue();
     // 各種イベントをボタンに適用
     this.applyEventListeners();
   }
@@ -151,7 +148,7 @@ export default class LaymicPreference {
 
     if (dataStr) {
       try {
-        data = JSON.parse(dataStr)
+        data = JSON.parse(dataStr);
       } catch(e) {
         console.error(e);
         localStorage.removeItem(this.PREFERENCE_KEY);
@@ -162,10 +159,31 @@ export default class LaymicPreference {
   }
 
   /**
+   * preferenceと関係する項目をセットする
+   * 主にページ読み込み直後にLaymicクラスから呼び出される
+   */
+  applyPreferenceValues() {
+    // 更新前のデータをdeep copy
+    const oldData = Object.assign(this.data);
+    // 設定値をlocalStorageの値と同期させる
+    this.data = this.loadPreferenceData();
+
+    const dispatchs = [];
+    // 新旧で値が異なっていればdispatchsに追加
+    if (oldData.progressBarWidth !== this.data.progressBarWidth) dispatchs.push("progressBarWidth");
+    if (oldData.paginationVisibility !== this.data.paginationVisibility) dispatchs.push("paginationVisibility");
+
+    dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
+
+    // 読み込んだpreference値を各ボタン状態に適用
+    this.overwritePreferenceElValues();
+  }
+
+  /**
    * 現在のpreference状態をボタン状態に適用する
    * 主に初期化時に用いる関数
    */
-  private applyCurrentPreferenceValue() {
+  private overwritePreferenceElValues() {
     const {
       isAutoFullscreen,
       isEnableTapSlidePage,
@@ -318,12 +336,27 @@ export default class LaymicPreference {
     // preference containerのクリックイベント
     this.el.addEventListener("click", () => {
       this.deactivateSelectButtons();
-      this.rootEl.classList.remove(this.builder.stateNames.showPreference);
+      this.hidePreference();
     })
   }
 
   /**
+   * 設定画面を表示する
+   */
+  showPreference() {
+    this.rootEl.classList.add(this.builder.stateNames.showPreference);
+  }
+
+  /**
+   * 設定画面を非表示とする
+   */
+  hidePreference() {
+    this.rootEl.classList.remove(this.builder.stateNames.showPreference);
+  }
+
+  /**
    * 全てのセレクトボタンを非アクティブ状態にする
+   * 設定画面が閉じられる際に呼び出される
    */
   private deactivateSelectButtons() {
     [
@@ -340,5 +373,23 @@ export default class LaymicPreference {
   private getSelectItemEls(el: HTMLElement): Element[] {
     const selectItemClass = this.builder.classNames.select.item;
     return Array.from(el.getElementsByClassName(selectItemClass) || [])
+  }
+
+  /**
+   * BarWidthの値から進捗バー幅数値を取得する
+   * @param  widthStr BarWidth値
+   * @return          対応する数値
+   */
+  getBarWidth(widthStr: BarWidth = "auto") {
+    let width = 8;
+    if (widthStr === "none") {
+      width = 0;
+    } else if (widthStr === "tint") {
+      width = 4;
+    } else if (widthStr === "bold")  {
+      width = 12;
+    }
+
+    return width;
   }
 }

@@ -56,7 +56,7 @@ export default class LaymicThumbnails {
    * 読み込み待ち状態のimg elementを全て読み込む
    * いわゆるlazyload処理
    */
-  revealImgs() {
+  private revealImgs() {
     const {lazyload, lazyloading, lazyloaded} = this.builder.classNames.thumbs;
     this.thumbEls.forEach(el => {
       if (!(el instanceof HTMLImageElement)) {
@@ -100,6 +100,20 @@ export default class LaymicThumbnails {
     this.wrapperEl.style.width = widthStyleStr;
   }
 
+  showThumbs() {
+    if (this.el.style.display === "none") {
+      // ページ読み込み後一度だけ動作する
+      this.el.style.display = "";
+      this.revealImgs();
+    }
+
+    this.rootEl.classList.add(this.builder.stateNames.showThumbs);
+  }
+
+  hideThumbs() {
+    this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
+  }
+
   /**
    * 各種イベントリスナーの登録
    */
@@ -111,8 +125,7 @@ export default class LaymicThumbnails {
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
     this.el.addEventListener("click", () => {
-      const showThumbs = this.builder.stateNames.showThumbs
-      this.rootEl.classList.remove(showThumbs);
+      this.hideThumbs();
     });
   }
 }
