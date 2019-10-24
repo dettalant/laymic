@@ -9,10 +9,12 @@ import {
   isExistTouchEvent,
   rafThrottle,
   excludeHashLocation,
+  calcWindowVH,
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
-import Preference from "#/components/preference";
-import Thumbnails from "#/components/thumbs";
+import LaymicPreference from "#/components/preference";
+import LaymicThumbnails from "#/components/thumbs";
+import LaymicHelp from "#/components/help";
 import {
   ViewerPages,
   ViewerElements,
@@ -30,8 +32,9 @@ export default class Laymic {
   // mangaViewer内部で用いるステートまとめ
   state: ViewerStates = this.defaultMangaViewerStates;
   initOptions: LaymicOptions;
-  preference: Preference;
-  thumbs: Thumbnails;
+  preference: LaymicPreference;
+  thumbs: LaymicThumbnails;
+  help: LaymicHelp;
   // swiper instance
   swiper: Swiper;
   builder: DOMBuilder;
@@ -74,7 +77,7 @@ export default class Laymic {
       }
     }
 
-    this.preference = new Preference(builder, rootEl);
+    this.preference = new LaymicPreference(builder, rootEl);
 
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
@@ -94,7 +97,8 @@ export default class Laymic {
       this.state.progressBarWidth = this.getBarWidth(options.progressBarWidth);
     }
 
-    this.thumbs = new Thumbnails(builder, rootEl, pages, this.state);
+    this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
+    this.help = new LaymicHelp(builder, rootEl);
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
     rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -111,7 +115,8 @@ export default class Laymic {
       controllerEl,
       swiperEl,
       this.thumbs.el,
-      this.preference.el
+      this.preference.el,
+      this.help.el,
     ].forEach(el => rootEl.appendChild(el));
 
     this.el = {
@@ -122,6 +127,7 @@ export default class Laymic {
     };
     this.cssProgressBarWidthUpdate();
     this.cssViewerPaddingUpdate();
+    this.cssJsVhUpdate();
 
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
@@ -229,6 +235,7 @@ export default class Laymic {
         reachBeginning: () => this.changePaginationVisibility(),
         resize: () => {
           this.switchSingleSlideState();
+          this.cssJsVhUpdate();
           this.viewUpdate();
         },
         slideChange: () => {
@@ -262,7 +269,10 @@ export default class Laymic {
       freeModeMinimumVelocity: 0.02,
       on: {
         reachBeginning: () => this.changePaginationVisibility(),
-        resize: () => this.viewUpdate(),
+        resize: () => {
+          this.cssJsVhUpdate();
+          this.viewUpdate()
+        },
         slideChange: () => {
           this.hideViewerUI();
           this.changePaginationVisibility();
@@ -287,7 +297,8 @@ export default class Laymic {
   private applyEventListeners() {
     const stateNames = this.builder.stateNames;
     this.el.buttons.help.addEventListener("click", () => {
-      console.log("help button click");
+      this.el.rootEl.classList.toggle(stateNames.showHelp);
+      this.hideViewerUI();
     })
 
     // 縦読み/横読み切り替えボタン
@@ -327,7 +338,7 @@ export default class Laymic {
     // 設定ボタンのクリックイベント
     this.el.buttons.preference.addEventListener("click", () => {
       this.el.rootEl.classList.toggle(stateNames.showPreference);
-      // NOTE: 暫定でUIを閉じておく
+      // UIを閉じておく
       this.hideViewerUI();
     })
 
@@ -823,6 +834,10 @@ export default class Laymic {
 
   private cssViewerPaddingUpdate() {
     this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+  }
+
+  private cssJsVhUpdate() {
+    calcWindowVH(this.el.rootEl);
   }
 
   /**

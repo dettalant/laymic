@@ -2,7 +2,7 @@ import DOMBuilder from "#/components/builder";
 import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
-export default class Preference {
+export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";
   rootEl: HTMLElement;
   // preference el
@@ -25,7 +25,7 @@ export default class Preference {
     const preferenceBtnClass = preferenceClassNames.button;
     const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
 
-    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでの「タップでのページ送り」を有効化する", preferenceBtnClass);
+    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを有効化", preferenceBtnClass);
 
     const progressBarWidths = [
       "初期値",
@@ -48,8 +48,8 @@ export default class Preference {
     const descriptionEl = builder.createDiv();
     [
       "",
-      "※1: 一部設定値は次回以降のページ読み込み時に適用されます",
-      "※2: 自動全画面化処理はブラウザの仕様から「ビューワー展開ボタンクリック時」にしか動きません",
+      "※1: 一部設定値は次回ページ読み込み時に適用されます",
+      "※2: 自動全画面処理はビューワー展開ボタンクリック時にしか動きません",
     ].forEach(s => {
       const p = builder.createParagraph();
       p.textContent = s;

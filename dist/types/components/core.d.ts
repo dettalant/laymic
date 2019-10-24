@@ -1,14 +1,16 @@
 import { Swiper } from "swiper/js/swiper.esm";
 import DOMBuilder from "#/components/builder";
-import Preference from "#/components/preference";
-import Thumbnails from "#/components/thumbs";
+import LaymicPreference from "#/components/preference";
+import LaymicThumbnails from "#/components/thumbs";
+import LaymicHelp from "#/components/help";
 import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;
     initOptions: LaymicOptions;
-    preference: Preference;
-    thumbs: Thumbnails;
+    preference: LaymicPreference;
+    thumbs: LaymicThumbnails;
+    help: LaymicHelp;
     swiper: Swiper;
     builder: DOMBuilder;
     constructor(pages: ViewerPages, options?: LaymicOptions);
@@ -114,6 +116,7 @@ export default class Laymic {
     private cssPageWidthUpdate;
     private cssProgressBarWidthUpdate;
     private cssViewerPaddingUpdate;
+    private cssJsVhUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */

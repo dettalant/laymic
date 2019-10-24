@@ -1,6 +1,6 @@
 import { ViewerPages, ViewerStates } from "#/interfaces";
 import DOMBuilder from "#/components/builder";
-export default class Thumbnails {
+export default class LaymicThumbnails {
     state: ViewerStates;
     builder: DOMBuilder;
     rootEl: HTMLElement;

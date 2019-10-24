@@ -146,6 +146,7 @@ export interface LaymicStateClassNames {
   singleSlide: string,
   showPreference: string,
   showThumbs: string,
+  showHelp: string,
   fullscreen: string,
   visibleUI: string,
   visiblePagination: string,
@@ -171,6 +172,7 @@ export interface LaymicControllerClassNames {
 export interface LaymicCheckboxClassNames {
   container: string,
   label: string
+  iconWrapper: string,
 }
 
 export interface LaymicSelectClassNames {
@@ -197,13 +199,19 @@ export interface LaymicPreferenceClassNames {
   button: string,
 }
 
+export interface LaymicHelpClassNames {
+  container: string,
+  wrapper: string,
+  vertImg: string,
+  horizImg: string,
+}
+
 export interface LaymicClassNames {
   root: string,
   slider: string,
   emptySlide: string,
   uiButton: string,
   pagination: string,
-  iconWrapper: string,
   controller: LaymicControllerClassNames,
   buttons: LaymicUIButtonClassNames,
   svg: LaymicSVGClassNames,
@@ -211,4 +219,5 @@ export interface LaymicClassNames {
   select: LaymicSelectClassNames,
   thumbs: LaymicThumbsClassNames,
   preference: LaymicPreferenceClassNames,
+  help: LaymicHelpClassNames,
 }

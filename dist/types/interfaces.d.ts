@@ -91,24 +91,21 @@ export interface PreferenceData {
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
 }
-export declare type PreferenceButtons = {
-    [P in keyof PreferenceData]: HTMLButtonElement;
-};
+export declare type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
 export interface LaymicStateClassNames {
     active: string;
     hidden: string;
     singleSlide: string;
     showPreference: string;
     showThumbs: string;
+    showHelp: string;
     fullscreen: string;
     visibleUI: string;
     visiblePagination: string;
     vertView: string;
     ltr: string;
 }
-export declare type LaymicUIButtonClassNames = {
-    [K in keyof ViewerUIButtons]: string;
-};
+export declare type LaymicUIButtonClassNames = Record<keyof ViewerUIButtons, string>;
 export interface LaymicSVGClassNames {
     container: string;
     icon: string;
@@ -123,6 +120,7 @@ export interface LaymicControllerClassNames {
 export interface LaymicCheckboxClassNames {
     container: string;
     label: string;
+    iconWrapper: string;
 }
 export interface LaymicSelectClassNames {
     container: string;
@@ -145,13 +143,18 @@ export interface LaymicPreferenceClassNames {
     wrapper: string;
     button: string;
 }
+export interface LaymicHelpClassNames {
+    container: string;
+    wrapper: string;
+    vertImg: string;
+    horizImg: string;
+}
 export interface LaymicClassNames {
     root: string;
     slider: string;
     emptySlide: string;
     uiButton: string;
     pagination: string;
-    iconWrapper: string;
     controller: LaymicControllerClassNames;
     buttons: LaymicUIButtonClassNames;
     svg: LaymicSVGClassNames;
@@ -159,4 +162,5 @@ export interface LaymicClassNames {
     select: LaymicSelectClassNames;
     thumbs: LaymicThumbsClassNames;
     preference: LaymicPreferenceClassNames;
+    help: LaymicHelpClassNames;
 }

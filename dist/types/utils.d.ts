@@ -46,3 +46,4 @@ export declare const isHTMLElementArray: (array: any) => array is HTMLElement[];
 export declare const isBarWidth: (s: any) => s is BarWidth;
 export declare const compareString: <T, U>(s: string, cmp: string, success: T, failed?: U | undefined) => T | U | undefined;
 export declare const excludeHashLocation: () => string;
+export declare const calcWindowVH: (el?: HTMLElement) => void;

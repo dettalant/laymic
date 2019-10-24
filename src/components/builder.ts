@@ -37,7 +37,6 @@ export default class DOMBuilder {
       // 空スライドクラス名
       emptySlide: "laymic_emptySlide",
       pagination: "laymic_pagination",
-      iconWrapper: "laymic_iconWrapper",
       controller: {
         controller: "laymic_controller",
         controllerTop: "laymic_controllerTop",
@@ -62,6 +61,7 @@ export default class DOMBuilder {
       checkbox: {
         container: "laymic_checkbox",
         label: "laymic_checkboxLabel",
+        iconWrapper: "laymic_checkboxIconWrapper",
       },
       select: {
         container: "laymic_select",
@@ -83,6 +83,12 @@ export default class DOMBuilder {
         container: "laymic_preference",
         wrapper: "laymic_preferenceWrapper",
         button: "laymic_preferenceButton",
+      },
+      help: {
+        container: "laymic_help",
+        wrapper: "laymic_helpWrapper",
+        vertImg: "laymic_helpVertImg",
+        horizImg: "laymic_helpHorizImg",
       }
     }
   }
@@ -91,6 +97,7 @@ export default class DOMBuilder {
     return {
       active: "laymic_isActive",
       hidden: "laymic_isHidden",
+      showHelp: "laymic_isShowHelp",
       showThumbs: "laymic_isShowThumbs",
       showPreference: "laymic_isShowPreference",
       singleSlide: "laymic_isSingleSlide",
@@ -449,7 +456,7 @@ export default class DOMBuilder {
     labelEl.textContent = label;
 
     const wrapperEl = this.createDiv();
-    wrapperEl.className = this.classNames.iconWrapper;
+    wrapperEl.className = checkboxClassNames.iconWrapper;
 
     [
       this.createSvgUseElement(this.icons.checkboxOuter),

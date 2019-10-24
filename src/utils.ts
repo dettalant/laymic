@@ -104,3 +104,8 @@ export const compareString = <T, U>(s: string, cmp: string, success: T, failed?:
 }
 
 export const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
+
+export const calcWindowVH = (el: HTMLElement = document.documentElement) => {
+  const vh = window.innerHeight * 0.01;
+  el.style.setProperty("--js-vh", vh + "px");
+}
