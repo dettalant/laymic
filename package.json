@@ -1,7 +1,7 @@
 {
   "name": "laymic",
   "version": "0.1.0",
-  "main": "dist/index.js",
+  "main": "dist/laymic.js",
   "types": "dist/types/index.d.ts",
   "author": "dettalant (https://dettalant.com/)",
   "license": "MIT",
