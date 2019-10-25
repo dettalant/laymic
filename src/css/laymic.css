@@ -113,15 +113,15 @@
 }
 
 /* 縦読み時はプログレスバーを右側配置 */
-.laymic_root.laymic_isVertView .laymic_progressbar {
+.laymic_isVertView .laymic_progressbar {
   height: 100%;
   width: var(--progressbar-width);
   left: auto;
   right: 0;
 }
 
-.laymic_root.laymic_isVisibleUI .laymic_controllerTop,
-.laymic_root.laymic_isVisibleUI .laymic_controllerBottom {
+.laymic_isVisibleUI .laymic_controllerTop,
+.laymic_isVisibleUI .laymic_controllerBottom {
   transform: translateY(0);
 }
 
@@ -150,11 +150,11 @@
   top: calc(50% + var(--progressbar-width) / 2);
 }
 
-.laymic_root.laymic_isSingleSlide .laymic_slider {
+.laymic_isSingleSlide .laymic_slider {
   max-width: var(--page-width);
 }
 
-.laymic_root.laymic_isVertView .laymic_slider {
+.laymic_isVertView .laymic_slider {
   /* 100% - 左右余白 - プログレスバー幅 */
   width: calc(100% - var(--viewer-padding) * 2 - var(--progressbar-width));
   height: calc(100% - var(--viewer-padding) * 2);
@@ -174,7 +174,7 @@
   max-height: var(--page-height);
 }
 
-.laymic_root.laymic_isVertView .laymic_emptySlide {
+.laymic_isVertView .laymic_emptySlide {
   display: none;
 }
 
@@ -202,9 +202,9 @@
   transition: opacity .3s, visibility .3s;
 }
 
-.laymic_root.laymic_isShowHelp .laymic_help,
-.laymic_root.laymic_isShowThumbs .laymic_thumbs,
-.laymic_root.laymic_isShowPreference .laymic_preference {
+.laymic_isShowHelp .laymic_help,
+.laymic_isShowThumbs .laymic_thumbs,
+.laymic_isShowPreference .laymic_preference {
   opacity: 1;
   visibility: visible;
 }
@@ -228,12 +228,12 @@
 }
 
 .laymic_helpHorizImg,
-.laymic_root.laymic_isVertView .laymic_helpVertImg {
+.laymic_isVertView .laymic_helpVertImg {
   display: inline-block;
 }
 
 .laymic_helpVertImg,
-.laymic_root.laymic_isVertView .laymic_helpHorizImg {
+.laymic_isVertView .laymic_helpHorizImg {
   display: none;
 }
 
@@ -370,60 +370,60 @@
 
 /* 進むボタン */
 .swiper-button-next,
-.laymic_root.laymic_isLTR .swiper-button-prev {
+.laymic_isLTR .swiper-button-prev {
   left: 10px;
   right: auto;
 }
 
 .swiper-button-next:after,
-.laymic_root.laymic_isLTR .swiper-button-prev:after {
+.laymic_isLTR .swiper-button-prev:after {
   content: 'prev';
 }
 
 /* 戻るボタン */
 .swiper-button-prev,
-.laymic_root.laymic_isLTR .swiper-button-next {
+.laymic_isLTR .swiper-button-next {
   right: 10px;
   left: auto;
 }
 .swiper-button-prev:after,
-.laymic_root.laymic_isLTR .swiper-button-next:after {
+.laymic_isLTR .swiper-button-next:after {
   content: 'next';
 }
 
 /* 縦読み時戻る進むボタン */
-.laymic_root.laymic_isVertView .swiper-button-next,
-.laymic_root.laymic_isVertView .swiper-button-prev {
+.laymic_isVertView .swiper-button-next,
+.laymic_isVertView .swiper-button-prev {
   left: 50%;
   right: auto;
   margin: 0;
 }
 
-.laymic_root.laymic_isVertView .swiper-button-next:after,
-.laymic_root.laymic_isVertView .swiper-button-prev:after {
+.laymic_isVertView .swiper-button-next:after,
+.laymic_isVertView .swiper-button-prev:after {
   content: "prev";
 }
 
-.laymic_root.laymic_isVertView .swiper-button-next {
+.laymic_isVertView .swiper-button-next {
   top: auto;
 	bottom: 0;
   transform: rotate(-90deg);
 }
 
-.laymic_root.laymic_isVertView .swiper-button-prev {
+.laymic_isVertView .swiper-button-prev {
 	top: 0;
 	bottom: auto;
   transform: rotate(90deg);
 }
 
 /* for mobile */
-.laymic_root.laymic_isMobile .laymic_pagination,
-.laymic_root.laymic_isMobile .laymic_preferencePaginationVisibility {
+.laymic_isMobile .laymic_pagination,
+.laymic_isMobile .laymic_preferencePaginationVisibility {
   display: none;
 }
 
 /* for unsupported fullscreen api  */
-.laymic_root.laymic_isUnsupportedFullscreen .laymic_fullscreen {
+.laymic_isUnsupportedFullscreen .laymic_fullscreen {
   display: none;
 }
 
@@ -451,13 +451,13 @@
 .laymic_root .icon_horizView,
 .laymic_root .icon_exitFullscreen,
 .laymic_root .icon_checkBoxInner,
-.laymic_root.laymic_isVertView .icon_vertView,
-.laymic_root.laymic_isFullscreen .icon_fullscreen {
+.laymic_isVertView .icon_vertView,
+.laymic_isFullscreen .icon_fullscreen {
   display: none;
 }
 
-.laymic_root.laymic_isVertView .icon_horizView,
-.laymic_root.laymic_isFullscreen .icon_exitFullscreen,
+.laymic_isVertView .icon_horizView,
+.laymic_isFullscreen .icon_exitFullscreen,
 .laymic_preferenceButton.laymic_isActive .icon_checkBoxInner {
   display: block;
 }
