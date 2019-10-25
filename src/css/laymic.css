@@ -1,0 +1,463 @@
+@import "swiper_part.css";
+
+/*!
+ *   laymic base
+ * reference: [ress 2.0.1](github.com/filipelinhares/ress)
+ */
+
+.laymic_root {
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+  word-break: break-word;
+}
+
+.laymic_root button {
+  cursor: pointer;
+  background-color: transparent;
+  border-style: none;
+  overflow: visible;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  -webkit-appearance: button; /* for iOS */
+}
+
+.laymic_root button::-moz-focus-inner {
+  border-style: none;
+  padding: 0;
+}
+
+.laymic_root svg:not([fill]) {
+  fill: currentColor;
+}
+
+/*!
+ * laymic layout
+ */
+
+.laymic_root {
+  /*
+      javascript側で追加する変数リスト
+    * --page-height: 各ページの縦幅
+    * --page-width: 各ページの横幅
+    * --viewer-padding: 漫画表示周囲の余白ピクセル数
+    * --progressbar-width: 進行度バーの幅ピクセル数
+    * --js-vh: 正確なvh数字
+   */
+  width: 100vw;
+  height: calc(var(--js-vh, 1vh) * 100);
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, .5);
+  transition: opacity .3s, visibility .3s;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.laymic_root:fullscreen {
+  /* 全画面表示時の背景色 */
+  background: #444;
+}
+
+.laymic_controller {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.laymic_controllerTop,
+.laymic_controllerBottom {
+  position: absolute;
+  width: 100%;
+  height: 3rem;
+  background: rgba(0, 0, 0, .5);
+  left: 0;
+  z-index: 20;
+  transition: transform .3s;
+  color: #fafafa;
+  /* 親要素のカーソル変化に追従させない */
+  cursor: auto;
+}
+
+.laymic_controllerTop {
+  top: 0;
+  /* HACK: safari z-index bug対策にtranslate3d使用 */
+  transform: translate3d(0, -100%, 0);
+  display: flex;
+  align-items: center;
+  /* 暫定で右寄せ */
+  justify-content: flex-end;
+}
+
+.laymic_controllerBottom {
+  bottom: 0;
+  /* HACK: safari z-index bug対策にtranslate3d使用 */
+  transform: translate3d(0, 100%, 0);
+}
+
+.laymic_progressbar {
+  /* #888か#999くらいの配色が良さそう */
+  --swiper-pagination-color: rgba(255, 255, 255, .3);
+	width: 100%;
+	height: var(--progressbar-width);
+  top: 0;
+  left: 0;
+  z-index: 15;
+}
+
+/* isLTR設定がfalseの際にのみ有効なスタイル */
+.laymic_root:not(.laymic_isLTR) .laymic_progressbar .swiper-pagination-progressbar-fill {
+  /* プログレスバーが右から左へ流れるようにする */
+  transform-origin: right top;
+}
+
+/* 縦読み時はプログレスバーを右側配置 */
+.laymic_root.laymic_isVertView .laymic_progressbar {
+  height: 100%;
+  width: var(--progressbar-width);
+  left: auto;
+  right: 0;
+}
+
+.laymic_root.laymic_isVisibleUI .laymic_controllerTop,
+.laymic_root.laymic_isVisibleUI .laymic_controllerBottom {
+  transform: translateY(0);
+}
+
+.swiper-wrapper {
+  /* 縦読み時などでの中央寄せ */
+  align-items: center;
+}
+
+.laymic_slider,
+.laymic_helpWrapper,
+.laymic_thumbsWrapper,
+.laymic_preferenceWrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.laymic_slider {
+  width: calc(100% - var(--viewer-padding) * 2);
+  /* 100% - 左右余白 - プログレスバー幅 */
+  height: calc(100% - var(--viewer-padding) * 2 - var(--progressbar-width));
+  max-width: calc(var(--page-width) * 2);
+  max-height: var(--page-height);
+  /* プログレスバー幅の半分だけ下にずらす */
+  top: calc(50% + var(--progressbar-width) / 2);
+}
+
+.laymic_root.laymic_isSingleSlide .laymic_slider {
+  max-width: var(--page-width);
+}
+
+.laymic_root.laymic_isVertView .laymic_slider {
+  /* 100% - 左右余白 - プログレスバー幅 */
+  width: calc(100% - var(--viewer-padding) * 2 - var(--progressbar-width));
+  height: calc(100% - var(--viewer-padding) * 2);
+  overflow: visible;
+  max-width: inherit;
+  /* 横読み時につけた値を通常値で上書き */
+  top: 50%;
+  /* プログレスバー幅の半分だけ左にずらす */
+  left: calc(50% - var(--progressbar-width) / 2);
+}
+
+.laymic_slider .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: var(--page-width);
+  max-height: var(--page-height);
+}
+
+.laymic_root.laymic_isVertView .laymic_emptySlide {
+  display: none;
+}
+
+.swiper-slide img,
+.laymic_thumbItem {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: scale-down;
+  /* NOTE: 後でprefixを足す必要あり */
+  user-select: none;
+}
+
+.laymic_help,
+.laymic_thumbs,
+.laymic_preference {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, .5);
+  z-index: 18;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .3s, visibility .3s;
+}
+
+.laymic_root.laymic_isShowHelp .laymic_help,
+.laymic_root.laymic_isShowThumbs .laymic_thumbs,
+.laymic_root.laymic_isShowPreference .laymic_preference {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* help */
+.laymic_helpWrapper {
+  max-width: 90%;
+  max-height: 90%;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.laymic_helpHorizImg,
+.laymic_helpVertImg {
+  max-width: 100%;
+  max-height: 100%;
+  opacity: .9;
+}
+
+.laymic_helpHorizImg,
+.laymic_root.laymic_isVertView .laymic_helpVertImg {
+  display: inline-block;
+}
+
+.laymic_helpVertImg,
+.laymic_root.laymic_isVertView .laymic_helpHorizImg {
+  display: none;
+}
+
+/* thumbs */
+.laymic_thumbsWrapper {
+  /*
+    * --thumb-item-width: サムネイル横幅
+    * --thumb-item-height: サムネイル縦幅
+    * --thumb-item-gap: サムネイル間の余白
+    * --thumbs-wrapper-padding: サムネイルラッパーの余白（側面）
+  */
+  max-height: 90%;
+  max-width: 90%;
+  padding: 0 var(--thumbs-wrapper-padding);
+  background: #333;
+  overflow: auto;
+  display: grid;
+  grid-gap: var(--thumb-item-gap);
+  grid-template-columns: repeat(auto-fit, var(--thumb-item-width));
+  grid-auto-rows: var(--thumb-item-height);
+  width: 100%;
+  justify-content: space-around;
+  /* なんか下方向のpaddingだけ上手く効かないので苦肉の策 */
+  border: solid transparent;
+  border-width: 1rem 0;
+}
+
+.laymic_thumbItem {
+  margin: auto;
+	cursor: pointer;
+  overflow: hidden;
+}
+
+.laymic_preferenceWrapper {
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+  background: #333;
+  padding: 1rem;
+  z-index: 18;
+  color: #fafafa;
+  height: 17rem;
+  width: 35rem;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+}
+
+.laymic_preferenceButton {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  max-height: 2rem;
+  width: 100%;
+  justify-content: space-between;
+  /* 設定ボタンごとでの余白 */
+  margin-bottom: .5rem;
+}
+
+.laymic_preferenceButton,
+.laymic_uiButton {
+  /* 文字色 + svg配色設定 */
+  color: inherit;
+}
+
+.laymic_uiButton {
+  max-height: 100%;
+  max-width: 2.5rem;
+  display: flex;
+}
+
+/* select button & checkbox button */
+.laymic_checkboxIconWrapper {
+  display: flex;
+  position: relative;
+  flex: 0 0 5rem;
+  justify-content: flex-end;
+}
+
+.laymic_select {
+  max-height: 2rem;
+}
+
+.laymic_selectWrapper {
+  display: flex;
+  flex-flow: column nowrap;
+  overflow: hidden;
+  max-height: inherit;
+  position: relative;
+  z-index: 10;
+  flex: 0 0 5rem;
+}
+
+.laymic_checkboxLabel,
+.laymic_selectLabel {
+  margin-right: 1rem;
+}
+
+.laymic_selectItem {
+  padding: 0.5rem 1rem;
+  background: #fafafa;
+  color: #333;
+  pointer-events: none;
+}
+
+.laymic_select.laymic_isActive .laymic_selectWrapper {
+  overflow: visible;
+  z-index: 12;
+}
+
+.laymic_select.laymic_isActive .laymic_selectItem {
+  pointer-events: auto;
+}
+
+.laymic_pagination {
+  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  display: none;
+  cursor: auto;
+}
+
+.laymic_root.laymic_isVisiblePagination .laymic_pagination {
+  display: flex;
+}
+
+.laymic_pagination.laymic_isActive {
+  --swiper-navigation-color: rgba(255, 255, 255, .9);
+  cursor: pointer;
+}
+
+.laymic_pagination.laymic_isHidden {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* 進むボタン */
+.swiper-button-next,
+.laymic_root.laymic_isLTR .swiper-button-prev {
+  left: 10px;
+  right: auto;
+}
+
+.swiper-button-next:after,
+.laymic_root.laymic_isLTR .swiper-button-prev:after {
+  content: 'prev';
+}
+
+/* 戻るボタン */
+.swiper-button-prev,
+.laymic_root.laymic_isLTR .swiper-button-next {
+  right: 10px;
+  left: auto;
+}
+.swiper-button-prev:after,
+.laymic_root.laymic_isLTR .swiper-button-next:after {
+  content: 'next';
+}
+
+/* 縦読み時戻る進むボタン */
+.laymic_root.laymic_isVertView .swiper-button-next,
+.laymic_root.laymic_isVertView .swiper-button-prev {
+  left: 50%;
+  right: auto;
+  margin: 0;
+}
+
+.laymic_root.laymic_isVertView .swiper-button-next:after,
+.laymic_root.laymic_isVertView .swiper-button-prev:after {
+  content: "prev";
+}
+
+.laymic_root.laymic_isVertView .swiper-button-next {
+  top: auto;
+	bottom: 0;
+  transform: rotate(-90deg);
+}
+
+.laymic_root.laymic_isVertView .swiper-button-prev {
+	top: 0;
+	bottom: auto;
+  transform: rotate(90deg);
+}
+
+/* for mobile */
+.laymic_root.laymic_isMobile .laymic_pagination,
+.laymic_root.laymic_isMobile .laymic_preferencePaginationVisibility {
+  display: none;
+}
+
+/* for unsupported fullscreen api  */
+.laymic_root.laymic_isUnsupportedFullscreen .laymic_fullscreen {
+  display: none;
+}
+
+/* laymic template */
+.laymic_template {
+  /* 中身だけ取り出すので表示する必要はない */
+  display: none;
+}
+
+/* icons */
+.laymic_svgIcon {
+  --icon-size: 3rem;
+  height: var(--icon-size);
+  width: var(--icon-size);
+}
+
+.laymic_preferenceButton .laymic_svgIcon {
+  --icon-size: 2rem;
+}
+
+.icon_checkBoxInner {
+  position: absolute;
+}
+
+.laymic_root .icon_horizView,
+.laymic_root .icon_exitFullscreen,
+.laymic_root .icon_checkBoxInner,
+.laymic_root.laymic_isVertView .icon_vertView,
+.laymic_root.laymic_isFullscreen .icon_fullscreen {
+  display: none;
+}
+
+.laymic_root.laymic_isVertView .icon_horizView,
+.laymic_root.laymic_isFullscreen .icon_exitFullscreen,
+.laymic_preferenceButton.laymic_isActive .icon_checkBoxInner {
+  display: block;
+}

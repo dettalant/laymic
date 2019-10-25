@@ -1,6 +1,7 @@
 import typescript from "rollup-plugin-typescript2";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
+import { terser } from "rollup-plugin-terser";
 import pkg from "./package.json";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -22,30 +23,34 @@ const plugins = [
   }),
 ];
 
+const buildName = ["laymic", ".js"];
+
 if (isProduction) {
   // for production build
-//   const terserOptions = {
-//     output: {
-//       comments: "some"
-//     }
-//   }
-//
-//   plugins.push(terser(terserOptions));
+  const terserOptions = {
+    output: {
+      comments: "some"
+    }
+  }
+
+  plugins.push(terser(terserOptions));
+  buildName.splice(1, 0, ".min");
 }
 
 const dirName = "./dist/";
 const cjsOutput = {
   dir: dirName,
-  entryFileNames: "[name].js",
+  entryFileNames: buildName.join(""),
   format: "cjs",
   name: pkg.name,
   banner: bannerComment,
   sourceMap: "inline",
 }
 
+buildName.splice(1, 0, ".iife");
 const iifeOutput = Object.assign({}, cjsOutput);
 iifeOutput.format = "iife";
-iifeOutput.entryFileNames = "[name]_iife.js";
+iifeOutput.entryFileNames = buildName.join("");
 
 export default {
   input: "./src/index.ts",

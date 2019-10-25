@@ -22,7 +22,8 @@ script = [
 dist="./dist"
 pub="./public"
 
-cp $dist/index_iife.js $pub
+cp $dist/laymic.iife.js $pub
+cp $dist/laymic.css $pub
 
 cat $pub/base.html \
   | sed -e 's/{{$date}}/'$(date +%s)'/g' \
@@ -34,20 +35,47 @@ cat $pub/base.html \
 command = "yarn"
 args = ["run", "rollup", "-c"]
 
+[tasks.rollup_prod]
+env = {"NODE_ENV" = "production"}
+command = "yarn"
+args = ["run", "rollup", "-c"]
+
+[tasks.postcss]
+command = "yarn"
+args = ["run", "postcss", "./src/css/laymic.css", "-o", "./dist/laymic.css"]
+
+[tasks.postcss_prod]
+env = {"NODE_ENV" = "production"}
+command = "yarn"
+args = ["run", "postcss", "./src/css/laymic.css", "-o", "./dist/laymic.min.css"]
+
 [tasks.test]
 command = "yarn"
 args = ["run", "jest"]
 
+[tasks.build_dev]
+dependencies = [
+  "rollup",
+  "postcss"
+]
+
+[tasks.build_prod]
+dependencies = [
+  "rollup_prod",
+  "postcss_prod"
+]
+
 [tasks.build]
 dependencies = [
   "clean",
-  "rollup"
+  "build_dev",
+  "build_prod"
 ]
 
 [tasks.serve]
 command = "yarn"
 args = ["run", "http-server", "./public", "-p", "8931"]
 dependencies = [
-  "build",
+  "build_dev",
   "copy"
 ]
