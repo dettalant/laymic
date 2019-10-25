@@ -83,6 +83,7 @@ export default class DOMBuilder {
         container: "laymic_preference",
         wrapper: "laymic_preferenceWrapper",
         button: "laymic_preferenceButton",
+        paginationVisibility: "laymic_preferencePaginationVisibility",
       },
       help: {
         container: "laymic_help",
@@ -105,7 +106,9 @@ export default class DOMBuilder {
       visibleUI: "laymic_isVisibleUI",
       visiblePagination: "laymic_isVisiblePagination",
       fullscreen: "laymic_isFullscreen",
+      unsupportedFullscreen: "laymic_isUnsupportedFullscreen",
       ltr: "laymic_isLTR",
+      mobile: "laymic_isMobile",
     }
   }
 

@@ -90,7 +90,6 @@ export default class LaymicApplicator {
       return result;
     });
 
-
     this.laymicMap.set(viewerId, new Laymic(pages, options))
 
     // 用をなしたテンプレート要素を削除

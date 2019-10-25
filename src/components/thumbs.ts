@@ -20,7 +20,7 @@ export default class LaymicThumbnails {
     wrapperEl.className = thumbsClassNames.wrapper;
 
     const thumbEls = [];
-    for (let p of pages) {
+    for (const p of pages) {
       let el: Element;
       if (typeof p === "string") {
         const img = new Image();
@@ -28,15 +28,18 @@ export default class LaymicThumbnails {
         img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
         el = img;
       } else {
-        p.classList.add(thumbsClassNames.slideThumb)
-        el = p;
+        // thumbs用にnodeをコピー
+        const slideEl = p.cloneNode(true);
+        if (!(slideEl instanceof Element)) continue;
+        el = slideEl;
+        el.classList.add(thumbsClassNames.slideThumb)
       }
 
       el.classList.add(thumbsClassNames.item);
       thumbEls.push(el);
       wrapperEl.appendChild(el);
     }
-
+    console.log(wrapperEl.children);
     thumbsEl.appendChild(wrapperEl);
 
     this.el = thumbsEl;
@@ -45,9 +48,24 @@ export default class LaymicThumbnails {
     this.state = state;
     this.rootEl = rootEl;
 
-    this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
-    this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
-    this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+    [
+      {
+        label: "--thumb-item-height",
+        num: this.state.thumbItemHeight
+      },
+      {
+        label: "--thumb-item-width",
+        num: this.state.thumbItemWidth,
+      },
+      {
+        label: "--thumb-item-gap",
+        num: this.state.thumbItemGap
+      },
+      {
+        label: "--thumbs-wrapper-padding",
+        num: this.state.thumbsWrapperPadding
+      }
+    ].forEach(obj => this.wrapperEl.style.setProperty(obj.label, obj.num + "px"));
 
     this.applyEventListeners();
   }

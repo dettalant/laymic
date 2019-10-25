@@ -124,6 +124,7 @@ export interface ViewerStates {
   horizPageMargin: number,
   vertPageMargin: number,
   progressBarWidth: number,
+  thumbItemHeight: number,
   thumbItemWidth: number,
   thumbItemGap: number,
   thumbsWrapperPadding: number,
@@ -148,10 +149,12 @@ export interface LaymicStateClassNames {
   showThumbs: string,
   showHelp: string,
   fullscreen: string,
+  unsupportedFullscreen: string,
   visibleUI: string,
   visiblePagination: string,
   vertView: string,
   ltr: string,
+  mobile: string,
 }
 
 export type LaymicUIButtonClassNames = Record<keyof ViewerUIButtons, string>
@@ -197,6 +200,7 @@ export interface LaymicPreferenceClassNames {
   container: string,
   wrapper: string,
   button: string,
+  paginationVisibility: string,
 }
 
 export interface LaymicHelpClassNames {

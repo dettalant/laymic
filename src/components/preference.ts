@@ -43,7 +43,7 @@ export default class LaymicPreference {
       "表示",
     ];
 
-    const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, preferenceBtnClass);
+    const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
 
     const descriptionEl = builder.createDiv();
     [

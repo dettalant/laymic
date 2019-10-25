@@ -97,6 +97,9 @@ export default class Laymic {
     rootEl.style.display = "none";
     rootEl.classList.add(classNames.root, stateNames.visibleUI);
     if (this.state.isLTR) rootEl.classList.add(stateNames.ltr);
+    if (this.state.isMobile) rootEl.classList.add(stateNames.mobile);
+    // fullscreen非対応なら全画面ボタンを非表示化する
+    if (!screenfull.isEnabled) rootEl.classList.add(stateNames.unsupportedFullscreen);
 
     const [controllerEl, uiButtons] = builder.createViewerController();
     const swiperEl = builder.createSwiperContainer(
@@ -201,6 +204,7 @@ export default class Laymic {
       horizPageMargin: 0,
       // mediumと同じ数値
       progressBarWidth: 8,
+      thumbItemHeight: 128,
       thumbItemWidth: 96,
       thumbItemGap: 16,
       thumbsWrapperPadding: 16,

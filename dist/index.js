@@ -5277,6 +5277,7 @@ class DOMBuilder {
                 container: "laymic_preference",
                 wrapper: "laymic_preferenceWrapper",
                 button: "laymic_preferenceButton",
+                paginationVisibility: "laymic_preferencePaginationVisibility",
             },
             help: {
                 container: "laymic_help",
@@ -5298,7 +5299,9 @@ class DOMBuilder {
             visibleUI: "laymic_isVisibleUI",
             visiblePagination: "laymic_isVisiblePagination",
             fullscreen: "laymic_isFullscreen",
+            unsupportedFullscreen: "laymic_isUnsupportedFullscreen",
             ltr: "laymic_isLTR",
+            mobile: "laymic_isMobile",
         };
     }
     /**
@@ -5685,7 +5688,7 @@ class LaymicPreference {
             "非表示",
             "表示",
         ];
-        const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, preferenceBtnClass);
+        const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
         const descriptionEl = builder.createDiv();
         [
             "",
@@ -6002,7 +6005,7 @@ class LaymicThumbnails {
         const wrapperEl = builder.createDiv();
         wrapperEl.className = thumbsClassNames.wrapper;
         const thumbEls = [];
-        for (let p of pages) {
+        for (const p of pages) {
             let el;
             if (typeof p === "string") {
                 const img = new Image();
@@ -6011,22 +6014,42 @@ class LaymicThumbnails {
                 el = img;
             }
             else {
-                p.classList.add(thumbsClassNames.slideThumb);
-                el = p;
+                // thumbs用にnodeをコピー
+                const slideEl = p.cloneNode(true);
+                if (!(slideEl instanceof Element))
+                    continue;
+                el = slideEl;
+                el.classList.add(thumbsClassNames.slideThumb);
             }
             el.classList.add(thumbsClassNames.item);
             thumbEls.push(el);
             wrapperEl.appendChild(el);
         }
+        console.log(wrapperEl.children);
         thumbsEl.appendChild(wrapperEl);
         this.el = thumbsEl;
         this.wrapperEl = wrapperEl;
         this.thumbEls = thumbEls;
         this.state = state;
         this.rootEl = rootEl;
-        this.wrapperEl.style.setProperty("--thumb-item-width", this.state.thumbItemWidth + "px");
-        this.wrapperEl.style.setProperty("--thumb-item-gap", this.state.thumbItemGap + "px");
-        this.wrapperEl.style.setProperty("--thumbs-wrapper-padding", this.state.thumbsWrapperPadding + "px");
+        [
+            {
+                label: "--thumb-item-height",
+                num: this.state.thumbItemHeight
+            },
+            {
+                label: "--thumb-item-width",
+                num: this.state.thumbItemWidth,
+            },
+            {
+                label: "--thumb-item-gap",
+                num: this.state.thumbItemGap
+            },
+            {
+                label: "--thumbs-wrapper-padding",
+                num: this.state.thumbsWrapperPadding
+            }
+        ].forEach(obj => this.wrapperEl.style.setProperty(obj.label, obj.num + "px"));
         this.applyEventListeners();
     }
     /**
@@ -6231,6 +6254,11 @@ class Laymic {
         rootEl.classList.add(classNames.root, stateNames.visibleUI);
         if (this.state.isLTR)
             rootEl.classList.add(stateNames.ltr);
+        if (this.state.isMobile)
+            rootEl.classList.add(stateNames.mobile);
+        // fullscreen非対応なら全画面ボタンを非表示化する
+        if (!screenfull.isEnabled)
+            rootEl.classList.add(stateNames.unsupportedFullscreen);
         const [controllerEl, uiButtons] = builder.createViewerController();
         const swiperEl = builder.createSwiperContainer(pages, this.state.isLTR, this.state.isFirstSlideEmpty);
         [
@@ -6312,6 +6340,7 @@ class Laymic {
             horizPageMargin: 0,
             // mediumと同じ数値
             progressBarWidth: 8,
+            thumbItemHeight: 128,
             thumbItemWidth: 96,
             thumbItemGap: 16,
             thumbsWrapperPadding: 16,

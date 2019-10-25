@@ -47,7 +47,7 @@ export const readImage = (path: string): Promise<HTMLImageElement> => {
 }
 
 export const isMobile = (): boolean => {
-  const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
   return regex.test(window.navigator.userAgent);
 }
 
