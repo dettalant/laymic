@@ -5277,6 +5277,7 @@ var laymic = (function (exports) {
                   wrapper: "laymic_preferenceWrapper",
                   button: "laymic_preferenceButton",
                   paginationVisibility: "laymic_preferencePaginationVisibility",
+                  isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
               },
               help: {
                   container: "laymic_help",
@@ -5672,7 +5673,7 @@ var laymic = (function (exports) {
           const wrapperEl = builder.createDiv();
           wrapperEl.className = preferenceClassNames.wrapper;
           const preferenceBtnClass = preferenceClassNames.button;
-          const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", preferenceBtnClass);
+          const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
           const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを有効化", preferenceBtnClass);
           const progressBarWidths = [
               "初期値",

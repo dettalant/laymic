@@ -423,7 +423,8 @@
 }
 
 /* for unsupported fullscreen api  */
-.laymic_isUnsupportedFullscreen .laymic_fullscreen {
+.laymic_isUnsupportedFullscreen .laymic_fullscreen,
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen {
   display: none;
 }
 

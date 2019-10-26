@@ -146,6 +146,7 @@ export interface LaymicPreferenceClassNames {
     wrapper: string;
     button: string;
     paginationVisibility: string;
+    isAutoFullscreen: string;
 }
 export interface LaymicHelpClassNames {
     container: string;

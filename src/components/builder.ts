@@ -84,6 +84,7 @@ export default class DOMBuilder {
         wrapper: "laymic_preferenceWrapper",
         button: "laymic_preferenceButton",
         paginationVisibility: "laymic_preferencePaginationVisibility",
+        isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
       },
       help: {
         container: "laymic_help",
