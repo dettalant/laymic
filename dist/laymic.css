@@ -256,7 +256,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, .5);
+  background: rgba(0, 0, 0, .8);
   -webkit-transition: opacity .3s, visibility .3s;
   transition: opacity .3s, visibility .3s;
   visibility: hidden;
