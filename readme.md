@@ -1,17 +1,59 @@
 laymic - overlay comic viewer
 =======================
 
-全般的な仕様
-* swiperのwrapper
-* 画面幅が広い状態では見開き2p表示、画面幅が狭い状態では1p表示
-* 操作UIのアイコンテキストは表示せず
-* htmlからの表示画像追加
-* javascriptからのapiも一応用意
+[日本語版readmeはこちら](./readme_ja.md)
 
-サイト管理者側設定
-* 縦読み時の余白を自由設定できるオプション引数
-* 色設定を自由設定できるオプション引数
+**commonjs `Laymic` class example**
 
-ユーザー側設定
-* 自動全画面化のオプション設定
-* 
+```javascript
+const { Laymic } = require("laymic"); 
+
+const pages = [
+  "page0.png",
+  "page1.png",
+  "page2.png",
+  "page3.png",
+  "page4.png"
+];
+
+const laymic = new Laymic(pages, {
+  pageWidth: 690,
+  pageHeight: 976,
+})
+
+el.addEventListener("click", () => {
+  laymic.open();
+})
+```
+
+**iife `LaymicApplicator` class example**
+
+```html
+<!-- viewer1 -->
+<div class="laymic_template" data-viewer-id="laymic0">
+  <img data-src="page0.png">
+  <img data-src="page1.png">
+  <img data-src="page2.png">
+</div>
+<button class="laymic_opener" type="button" data-for="laymic0">
+  open viewer1
+</button>
+
+<!-- viewer2 -->
+<div class="laymic_template" data-viewer-id="laymic1">
+  <img data-src="page0.png">
+  <img data-src="page1.png">
+  <img data-src="page2.png">
+</div>
+<button class="laymic_opener" type="button" data-for="laymic1">
+  open viewer2
+</button>
+
+<script src="laymic.iife.min.js"></script>
+<script>
+const applicator = new laymic.LaymicApplicator(".laymic_template", {
+  pageWidth: 690,
+  pageHeight: 976,
+})
+</script>
+```

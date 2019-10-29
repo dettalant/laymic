@@ -19,21 +19,23 @@ export interface LaymicOptions {
   icons?: Partial<ViewerIcons>,
   // 各種クラス名を別のものに変更する
   classNames?: Partial<LaymicClassNames>,
-  // state変化用クラス名を別のものに変更する
+  // ステート変化用クラス名を別のものに変更する
   stateNames?: Partial<LaymicStateClassNames>,
   // 縦読み時のページ間余白ピクセル数値
   vertPageMargin?: number,
   // 横読み時のページ間余白ピクセル数値
   horizPageMargin?: number,
-  // swiper-container周囲の余白ピクセル数値
+  // 漫画ページ表示コンテナ周囲の余白ピクセル数値
   viewerPadding?: number,
+  // 進捗バーの太さ
   progressBarWidth?: BarWidth,
   // ページ読み込み直後にビューワーを開く機能
   // trueならば有効化、falseならば無効化
   isInstantOpen?: boolean,
-  // ビューワーで読み進める方向のデフォルト値
+  // 漫画を読み進める方向のデフォルト値
   // ユーザー設定がなされていればそちらを優先
   viewerDirection?: "vertical" | "horizontal",
+  // インスタンスと紐付けられる文字列
   viewerId?: string,
 }
 
@@ -142,18 +144,31 @@ export interface PreferenceData {
 export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>
 
 export interface LaymicStateClassNames {
+  // 汎用的なアクティブ時ステート
   active: string,
+  // 汎用的な非表示時ステート
   hidden: string,
+  // 横読み時1p表示がなされている際に付与
   singleSlide: string,
+  // 設定画面展開中に付与
   showPreference: string,
+  // サムネイル表示展開中に付与
   showThumbs: string,
+  // ヘルプ表示展開中に付与
   showHelp: string,
+  // 全画面表示時に付与
   fullscreen: string,
+  // 使用ブラウザがFullscreen APIに未対応の場合に付与
   unsupportedFullscreen: string,
+  // UI表示がなされている場合に付与
   visibleUI: string,
+  // ページ送りボタン表示設定が有効な場合に付与
   visiblePagination: string,
+  // 縦読み時に付与
   vertView: string,
+  // 設定が有効な場合に付与
   ltr: string,
+  // モバイル端末の場合に付与
   mobile: string,
 }
 
