@@ -15,6 +15,7 @@ import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
 import LaymicThumbnails from "#/components/thumbs";
 import LaymicHelp from "#/components/help";
+import LaymicZoom from "#/components/zoom";
 import {
   ViewerPages,
   ViewerElements,
@@ -34,6 +35,7 @@ export default class Laymic {
   preference: LaymicPreference;
   thumbs: LaymicThumbnails;
   help: LaymicHelp;
+  zoom: LaymicZoom;
   // swiper instance
   swiper: Swiper;
   builder: DOMBuilder;
@@ -93,6 +95,7 @@ export default class Laymic {
 
     this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
+    this.zoom = new LaymicZoom(builder, rootEl);
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
     rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -115,6 +118,7 @@ export default class Laymic {
       this.preference.el,
       this.help.el,
     ].forEach(el => rootEl.appendChild(el));
+    controllerEl.appendChild(this.zoom.el);
 
     this.el = {
       rootEl,
@@ -328,6 +332,18 @@ export default class Laymic {
       this.thumbs.hideThumbs();
       this.swiper.slideTo(i);
     }));
+
+    // ズームボタンのクリックイベント
+    this.el.buttons.zoom.addEventListener("click", () => {
+      if (this.zoom.isZoomed) {
+        // ズーム時
+        this.zoom.disable();
+      } else {
+        // 非ズーム時
+        this.zoom.enable();
+      }
+      this.hideViewerUI();
+    })
 
     // 全画面化ボタンのクリックイベント
     this.el.buttons.fullscreen.addEventListener("click", () => {

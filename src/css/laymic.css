@@ -50,7 +50,7 @@
   top: 0;
   left: 0;
   background: rgba(0, 0, 0, .8);
-  transition: opacity .3s, visibility .3s;
+  transition: opacity .3s, visibility .3s, transform .3s;
   visibility: hidden;
   opacity: 0;
 }
@@ -426,6 +426,23 @@
 .laymic_isUnsupportedFullscreen .laymic_fullscreen,
 .laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen {
   display: none;
+}
+
+/* zoom */
+.laymic_zoomContainer {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  /* 非ズーム時は裏側に隠す */
+  z-index: -1;
+  background: rgba(255, 0, 0, .3);
+}
+
+.laymic_isZoomed .laymic_zoomContainer {
+  /* 他要素より前にせりでて操作を妨害する */
+  z-index: 20;
 }
 
 /* laymic template */

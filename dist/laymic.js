@@ -2,7 +2,7 @@
  *   laymic.js
  *
  * @author dettalant
- * @version v1.0.0
+ * @version v1.1.0
  * @license MIT License
  */
 'use strict';
@@ -5246,6 +5246,7 @@ class DOMBuilder {
                 help: "laymic_showHelp",
                 nextPage: "laymic_paginationNext",
                 prevPage: "laymic_paginationPrev",
+                zoom: "laymic_zoom",
             },
             svg: {
                 icon: "laymic_svgIcon",
@@ -5303,6 +5304,7 @@ class DOMBuilder {
             unsupportedFullscreen: "laymic_isUnsupportedFullscreen",
             ltr: "laymic_isLTR",
             mobile: "laymic_isMobile",
+            zoomed: "laymic_isZoomed",
         };
     }
     /**
@@ -5398,6 +5400,16 @@ class DOMBuilder {
                 "M12 3a9 9 0 00-9 9 9 9 0 009 9 9 9 0 009-9 9 9 0 00-9-9zm0 1.445A7.555 7.555 0 0119.555 12 7.555 7.555 0 0112 19.555 7.555 7.555 0 014.445 12 7.555 7.555 0 0112 4.445z"
             ]
         };
+        // material.io: zoom_in(modified)
+        const zoomIn = {
+            id: "laymic_svgZoomIn",
+            className: "icon_zoomIn",
+            viewBox: "0 0 24 24",
+            pathDs: [
+                "M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+                "M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z",
+            ]
+        };
         return {
             close,
             fullscreen,
@@ -5409,6 +5421,7 @@ class DOMBuilder {
             checkboxInner,
             checkboxOuter,
             showHelp,
+            zoomIn,
         };
     }
     /**
@@ -5491,10 +5504,16 @@ class DOMBuilder {
         help.classList.add(btnClassNames.help);
         const helpIcon = this.createSvgUseElement(this.icons.showHelp);
         help.appendChild(helpIcon);
+        const zoom = this.createButton();
+        zoom.classList.add(btnClassNames.zoom);
+        [
+            this.createSvgUseElement(this.icons.zoomIn),
+        ].forEach(icon => zoom.appendChild(icon));
         [
             help,
             direction,
             thumbs,
+            zoom,
             fullscreen,
             preference,
             close
@@ -5506,6 +5525,7 @@ class DOMBuilder {
             help,
             close,
             thumbs,
+            zoom,
             fullscreen,
             preference,
             direction,
@@ -6188,6 +6208,46 @@ class LaymicHelp {
     }
 }
 
+class LaymicZoom {
+    constructor(builder, rootEl) {
+        this._isZoomed = false;
+        this.state = { isZoomed: false, zoomMultiply: 1.0 };
+        const zoomEl = builder.createDiv();
+        zoomEl.className = "laymic_zoomContainer";
+        this.el = zoomEl;
+        this.rootEl = rootEl;
+        this.builder = builder;
+        this.el.addEventListener("click", () => {
+            // zoom要素クリックでzoom解除
+            this.disable();
+        });
+    }
+    get isZoomed() {
+        return this.state.isZoomed;
+    }
+    /**
+     * ズームモードに入る
+     */
+    enable(zoomMultiply = 1.5) {
+        const zoomed = this.builder.stateNames.zoomed;
+        this.rootEl.classList.add(zoomed);
+        this.state.isZoomed = true;
+        this.state.zoomMultiply = zoomMultiply;
+        this.rootEl.style.transform = `scale(${zoomMultiply})`;
+        console.log(this.rootEl.style.scale);
+    }
+    /**
+     * ズームモードから抜ける
+     */
+    disable() {
+        const zoomed = this.builder.stateNames.zoomed;
+        this.rootEl.classList.remove(zoomed);
+        this.state.isZoomed = false;
+        this.state.zoomMultiply = 1.0;
+        this.rootEl.style.transform = "";
+    }
+}
+
 Swiper.use([keyboard, pagination, lazy]);
 class Laymic {
     constructor(pages, options = {}) {
@@ -6250,6 +6310,7 @@ class Laymic {
             this.state.viewerId = options.viewerId;
         this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
         this.help = new LaymicHelp(builder, rootEl);
+        this.zoom = new LaymicZoom(builder, rootEl);
         // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
         rootEl.style.display = "none";
         rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -6269,6 +6330,7 @@ class Laymic {
             this.preference.el,
             this.help.el,
         ].forEach(el => rootEl.appendChild(el));
+        controllerEl.appendChild(this.zoom.el);
         this.el = {
             rootEl,
             swiperEl,
@@ -6458,6 +6520,18 @@ class Laymic {
             this.thumbs.hideThumbs();
             this.swiper.slideTo(i);
         }));
+        // ズームボタンのクリックイベント
+        this.el.buttons.zoom.addEventListener("click", () => {
+            if (this.zoom.isZoomed) {
+                // ズーム時
+                this.zoom.disable();
+            }
+            else {
+                // 非ズーム時
+                this.zoom.enable();
+            }
+            this.hideViewerUI();
+        });
         // 全画面化ボタンのクリックイベント
         this.el.buttons.fullscreen.addEventListener("click", () => {
             this.fullscreenHandler();

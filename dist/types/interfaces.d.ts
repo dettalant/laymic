@@ -54,6 +54,7 @@ export interface ViewerIcons {
     checkboxOuter: IconData;
     checkboxInner: IconData;
     showHelp: IconData;
+    zoomIn: IconData;
 }
 export interface ViewerUIButtons {
     help: HTMLButtonElement;
@@ -64,6 +65,7 @@ export interface ViewerUIButtons {
     direction: HTMLButtonElement;
     nextPage: HTMLButtonElement;
     prevPage: HTMLButtonElement;
+    zoom: HTMLButtonElement;
 }
 export interface ViewerStates {
     viewerId: string;
@@ -107,6 +109,7 @@ export interface LaymicStateClassNames {
     vertView: string;
     ltr: string;
     mobile: string;
+    zoomed: string;
 }
 export declare type LaymicUIButtonClassNames = Record<keyof ViewerUIButtons, string>;
 export interface LaymicSVGClassNames {

@@ -3,6 +3,7 @@ import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
 import LaymicThumbnails from "#/components/thumbs";
 import LaymicHelp from "#/components/help";
+import LaymicZoom from "#/components/zoom";
 import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces";
 export default class Laymic {
     el: ViewerElements;
@@ -11,6 +12,7 @@ export default class Laymic {
     preference: LaymicPreference;
     thumbs: LaymicThumbnails;
     help: LaymicHelp;
+    zoom: LaymicZoom;
     swiper: Swiper;
     builder: DOMBuilder;
     constructor(pages: ViewerPages, options?: LaymicOptions);

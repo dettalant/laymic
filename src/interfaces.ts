@@ -93,6 +93,7 @@ export interface ViewerIcons {
   checkboxOuter: IconData,
   checkboxInner: IconData,
   showHelp: IconData,
+  zoomIn: IconData,
 }
 
 // mangaViewer UI要素として組み込むボタン要素まとめ
@@ -107,6 +108,7 @@ export interface ViewerUIButtons {
   direction: HTMLButtonElement,
   nextPage: HTMLButtonElement,
   prevPage: HTMLButtonElement,
+  zoom: HTMLButtonElement
 }
 
 // mangaViewer内部で用いるステートまとめ
@@ -170,6 +172,8 @@ export interface LaymicStateClassNames {
   ltr: string,
   // モバイル端末の場合に付与
   mobile: string,
+  // ズーム中に付与
+  zoomed: string,
 }
 
 export type LaymicUIButtonClassNames = Record<keyof ViewerUIButtons, string>
