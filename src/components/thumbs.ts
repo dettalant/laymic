@@ -39,7 +39,6 @@ export default class LaymicThumbnails {
       thumbEls.push(el);
       wrapperEl.appendChild(el);
     }
-    console.log(wrapperEl.children);
     thumbsEl.appendChild(wrapperEl);
 
     this.el = thumbsEl;
