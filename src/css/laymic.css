@@ -52,6 +52,7 @@
   background: rgba(0, 0, 0, .8);
   transition: opacity .3s, visibility .3s, transform .3s;
   visibility: hidden;
+  transform-origin: top left;
   opacity: 0;
 }
 

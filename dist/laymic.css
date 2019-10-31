@@ -262,6 +262,8 @@
   transition: opacity .3s, visibility .3s, transform .3s;
   transition: opacity .3s, visibility .3s, transform .3s, -webkit-transform .3s;
   visibility: hidden;
+  -webkit-transform-origin: top left;
+  transform-origin: top left;
   opacity: 0;
 }
 
