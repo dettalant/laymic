@@ -6322,7 +6322,7 @@ var laymic = (function (exports) {
                   w: iw,
                   h: ih,
               },
-              viewerId: "laymic" + viewerIdx,
+              viewerId: "laymic",
               // インスタンスごとに固有のid数字
               viewerIdx,
               pageSize,
@@ -7045,11 +7045,11 @@ var laymic = (function (exports) {
       applyLaymicInstance(el, initOptions) {
           if (!(el instanceof HTMLElement))
               return;
-          const viewerId = el.dataset.viewerId || "laymic";
+          const viewerId = el.dataset.viewerId;
           const progressBarWidth = (isBarWidth(el.dataset.progressBarWidth))
               ? el.dataset.progressBarWidth
               : undefined;
-          const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
+          const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : undefined;
           const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
           const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
           const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
@@ -7092,7 +7092,7 @@ var laymic = (function (exports) {
               }
               return result;
           });
-          this.laymicMap.set(viewerId, new Laymic(pages, options));
+          this.laymicMap.set(viewerId || "laymic", new Laymic(pages, options));
           // 用をなしたテンプレート要素を削除
           if (el.parentNode)
               el.parentNode.removeChild(el);
