@@ -7082,7 +7082,10 @@ class LaymicApplicator {
             if (isFinite(viewerPadding))
                 options.viewerPadding = viewerPadding;
         }
-        const pages = Array.from(el.children).map(childEl => {
+        // br以外のElementを取得
+        const pages = Array.from(el.children)
+            .filter(el => el.tagName.toLowerCase() !== "br")
+            .map(childEl => {
             let result = childEl;
             if (childEl instanceof HTMLImageElement) {
                 const src = childEl.dataset.src || childEl.src || "";

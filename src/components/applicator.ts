@@ -79,16 +79,18 @@ export default class LaymicApplicator {
       if (isFinite(horizPageMargin)) options.horizPageMargin = horizPageMargin;
       if (isFinite(viewerPadding)) options.viewerPadding = viewerPadding;
     }
+    // br以外のElementを取得
+    const pages: ViewerPages = Array.from(el.children)
+      .filter(el => el.tagName.toLowerCase() !== "br")
+      .map(childEl => {
+        let result: Element | string = childEl;
+        if (childEl instanceof HTMLImageElement) {
+          const src = childEl.dataset.src || childEl.src || "";
+          result = src;
+        }
 
-    const pages: ViewerPages = Array.from(el.children).map(childEl => {
-      let result: Element | string = childEl;
-      if (childEl instanceof HTMLImageElement) {
-        const src = childEl.dataset.src || childEl.src || "";
-        result = src;
-      }
-
-      return result;
-    });
+        return result;
+      });
 
     this.laymicMap.set(viewerId, new Laymic(pages, options))
 
