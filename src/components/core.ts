@@ -157,7 +157,7 @@ export default class Laymic {
       width: w,
       left: l,
       top: t,
-    } = this.el.swiperEl.getBoundingClientRect();
+    } = this.el.rootEl.getBoundingClientRect();
     return {
       w,
       h,
@@ -692,7 +692,7 @@ export default class Laymic {
    */
   private getClickPoint(e: MouseEvent): [boolean, boolean] {
     const {l, t, w, h} = this.state.swiperRect;
-    const [x, y] = [e.pageX - l, e.pageY - t];
+    const [x, y] = [e.clientX - l, e.clientY - t];
 
     let [isNextClick, isPrevClick] = [false, false];
 
