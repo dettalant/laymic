@@ -5,8 +5,8 @@ interface LaymicZoomStates {
     zoomMultiply: number;
     isSwiped: boolean;
     isMouseDown: boolean;
-    posX: number;
-    posY: number;
+    pastX: number;
+    pastY: number;
     zoomRect: PageRect;
 }
 export default class LaymicZoom {
@@ -18,16 +18,18 @@ export default class LaymicZoom {
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
     readonly defaultLaymicZoomStates: LaymicZoomStates;
     readonly isZoomed: boolean;
-    readonly scaleProperty: string;
-    readonly translateProperty: string;
-    updateMousePos(e: MouseEvent): void;
-    updateZoomRect(): void;
-    getZoomElRect(): PageRect;
+    private readonly scaleProperty;
+    private readonly translateProperty;
+    private applyEventListeners;
+    private updateMousePos;
+    private updateZoomRect;
+    private getZoomElRect;
     /**
-     * マウス操作に応じてrootElのtranslateの値を動かす
-     * TODO: まともに機能していないので動くよう直す
+     * 指定された座標に応じてrootElのtranslateの値を動かす
+     * @param  currentX x座標
+     * @param  currentY y座標
      */
-    setRootElTranslate(eventX: number, eventY: number): void;
+    private setRootElTranslate;
     /**
      * ズームモードに入る
      */

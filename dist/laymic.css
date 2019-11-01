@@ -257,10 +257,8 @@
   top: 0;
   left: 0;
   background: rgba(0, 0, 0, .8);
-  -webkit-transition: opacity .3s, visibility .3s, -webkit-transform .3s;
-  transition: opacity .3s, visibility .3s, -webkit-transform .3s;
-  transition: opacity .3s, visibility .3s, transform .3s;
-  transition: opacity .3s, visibility .3s, transform .3s, -webkit-transform .3s;
+  -webkit-transition: opacity .3s, visibility .3s;
+  transition: opacity .3s, visibility .3s;
   visibility: hidden;
   -webkit-transform-origin: top left;
   transform-origin: top left;
@@ -714,7 +712,8 @@
   position: absolute;
   /* 非ズーム時は裏側に隠す */
   z-index: -1;
-  background: rgba(255, 0, 0, .3);
+  /* DEBUG: デバッグ用の赤色背景 */
+  /* background: rgba(255, 0, 0, .3); */
 }
 
 .laymic_isZoomed .laymic_zoomContainer {

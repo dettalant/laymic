@@ -1,13 +1,14 @@
 import DOMBuilder from "#/components/builder";
-import { PageRect } from "#/interfaces"
+import { PageRect } from "#/interfaces";
+import { rafThrottle } from "#/utils";
 
 interface LaymicZoomStates {
   isZoomed: boolean,
   zoomMultiply: number,
   isSwiped: boolean,
   isMouseDown: boolean,
-  posX: number,
-  posY: number,
+  pastX: number,
+  pastY: number,
   zoomRect: PageRect,
 }
 
@@ -25,35 +26,7 @@ export default class LaymicZoom {
     this.rootEl = rootEl;
     this.builder = builder;
 
-    this.el.addEventListener("click", () => {
-      // ドラッグ操作がなされている場合は処理をスキップ
-      if (this.state.isSwiped) return;
-
-      // zoom要素クリックでzoom解除
-      // this.disable();
-      console.log(this.el.getBoundingClientRect());
-    })
-
-    this.el.addEventListener("mousedown", e => {
-      this.state.isMouseDown = true;
-      this.state.isSwiped = false;
-
-      this.updateMousePos(e);
-      this.updateZoomRect();
-    })
-
-    this.el.addEventListener("mouseup", () => {
-      this.state.isMouseDown = false;
-    })
-
-    this.el.addEventListener("mousemove", e => {
-      // mousedown状況下でなければスキップ
-      if (!this.state.isMouseDown) return;
-
-      this.state.isSwiped = true;
-      this.setRootElTranslate(e.clientX, e.clientY);
-      this.updateMousePos(e);
-    })
+    this.applyEventListeners();
   }
 
   get defaultLaymicZoomStates(): LaymicZoomStates {
@@ -62,8 +35,8 @@ export default class LaymicZoom {
       zoomMultiply: 1.0,
       isSwiped: false,
       isMouseDown: false,
-      posX: 0,
-      posY: 0,
+      pastX: 0,
+      pastY: 0,
       zoomRect: {
         t: 0,
         l: 0,
@@ -77,24 +50,59 @@ export default class LaymicZoom {
     return this.state.isZoomed
   }
 
-  get scaleProperty(): string {
+  private get scaleProperty(): string {
     return `scale(${this.state.zoomMultiply})`;
   }
 
-  get translateProperty(): string {
-    return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t})`;
+  private get translateProperty(): string {
+    return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
   }
 
-  updateMousePos(e: MouseEvent) {
-    this.state.posX = e.clientX;
-    this.state.posY = e.clientY;
+  private applyEventListeners() {
+    this.el.addEventListener("click", () => {
+      // ドラッグ操作がなされている場合は処理をスキップ
+      if (this.state.isSwiped) return;
+
+      // zoom要素クリックでzoom解除
+      this.disable();
+      console.log(this.el.getBoundingClientRect());
+    });
+
+    this.el.addEventListener("mousedown", e => {
+      this.state.isMouseDown = true;
+      this.state.isSwiped = false;
+
+      this.updateMousePos(e.clientX, e.clientY);
+      this.updateZoomRect();
+    });
+
+    [
+      "mouseup",
+      "mouseleave"
+    ].forEach(ev => this.el.addEventListener(ev, () => {
+      this.state.isMouseDown = false;
+    }));
+
+    this.el.addEventListener("mousemove", rafThrottle(e =>  {
+      // mousedown状況下でなければスキップ
+      if (!this.state.isMouseDown) return;
+
+      this.state.isSwiped = true;
+      this.setRootElTranslate(e.clientX, e.clientY);
+      this.updateMousePos(e.clientX, e.clientY);
+    }));
   }
 
-  updateZoomRect() {
+  private updateMousePos(x: number, y: number) {
+    this.state.pastX = x;
+    this.state.pastY = y;
+  }
+
+  private updateZoomRect() {
     this.state.zoomRect = this.getZoomElRect();
   }
 
-  getZoomElRect(): PageRect {
+  private getZoomElRect(): PageRect {
     const rect = this.el.getBoundingClientRect();
     return {
       t: rect.top,
@@ -105,40 +113,37 @@ export default class LaymicZoom {
   }
 
   /**
-   * マウス操作に応じてrootElのtranslateの値を動かす
-   * TODO: まともに機能していないので動くよう直す
+   * 指定された座標に応じてrootElのtranslateの値を動かす
+   * @param  currentX x座標
+   * @param  currentY y座標
    */
-  setRootElTranslate(eventX: number, eventY: number) {
+  private setRootElTranslate(currentX: number, currentY: number) {
     const {innerWidth: iw, innerHeight: ih} = window
-    const zoomRect = this.state.zoomRect;
+    const {pastX, pastY, zoomRect} = this.state;
+    const {t: ry, l: rx, w: rw, h: rh} = zoomRect;
+    const x = pastX - currentX;
+    const y = pastY - currentY;
+
     // これ以上の数値にはならないしきい値
-    const {t: ry, l: rx} = zoomRect;
-    console.log(`rx: ${rx}, ry: ${ry}`);
-    const maxX = -(rx - iw);
-    const maxY = -(ry - ih);
+    const maxX = -(rw - iw);
+    const maxY = -(rh - ih);
 
-    // eventXがtmpXより右ならマイナスの数値、
-    // eventXがtmpXより左ならプラスの数値になる
-    const x = this.state.posX - eventX;
-    const y = this.state.posY - eventY;
-    console.log(x, y);
-
-    let translateX = 0;
     const calcX = rx - x;
+    const calcY = ry - y;
+    let translateX = calcX;
     if (calcX < maxX) {
-      // maxXよりも低い数値ならばmaxXとする
+      // maxXより小さければmaxXを返す
       translateX = maxX;
-    } else if (calcX < 0) {
-      // 0よりも低い数値でなければ座標を適用しない
-      translateX = calcX;
+    } else if (calcX > 0) {
+      // 0より大きければ0を返す
+      translateX = 0;
     }
 
-    let translateY = 0;
-    const calcY = ry - y;
+    let translateY = calcY;
     if (calcY < maxY) {
       translateY = maxY;
-    } else if (calcY < 0) {
-      translateY = calcY;
+    } else if (calcY > 0) {
+      translateY = 0;
     }
 
     zoomRect.l = translateX;
@@ -160,6 +165,7 @@ export default class LaymicZoom {
     const translateY = (rect.height * zoomMultiply - rect.height) / 2;
 
     this.state.zoomMultiply = zoomMultiply;
+    // 中央寄せでズームする
     this.rootEl.style.transform = `translate(${-translateX}px, ${-translateY}px) scale(${zoomMultiply})`;
   }
 

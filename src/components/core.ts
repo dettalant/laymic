@@ -333,8 +333,7 @@ export default class Laymic {
       this.swiper.slideTo(i);
     }));
 
-    // ズームボタンのクリックイベント
-    this.el.buttons.zoom.addEventListener("click", () => {
+    const zoomHandler = () => {
       if (this.zoom.isZoomed) {
         // ズーム時
         this.zoom.disable();
@@ -343,7 +342,9 @@ export default class Laymic {
         this.zoom.enable();
       }
       this.hideViewerUI();
-    })
+    }
+    // ズームボタンのクリックイベント
+    this.el.buttons.zoom.addEventListener("click", zoomHandler)
 
     // 全画面化ボタンのクリックイベント
     this.el.buttons.fullscreen.addEventListener("click", () => {
@@ -389,6 +390,10 @@ export default class Laymic {
         }
       })
 
+      // ダブルクリック時のイベント
+      // el.addEventListener("dblclick", zoomHandler)
+
+      // マウス操作時のイベント
       el.addEventListener("mousemove", rafThrottle(e => {
         this.slideMouseHoverHandler(e);
       }))
