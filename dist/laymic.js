@@ -6295,7 +6295,7 @@ class Laymic {
      * @return 要素サイズオブジェクト
      */
     get swiperElRect() {
-        const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
+        const { height: h, width: w, left: l, top: t, } = this.el.rootEl.getBoundingClientRect();
         return {
             w,
             h,
@@ -6755,7 +6755,7 @@ class Laymic {
      */
     getClickPoint(e) {
         const { l, t, w, h } = this.state.swiperRect;
-        const [x, y] = [e.pageX - l, e.pageY - t];
+        const [x, y] = [e.clientX - l, e.clientY - t];
         let [isNextClick, isPrevClick] = [false, false];
         if (this.state.isVertView) {
             // 縦読み時処理
