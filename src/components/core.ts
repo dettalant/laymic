@@ -187,7 +187,7 @@ export default class Laymic {
         w: iw,
         h: ih,
       },
-      viewerId: "laymic" + viewerIdx,
+      viewerId: "laymic",
       // インスタンスごとに固有のid数字
       viewerIdx,
       pageSize,

@@ -45,11 +45,11 @@ export default class LaymicApplicator {
   private applyLaymicInstance(el: Element, initOptions: LaymicOptions) {
     if (!(el instanceof HTMLElement)) return;
 
-    const viewerId = el.dataset.viewerId || "laymic";
+    const viewerId = el.dataset.viewerId;
     const progressBarWidth = (isBarWidth(el.dataset.progressBarWidth))
       ? el.dataset.progressBarWidth
       : undefined;
-    const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
+    const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : undefined;
 
     const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
     const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
@@ -92,7 +92,7 @@ export default class LaymicApplicator {
         return result;
       });
 
-    this.laymicMap.set(viewerId, new Laymic(pages, options))
+    this.laymicMap.set(viewerId || "laymic", new Laymic(pages, options))
 
     // 用をなしたテンプレート要素を削除
     if (el.parentNode) el.parentNode.removeChild(el);
