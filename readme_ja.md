@@ -80,12 +80,12 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 
 |名前|初期値|説明|
 |---|---|---|
-|`pageWidth`|`720`|原稿画像横幅|
-|`pageHeight`|`1024`|原稿画像縦幅|
 |`icons`||アイコンを別のものに変更する。具体的な中身はViewerIconsを参照|
 |`stateNames`||ステート変化用クラス名を別のものに変更する。具体的な中身はLaymicStateClassNamesを参照|
 |`classNames`||各種クラス名を別のものに変更する。具体的な中身はLaymicClassNamesを参照|
 |`viewerId`||インスタンスと紐付けられる文字列|
+|`pageWidth`|`720`|原稿画像横幅|
+|`pageHeight`|`1024`|原稿画像縦幅|
 |`vertPageMargin`|`10`|縦読み時のページ間余白ピクセル数値|
 |`horizPageMargin`|`0`|横読み時のページ間余白ピクセル数値|
 |`viewerPadding`|`10`|漫画ページ表示コンテナ周囲の余白ピクセル数値|
@@ -122,8 +122,11 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
 また、`icons`と`classNames`と`stateNames`は指定できません。
 
 |名前|説明|
-|`dir`|ltr設定を有効にする（`isLTR`が`true`である場合と同様）は`"ltr"`を指定|
+|---|---|
+|`dir`|ltr設定を有効にする（`isLTR`が`true`である場合と同様）には`"ltr"`を指定|
 |`data-viewer-id`|`viewerId`と同様|
+|`data-page-height`|`pageHeight`と同様|
+|`data-page-width`|`pageWidth`と同様|
 |`data-viewer-direction`|`viewerDirection`と同様|
 |`data-is-visible-pagination`|`isVisiblePagination`と同様|
 |`data-is-first-slide-empty`|`isFirstSlideEmpty`と同様|
@@ -132,4 +135,20 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
 |`data-horiz-page-margin`|`horizPageMargin`と同様|
 |`data-viewer-padding`|`viewerPadding`と同様|
 |`data-progress-bar-width`|`progressBarWidth`と同様|
-|`data-viewer-direction`|`viewerDirection`と同様|
+
+指定例
+
+```html
+<div class="laymic_template" 
+  dir="ltr"
+  data-viewer-id="laymic0"
+  data-viewer-direction="vertical"
+  >
+  <img data-src="page0.png">
+  <img data-src="page1.png">
+  <img data-src="page2.png">
+</div>
+<button class="laymic_opener" type="button" data-for="laymic0">
+  ここをクリックでlaymic0のビューワー展開
+</button>
+```
