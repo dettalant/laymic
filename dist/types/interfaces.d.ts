@@ -85,6 +85,7 @@ export interface ViewerStates {
     thumbsWrapperPadding: number;
     isMobile: boolean;
     isInstantOpen: boolean;
+    bodyScrollTop: number;
 }
 export interface PreferenceData {
     isAutoFullscreen: boolean;

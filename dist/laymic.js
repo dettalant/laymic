@@ -6346,6 +6346,7 @@ class Laymic {
             thumbsWrapperPadding: 16,
             isMobile: isExistTouchEvent(),
             isInstantOpen: true,
+            bodyScrollTop: 0,
         };
     }
     get mainSwiperHorizViewConf() {
@@ -6967,15 +6968,23 @@ class Laymic {
      * body要素のスクロールを停止させる
      */
     disableBodyScroll() {
-        document.documentElement.style.overflowY = "hidden";
+        const docEl = document.documentElement;
+        this.state.bodyScrollTop = docEl.scrollTop;
+        docEl.style.overflowY = "hidden";
         document.body.style.overflowY = "hidden";
     }
     /**
      * body要素のスクロールを再開させる
      */
     enableBodyScroll() {
-        document.documentElement.style.overflowY = "";
+        const docEl = document.documentElement;
+        docEl.style.overflowY = "";
         document.body.style.overflowY = "";
+        sleep(1).then(() => {
+            // 次のプロセスへと移してから
+            // スクロール状況を復帰させる
+            docEl.scrollTop = this.state.bodyScrollTop;
+        });
     }
     /**
      * pageSizeと関連する部分を一挙に設定する
