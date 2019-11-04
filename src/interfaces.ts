@@ -134,6 +134,8 @@ export interface ViewerStates {
   thumbsWrapperPadding: number,
   isMobile: boolean,
   isInstantOpen: boolean,
+  // スクロール状況を復帰させるためのバッファ
+  bodyScrollTop: number,
 }
 
 export interface PreferenceData {
