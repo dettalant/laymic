@@ -210,6 +210,7 @@ export default class Laymic {
       thumbsWrapperPadding: 16,
       isMobile: isExistTouchEvent(),
       isInstantOpen: true,
+      bodyScrollTop: 0,
     }
   }
   private get mainSwiperHorizViewConf(): SwiperOptions {
@@ -902,7 +903,10 @@ export default class Laymic {
    * body要素のスクロールを停止させる
    */
   private disableBodyScroll() {
-    document.documentElement.style.overflowY = "hidden";
+    const docEl = document.documentElement;
+    this.state.bodyScrollTop = docEl.scrollTop;
+
+    docEl.style.overflowY = "hidden";
     document.body.style.overflowY = "hidden";
   }
 
@@ -910,8 +914,15 @@ export default class Laymic {
    * body要素のスクロールを再開させる
    */
   private enableBodyScroll() {
-    document.documentElement.style.overflowY = "";
+    const docEl = document.documentElement;
+
+    docEl.style.overflowY = "";
     document.body.style.overflowY = "";
+    sleep(1).then(() => {
+      // 次のプロセスへと移してから
+      // スクロール状況を復帰させる
+      docEl.scrollTop = this.state.bodyScrollTop;
+    })
   }
 
   /**
