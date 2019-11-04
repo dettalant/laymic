@@ -133,3 +133,8 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
 |`data-viewer-padding`|`viewerPadding`と同様|
 |`data-progress-bar-width`|`progressBarWidth`と同様|
 |`data-viewer-direction`|`viewerDirection`と同様|
+
+## Todo
+
+* ズーム機能
+* サムネイル機能でサムネイル画像を別個指定可能にする
