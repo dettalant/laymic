@@ -8,6 +8,7 @@ interface LaymicZoomStates {
     pastX: number;
     pastY: number;
     zoomRect: PageRect;
+    pinchBaseDistance: number;
 }
 export default class LaymicZoom {
     rootEl: HTMLElement;
@@ -18,11 +19,17 @@ export default class LaymicZoom {
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
     readonly defaultLaymicZoomStates: LaymicZoomStates;
     readonly isZoomed: boolean;
+    /**
+     * タッチされた二点間の距離を返す
+     * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
+     * @return 二点間の距離
+     */
+    getDistanceBetweenTouches(e: TouchEvent): number;
     private readonly scaleProperty;
     private readonly translateProperty;
     private applyEventListeners;
     private updateMousePos;
-    private updateZoomRect;
+    updateZoomRect(): void;
     private getZoomElRect;
     /**
      * 指定された座標に応じてrootElのtranslateの値を動かす
@@ -33,7 +40,7 @@ export default class LaymicZoom {
     /**
      * ズームモードに入る
      */
-    enable(zoomMultiply?: number): void;
+    enable(zoomMultiply?: number, zoomX?: number, zoomY?: number): void;
     /**
      * ズームモードから抜ける
      */

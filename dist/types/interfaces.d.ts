@@ -87,6 +87,7 @@ export interface ViewerStates {
     thumbsWrapperPadding: number;
     isMobile: boolean;
     isInstantOpen: boolean;
+    bodyScrollTop: number;
 }
 export interface PreferenceData {
     isAutoFullscreen: boolean;
@@ -157,6 +158,10 @@ export interface LaymicHelpClassNames {
     vertImg: string;
     horizImg: string;
 }
+export interface LaymicZoomClassNames {
+    controller: string;
+    wrapper: string;
+}
 export interface LaymicClassNames {
     root: string;
     slider: string;
@@ -171,4 +176,5 @@ export interface LaymicClassNames {
     thumbs: LaymicThumbsClassNames;
     preference: LaymicPreferenceClassNames;
     help: LaymicHelpClassNames;
+    zoom: LaymicZoomClassNames;
 }

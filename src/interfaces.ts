@@ -232,6 +232,11 @@ export interface LaymicHelpClassNames {
   horizImg: string,
 }
 
+export interface LaymicZoomClassNames {
+  controller: string,
+  wrapper: string
+}
+
 export interface LaymicClassNames {
   root: string,
   slider: string,
@@ -246,4 +251,5 @@ export interface LaymicClassNames {
   thumbs: LaymicThumbsClassNames,
   preference: LaymicPreferenceClassNames,
   help: LaymicHelpClassNames,
+  zoom: LaymicZoomClassNames,
 }

@@ -5150,9 +5150,24 @@ const readImage = (path) => {
         img.src = path;
     });
 };
+const isMobile = () => {
+    const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
+    return regex.test(window.navigator.userAgent);
+};
 const isExistTouchEvent = () => {
     return "ontouchmove" in window;
 };
+const isSupportedPassive = () => {
+    let passive = false;
+    const options = Object.defineProperty({}, "passive", {
+        get() { passive = true; }
+    });
+    const testFunc = () => { };
+    window.addEventListener("test", testFunc, options);
+    window.removeEventListener("test", testFunc);
+    return passive;
+};
+const passiveFalseOption = (isSupportedPassive()) ? { passive: false } : false;
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。
@@ -5286,6 +5301,10 @@ class DOMBuilder {
                 wrapper: "laymic_helpWrapper",
                 vertImg: "laymic_helpVertImg",
                 horizImg: "laymic_helpHorizImg",
+            },
+            zoom: {
+                controller: "laymic_zoomController",
+                wrapper: "laymic_zoomWrapper",
             }
         };
     }
@@ -5542,6 +5561,11 @@ class DOMBuilder {
             prevPage,
         ].forEach(el => ctrlEl.appendChild(el));
         return [ctrlEl, uiButtons];
+    }
+    createZoomWrapper() {
+        const zoomWrapper = this.createDiv();
+        zoomWrapper.className = this.classNames.zoom.wrapper;
+        return zoomWrapper;
     }
     /**
      * use要素を内包したSVGElementを返す
@@ -6212,7 +6236,7 @@ class LaymicZoom {
         this._isZoomed = false;
         this.state = this.defaultLaymicZoomStates;
         const zoomEl = builder.createDiv();
-        zoomEl.className = "laymic_zoomContainer";
+        zoomEl.className = builder.classNames.zoom.controller;
         this.el = zoomEl;
         this.rootEl = rootEl;
         this.builder = builder;
@@ -6231,12 +6255,31 @@ class LaymicZoom {
                 l: 0,
                 w: 800,
                 h: 600,
-            }
+            },
+            pinchBaseDistance: 1
         };
     }
     get isZoomed() {
         return this.state.isZoomed;
     }
+    /**
+     * タッチされた二点間の距離を返す
+     * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
+     * @return 二点間の距離
+     */
+    getDistanceBetweenTouches(e) {
+        // タッチ数が2点に満たない場合は1を返す
+        if (e.targetTouches.length < 2)
+            return 0;
+        const { clientX: x0, clientY: y0 } = e.targetTouches[0];
+        const { clientX: x1, clientY: y1 } = e.targetTouches[1];
+        const distance = ((x1 - x0) ** 2) + ((y1 - y0) ** 2);
+        return Math.sqrt(Math.abs(distance));
+    }
+    // getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
+    //   if (e.targetTouches.length < 2) return [0.5, 0.5];
+    //
+    // }
     get scaleProperty() {
         return `scale(${this.state.zoomMultiply})`;
     }
@@ -6244,34 +6287,77 @@ class LaymicZoom {
         return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
     }
     applyEventListeners() {
-        this.el.addEventListener("click", () => {
-            // ドラッグ操作がなされている場合は処理をスキップ
-            if (this.state.isSwiped)
-                return;
-            // zoom要素クリックでzoom解除
-            this.disable();
-            console.log(this.el.getBoundingClientRect());
-        });
-        this.el.addEventListener("mousedown", e => {
-            this.state.isMouseDown = true;
-            this.state.isSwiped = false;
-            this.updateMousePos(e.clientX, e.clientY);
-            this.updateZoomRect();
-        });
-        [
-            "mouseup",
-            "mouseleave"
-        ].forEach(ev => this.el.addEventListener(ev, () => {
-            this.state.isMouseDown = false;
-        }));
-        this.el.addEventListener("mousemove", rafThrottle(e => {
-            // mousedown状況下でなければスキップ
-            if (!this.state.isMouseDown)
-                return;
-            this.state.isSwiped = true;
-            this.setRootElTranslate(e.clientX, e.clientY);
-            this.updateMousePos(e.clientX, e.clientY);
-        }));
+        if (isMobile()) {
+            this.el.addEventListener("touchstart", e => {
+                e.preventDefault();
+                this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+            });
+            this.el.addEventListener("touchmove", e => {
+                e.preventDefault();
+                // if (this.state.pinchBaseDistance <= 1) {
+                //   this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+                //   return;
+                // }
+                const distance = this.getDistanceBetweenTouches(e);
+                if (!this.state.pinchBaseDistance || !distance) {
+                    return;
+                }
+                const m = distance / this.state.pinchBaseDistance;
+                // 1倍より小さい場合は1倍に固定する
+                // let multiply = m;
+                // if (m < 1) {
+                //   multiply = 1;
+                // } else if (m > 3) {
+                //   multiply = 3;
+                // }
+                let zoomMultiply = (m < 1)
+                    ? this.state.zoomMultiply * 0.9
+                    : this.state.zoomMultiply * 1.1;
+                if (zoomMultiply < 1) {
+                    zoomMultiply = 1;
+                }
+                else if (zoomMultiply > 3) {
+                    zoomMultiply = 3;
+                }
+                this.state.zoomMultiply = zoomMultiply;
+                this.rootEl.style.transform = this.scaleProperty;
+            }, passiveFalseOption);
+            // this.el.addEventListener("touchend", () => {
+            //   if (this.state.zoomMultiply > 1) return;
+            //   // ズーム倍率が1の場合はズームモードを終了させる
+            //   this.disable();
+            // })
+        }
+        else {
+            this.el.addEventListener("click", () => {
+                // ドラッグ操作がなされている場合は処理をスキップ
+                if (this.state.isSwiped)
+                    return;
+                // zoom要素クリックでzoom解除
+                this.disable();
+                console.log(this.el.getBoundingClientRect());
+            });
+            this.el.addEventListener("mousedown", e => {
+                this.state.isMouseDown = true;
+                this.state.isSwiped = false;
+                this.updateMousePos(e.clientX, e.clientY);
+                this.updateZoomRect();
+            });
+            [
+                "mouseup",
+                "mouseleave"
+            ].forEach(ev => this.el.addEventListener(ev, () => {
+                this.state.isMouseDown = false;
+            }));
+            this.el.addEventListener("mousemove", rafThrottle(e => {
+                // mousedown状況下でなければスキップ
+                if (!this.state.isMouseDown)
+                    return;
+                this.state.isSwiped = true;
+                this.setRootElTranslate(e.clientX, e.clientY);
+                this.updateMousePos(e.clientX, e.clientY);
+            }));
+        }
     }
     updateMousePos(x, y) {
         this.state.pastX = x;
@@ -6328,13 +6414,13 @@ class LaymicZoom {
     /**
      * ズームモードに入る
      */
-    enable(zoomMultiply = 1.5) {
+    enable(zoomMultiply = 1.5, zoomX = 0.5, zoomY = 0.5) {
         const zoomed = this.builder.stateNames.zoomed;
         this.rootEl.classList.add(zoomed);
         this.state.isZoomed = true;
-        const rect = this.el.getBoundingClientRect();
-        const translateX = (rect.width * zoomMultiply - rect.width) / 2;
-        const translateY = (rect.height * zoomMultiply - rect.height) / 2;
+        const { w: rw, h: rh } = this.state.zoomRect;
+        const translateX = (rw * zoomMultiply - rw) * zoomX;
+        const translateY = (rh * zoomMultiply - rh) * zoomY;
         this.state.zoomMultiply = zoomMultiply;
         // 中央寄せでズームする
         this.rootEl.style.transform = `translate(${-translateX}px, ${-translateY}px) scale(${zoomMultiply})`;
@@ -6411,9 +6497,10 @@ class Laymic {
         // ここからは省略表記で存在確認
         if (options.viewerId)
             this.state.viewerId = options.viewerId;
+        const zoomWrapper = builder.createZoomWrapper();
         this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
         this.help = new LaymicHelp(builder, rootEl);
-        this.zoom = new LaymicZoom(builder, rootEl);
+        this.zoom = new LaymicZoom(builder, zoomWrapper);
         // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
         rootEl.style.display = "none";
         rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -6432,7 +6519,8 @@ class Laymic {
             this.thumbs.el,
             this.preference.el,
             this.help.el,
-        ].forEach(el => rootEl.appendChild(el));
+        ].forEach(el => zoomWrapper.appendChild(el));
+        rootEl.appendChild(zoomWrapper);
         controllerEl.appendChild(this.zoom.el);
         this.el = {
             rootEl,
@@ -6461,7 +6549,7 @@ class Laymic {
      * @return 要素サイズオブジェクト
      */
     get swiperElRect() {
-        const { height: h, width: w, left: l, top: t, } = this.el.swiperEl.getBoundingClientRect();
+        const { height: h, width: w, left: l, top: t, } = this.el.rootEl.getBoundingClientRect();
         return {
             w,
             h,
@@ -6489,7 +6577,7 @@ class Laymic {
                 w: iw,
                 h: ih,
             },
-            viewerId: "laymic" + viewerIdx,
+            viewerId: "laymic",
             // インスタンスごとに固有のid数字
             viewerIdx,
             pageSize,
@@ -6512,6 +6600,7 @@ class Laymic {
             thumbsWrapperPadding: 16,
             isMobile: isExistTouchEvent(),
             isInstantOpen: true,
+            bodyScrollTop: 0,
         };
     }
     get mainSwiperHorizViewConf() {
@@ -6937,7 +7026,7 @@ class Laymic {
      */
     getClickPoint(e) {
         const { l, t, w, h } = this.state.swiperRect;
-        const [x, y] = [e.pageX - l, e.pageY - t];
+        const [x, y] = [e.clientX - l, e.clientY - t];
         let [isNextClick, isPrevClick] = [false, false];
         if (this.state.isVertView) {
             // 縦読み時処理
@@ -7056,6 +7145,8 @@ class Laymic {
         this.cssPageWidthUpdate();
         if (this.thumbs && this.el)
             this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
+        if (this.zoom)
+            this.zoom.updateZoomRect();
         if (this.swiper)
             this.swiper.update();
     }
@@ -7149,15 +7240,23 @@ class Laymic {
      * body要素のスクロールを停止させる
      */
     disableBodyScroll() {
-        document.documentElement.style.overflowY = "hidden";
+        const docEl = document.documentElement;
+        this.state.bodyScrollTop = docEl.scrollTop;
+        docEl.style.overflowY = "hidden";
         document.body.style.overflowY = "hidden";
     }
     /**
      * body要素のスクロールを再開させる
      */
     enableBodyScroll() {
-        document.documentElement.style.overflowY = "";
+        const docEl = document.documentElement;
+        docEl.style.overflowY = "";
         document.body.style.overflowY = "";
+        sleep(1).then(() => {
+            // 次のプロセスへと移してから
+            // スクロール状況を復帰させる
+            docEl.scrollTop = this.state.bodyScrollTop;
+        });
     }
     /**
      * pageSizeと関連する部分を一挙に設定する
@@ -7228,11 +7327,11 @@ class LaymicApplicator {
     applyLaymicInstance(el, initOptions) {
         if (!(el instanceof HTMLElement))
             return;
-        const viewerId = el.dataset.viewerId || "laymic";
+        const viewerId = el.dataset.viewerId;
         const progressBarWidth = (isBarWidth(el.dataset.progressBarWidth))
             ? el.dataset.progressBarWidth
             : undefined;
-        const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : "horizontal";
+        const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : undefined;
         const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
         const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
         const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
@@ -7264,7 +7363,9 @@ class LaymicApplicator {
             if (isFinite(viewerPadding))
                 options.viewerPadding = viewerPadding;
         }
-        const pages = Array.from(el.children).map(childEl => {
+        const pages = Array.from(el.children)
+            .filter(el => el.tagName.toLowerCase() !== "br")
+            .map(childEl => {
             let result = childEl;
             if (childEl instanceof HTMLImageElement) {
                 const src = childEl.dataset.src || childEl.src || "";
@@ -7272,7 +7373,7 @@ class LaymicApplicator {
             }
             return result;
         });
-        this.laymicMap.set(viewerId, new Laymic(pages, options));
+        this.laymicMap.set(viewerId || "laymic", new Laymic(pages, options));
         // 用をなしたテンプレート要素を削除
         if (el.parentNode)
             el.parentNode.removeChild(el);

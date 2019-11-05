@@ -260,8 +260,6 @@
   -webkit-transition: opacity .3s, visibility .3s;
   transition: opacity .3s, visibility .3s;
   visibility: hidden;
-  -webkit-transform-origin: top left;
-  transform-origin: top left;
   opacity: 0;
 }
 
@@ -704,7 +702,14 @@
 
 /* zoom */
 
-.laymic_zoomContainer {
+.laymic_zoomWrapper {
+  width: 100%;
+  height: 100%;
+  -webkit-transform-origin: top left;
+  transform-origin: top left;
+}
+
+.laymic_zoomController {
   width: 100%;
   height: 100%;
   top: 0;
@@ -716,7 +721,7 @@
   /* background: rgba(255, 0, 0, .3); */
 }
 
-.laymic_isZoomed .laymic_zoomContainer {
+.laymic_isZoomed .laymic_zoomController {
   /* 他要素より前にせりでて操作を妨害する */
   z-index: 20;
 }

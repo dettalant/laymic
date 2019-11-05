@@ -93,9 +93,12 @@ export default class Laymic {
     // ここからは省略表記で存在確認
     if (options.viewerId) this.state.viewerId = options.viewerId;
 
+    const zoomWrapper = builder.createZoomWrapper();
+
     this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
-    this.zoom = new LaymicZoom(builder, rootEl);
+    this.zoom = new LaymicZoom(builder, zoomWrapper);
+
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
     rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -117,7 +120,8 @@ export default class Laymic {
       this.thumbs.el,
       this.preference.el,
       this.help.el,
-    ].forEach(el => rootEl.appendChild(el));
+    ].forEach(el => zoomWrapper.appendChild(el));
+    rootEl.appendChild(zoomWrapper)
     controllerEl.appendChild(this.zoom.el);
 
     this.el = {
@@ -819,6 +823,7 @@ export default class Laymic {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
     if (this.thumbs && this.el) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
+    if (this.zoom) this.zoom.updateZoomRect();
     if (this.swiper) this.swiper.update();
 
   }

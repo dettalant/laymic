@@ -26,6 +26,7 @@ export default class DOMBuilder {
      * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
      */
     createViewerController(): [HTMLElement, ViewerUIButtons];
+    createZoomWrapper(): HTMLElement;
     /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名

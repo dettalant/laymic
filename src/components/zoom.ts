@@ -1,6 +1,6 @@
 import DOMBuilder from "#/components/builder";
 import { PageRect } from "#/interfaces";
-import { rafThrottle } from "#/utils";
+import { rafThrottle, isMobile, passiveFalseOption } from "#/utils";
 
 interface LaymicZoomStates {
   isZoomed: boolean,
@@ -10,6 +10,7 @@ interface LaymicZoomStates {
   pastX: number,
   pastY: number,
   zoomRect: PageRect,
+  pinchBaseDistance: number,
 }
 
 export default class LaymicZoom {
@@ -20,7 +21,7 @@ export default class LaymicZoom {
   state: LaymicZoomStates = this.defaultLaymicZoomStates;
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     const zoomEl = builder.createDiv();
-    zoomEl.className = "laymic_zoomContainer";
+    zoomEl.className = builder.classNames.zoom.controller;
 
     this.el = zoomEl;
     this.rootEl = rootEl;
@@ -42,13 +43,34 @@ export default class LaymicZoom {
         l: 0,
         w: 800,
         h: 600,
-      }
+      },
+      pinchBaseDistance: 1
     }
   }
 
   get isZoomed(): boolean {
     return this.state.isZoomed
   }
+
+  /**
+   * タッチされた二点間の距離を返す
+   * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
+   * @return 二点間の距離
+   */
+  getDistanceBetweenTouches(e: TouchEvent): number {
+    // タッチ数が2点に満たない場合は1を返す
+    if (e.targetTouches.length < 2) return 0;
+
+    const {clientX: x0, clientY: y0} = e.targetTouches[0];
+    const {clientX: x1, clientY: y1} = e.targetTouches[1];
+    const distance = ((x1 - x0) ** 2) + ((y1 - y0) ** 2);
+    return Math.sqrt(Math.abs(distance));
+  }
+
+  // getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
+  //   if (e.targetTouches.length < 2) return [0.5, 0.5];
+  //
+  // }
 
   private get scaleProperty(): string {
     return `scale(${this.state.zoomMultiply})`;
@@ -59,38 +81,84 @@ export default class LaymicZoom {
   }
 
   private applyEventListeners() {
-    this.el.addEventListener("click", () => {
-      // ドラッグ操作がなされている場合は処理をスキップ
-      if (this.state.isSwiped) return;
+    if (isMobile()) {
+      this.el.addEventListener("touchstart", e => {
+        e.preventDefault();
+        this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+      })
 
-      // zoom要素クリックでzoom解除
-      this.disable();
-      console.log(this.el.getBoundingClientRect());
-    });
+      this.el.addEventListener("touchmove", e => {
+        e.preventDefault();
+        // if (this.state.pinchBaseDistance <= 1) {
+        //   this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+        //   return;
+        // }
+        const distance = this.getDistanceBetweenTouches(e);
+        if (!this.state.pinchBaseDistance || !distance) {
+          return;
+        }
 
-    this.el.addEventListener("mousedown", e => {
-      this.state.isMouseDown = true;
-      this.state.isSwiped = false;
+        const m = distance / this.state.pinchBaseDistance;
+        // 1倍より小さい場合は1倍に固定する
+        // let multiply = m;
+        // if (m < 1) {
+        //   multiply = 1;
+        // } else if (m > 3) {
+        //   multiply = 3;
+        // }
+        let zoomMultiply = (m < 1)
+          ? this.state.zoomMultiply * 0.9
+          : this.state.zoomMultiply * 1.1;
+        if (zoomMultiply < 1) {
+          zoomMultiply = 1;
+        } else if (zoomMultiply > 3) {
+          zoomMultiply = 3;
+        }
 
-      this.updateMousePos(e.clientX, e.clientY);
-      this.updateZoomRect();
-    });
+        this.state.zoomMultiply = zoomMultiply;
+        this.rootEl.style.transform = this.scaleProperty;
+      }, passiveFalseOption)
 
-    [
-      "mouseup",
-      "mouseleave"
-    ].forEach(ev => this.el.addEventListener(ev, () => {
-      this.state.isMouseDown = false;
-    }));
+      // this.el.addEventListener("touchend", () => {
+      //   if (this.state.zoomMultiply > 1) return;
+      //   // ズーム倍率が1の場合はズームモードを終了させる
+      //   this.disable();
+      // })
+    } else {
+      this.el.addEventListener("click", () => {
+        // ドラッグ操作がなされている場合は処理をスキップ
+        if (this.state.isSwiped) return;
 
-    this.el.addEventListener("mousemove", rafThrottle(e =>  {
-      // mousedown状況下でなければスキップ
-      if (!this.state.isMouseDown) return;
+        // zoom要素クリックでzoom解除
+        this.disable();
+        console.log(this.el.getBoundingClientRect());
+      });
 
-      this.state.isSwiped = true;
-      this.setRootElTranslate(e.clientX, e.clientY);
-      this.updateMousePos(e.clientX, e.clientY);
-    }));
+      this.el.addEventListener("mousedown", e => {
+        this.state.isMouseDown = true;
+        this.state.isSwiped = false;
+
+        this.updateMousePos(e.clientX, e.clientY);
+        this.updateZoomRect();
+      });
+
+      [
+        "mouseup",
+        "mouseleave"
+      ].forEach(ev => this.el.addEventListener(ev, () => {
+        this.state.isMouseDown = false;
+      }));
+
+      this.el.addEventListener("mousemove", rafThrottle(e =>  {
+        // mousedown状況下でなければスキップ
+        if (!this.state.isMouseDown) return;
+
+        this.state.isSwiped = true;
+        this.setRootElTranslate(e.clientX, e.clientY);
+        this.updateMousePos(e.clientX, e.clientY);
+      }));
+
+    }
   }
 
   private updateMousePos(x: number, y: number) {
@@ -98,7 +166,7 @@ export default class LaymicZoom {
     this.state.pastY = y;
   }
 
-  private updateZoomRect() {
+  updateZoomRect() {
     this.state.zoomRect = this.getZoomElRect();
   }
 
@@ -155,14 +223,14 @@ export default class LaymicZoom {
   /**
    * ズームモードに入る
    */
-  enable(zoomMultiply: number = 1.5) {
+  enable(zoomMultiply: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
     const zoomed = this.builder.stateNames.zoomed;
     this.rootEl.classList.add(zoomed);
     this.state.isZoomed = true;
 
-    const rect = this.el.getBoundingClientRect();
-    const translateX = (rect.width * zoomMultiply - rect.width) / 2;
-    const translateY = (rect.height * zoomMultiply - rect.height) / 2;
+    const {w: rw, h: rh} = this.state.zoomRect;
+    const translateX = (rw * zoomMultiply - rw) * zoomX;
+    const translateY = (rh * zoomMultiply - rh) * zoomY;
 
     this.state.zoomMultiply = zoomMultiply;
     // 中央寄せでズームする

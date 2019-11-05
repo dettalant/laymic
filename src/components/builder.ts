@@ -92,6 +92,10 @@ export default class DOMBuilder {
         wrapper: "laymic_helpWrapper",
         vertImg: "laymic_helpVertImg",
         horizImg: "laymic_helpHorizImg",
+      },
+      zoom: {
+        controller: "laymic_zoomController",
+        wrapper: "laymic_zoomWrapper",
       }
     }
   }
@@ -382,6 +386,12 @@ export default class DOMBuilder {
     ].forEach(el => ctrlEl.appendChild(el));
 
     return [ctrlEl, uiButtons]
+  }
+
+  createZoomWrapper(): HTMLElement {
+    const zoomWrapper = this.createDiv();
+    zoomWrapper.className = this.classNames.zoom.wrapper;
+    return zoomWrapper;
   }
 
   /**
