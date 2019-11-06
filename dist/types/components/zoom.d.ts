@@ -7,6 +7,7 @@ interface LaymicZoomStates {
     isMouseDown: boolean;
     pastX: number;
     pastY: number;
+    baseRect: PageRect;
     zoomRect: PageRect;
     pinchBaseDistance: number;
 }
@@ -25,12 +26,14 @@ export default class LaymicZoom {
      * @return 二点間の距離
      */
     getDistanceBetweenTouches(e: TouchEvent): number;
+    getNormalizePosBetweenTouches(e: TouchEvent): [number, number];
     private readonly scaleProperty;
     private readonly translateProperty;
     private applyEventListeners;
     private updateMousePos;
-    updateZoomRect(): void;
-    private getZoomElRect;
+    updateZoomRect(translateX: number, translateY: number): void;
+    updateBaseRect(): void;
+    private getElRect;
     /**
      * 指定された座標に応じてrootElのtranslateの値を動かす
      * @param  currentX x座標

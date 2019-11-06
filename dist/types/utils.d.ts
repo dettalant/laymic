@@ -29,6 +29,7 @@ export declare const isMobile: () => boolean;
 export declare const isExistTouchEvent: () => boolean;
 export declare const isSupportedPassive: () => boolean;
 export declare const passiveFalseOption: AddEventListenerOptions | false;
+export declare const isMultiTouch: (e: TouchEvent) => boolean;
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。

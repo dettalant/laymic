@@ -5168,6 +5168,9 @@ const isSupportedPassive = () => {
     return passive;
 };
 const passiveFalseOption = (isSupportedPassive()) ? { passive: false } : false;
+const isMultiTouch = (e) => {
+    return e.targetTouches.length > 1;
+};
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。
@@ -6250,6 +6253,12 @@ class LaymicZoom {
             isMouseDown: false,
             pastX: 0,
             pastY: 0,
+            baseRect: {
+                t: 0,
+                l: 0,
+                w: 800,
+                h: 600,
+            },
             zoomRect: {
                 t: 0,
                 l: 0,
@@ -6276,10 +6285,18 @@ class LaymicZoom {
         const distance = ((x1 - x0) ** 2) + ((y1 - y0) ** 2);
         return Math.sqrt(Math.abs(distance));
     }
-    // getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
-    //   if (e.targetTouches.length < 2) return [0.5, 0.5];
-    //
-    // }
+    getNormalizePosBetweenTouches(e) {
+        if (e.targetTouches.length < 2)
+            return [0.5, 0.5];
+        const { clientX: x0, clientY: y0 } = e.targetTouches[0];
+        const { clientX: x1, clientY: y1 } = e.targetTouches[1];
+        const { w: rw, h: rh } = this.state.zoomRect;
+        // between x
+        const bx = (x0 + x1) / 2;
+        // between y
+        const by = (y0 + y1) / 2;
+        return [bx / rw, by / rh];
+    }
     get scaleProperty() {
         return `scale(${this.state.zoomMultiply})`;
     }
@@ -6291,42 +6308,40 @@ class LaymicZoom {
             this.el.addEventListener("touchstart", e => {
                 e.preventDefault();
                 this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+                this.state.isSwiped = false;
             });
-            this.el.addEventListener("touchmove", e => {
-                e.preventDefault();
-                // if (this.state.pinchBaseDistance <= 1) {
-                //   this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
-                //   return;
-                // }
-                const distance = this.getDistanceBetweenTouches(e);
-                if (!this.state.pinchBaseDistance || !distance) {
+            this.el.addEventListener("touchmove", rafThrottle(e => {
+                if (isMultiTouch(e)) {
+                    // multi touch
+                    e.preventDefault();
+                    const distance = this.getDistanceBetweenTouches(e);
+                    const m = distance / this.state.pinchBaseDistance;
+                    let zoomMultiply = (m < 1)
+                        ? this.state.zoomMultiply * 0.9
+                        : this.state.zoomMultiply * 1.1;
+                    if (zoomMultiply < 1) {
+                        zoomMultiply = 1;
+                    }
+                    else if (zoomMultiply > 3) {
+                        zoomMultiply = 3;
+                    }
+                    const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+                    this.enable(zoomMultiply, zoomX, zoomY);
+                }
+                else {
+                    // single touch
+                    const { clientX: x, clientY: y } = e.targetTouches[0];
+                    this.state.isSwiped = true;
+                    this.setRootElTranslate(x, y);
+                    this.updateMousePos(x, y);
+                }
+            }), passiveFalseOption);
+            this.el.addEventListener("touchend", () => {
+                if (this.state.isSwiped || this.state.zoomMultiply > 1)
                     return;
-                }
-                const m = distance / this.state.pinchBaseDistance;
-                // 1倍より小さい場合は1倍に固定する
-                // let multiply = m;
-                // if (m < 1) {
-                //   multiply = 1;
-                // } else if (m > 3) {
-                //   multiply = 3;
-                // }
-                let zoomMultiply = (m < 1)
-                    ? this.state.zoomMultiply * 0.9
-                    : this.state.zoomMultiply * 1.1;
-                if (zoomMultiply < 1) {
-                    zoomMultiply = 1;
-                }
-                else if (zoomMultiply > 3) {
-                    zoomMultiply = 3;
-                }
-                this.state.zoomMultiply = zoomMultiply;
-                this.rootEl.style.transform = this.scaleProperty;
-            }, passiveFalseOption);
-            // this.el.addEventListener("touchend", () => {
-            //   if (this.state.zoomMultiply > 1) return;
-            //   // ズーム倍率が1の場合はズームモードを終了させる
-            //   this.disable();
-            // })
+                // ズーム倍率が1の場合はズームモードを終了させる
+                this.disable();
+            });
         }
         else {
             this.el.addEventListener("click", () => {
@@ -6341,7 +6356,6 @@ class LaymicZoom {
                 this.state.isMouseDown = true;
                 this.state.isSwiped = false;
                 this.updateMousePos(e.clientX, e.clientY);
-                this.updateZoomRect();
             });
             [
                 "mouseup",
@@ -6363,10 +6377,31 @@ class LaymicZoom {
         this.state.pastX = x;
         this.state.pastY = y;
     }
-    updateZoomRect() {
-        this.state.zoomRect = this.getZoomElRect();
+    updateZoomRect(translateX, translateY) {
+        const zoomMultiply = this.state.zoomMultiply;
+        const { w: baseW, h: baseH } = this.state.baseRect;
+        const zoomRect = {
+            l: translateX,
+            t: translateY,
+            w: baseW * zoomMultiply,
+            h: baseH * zoomMultiply
+        };
+        this.state.zoomRect = zoomRect;
     }
-    getZoomElRect() {
+    updateBaseRect() {
+        const elRect = this.getElRect();
+        const zoomMultiply = this.state.zoomMultiply;
+        const baseRect = (zoomMultiply > 1)
+            ? {
+                t: 0,
+                l: 0,
+                w: elRect.w / zoomMultiply,
+                h: elRect.h / zoomMultiply
+            }
+            : elRect;
+        this.state.baseRect = baseRect;
+    }
+    getElRect() {
         const rect = this.el.getBoundingClientRect();
         return {
             t: rect.top,
@@ -6419,11 +6454,12 @@ class LaymicZoom {
         this.rootEl.classList.add(zoomed);
         this.state.isZoomed = true;
         const { w: rw, h: rh } = this.state.zoomRect;
-        const translateX = (rw * zoomMultiply - rw) * zoomX;
-        const translateY = (rh * zoomMultiply - rh) * zoomY;
+        const translateX = -((rw * zoomMultiply - rw) * zoomX);
+        const translateY = -((rh * zoomMultiply - rh) * zoomY);
         this.state.zoomMultiply = zoomMultiply;
-        // 中央寄せでズームする
-        this.rootEl.style.transform = `translate(${-translateX}px, ${-translateY}px) scale(${zoomMultiply})`;
+        this.updateZoomRect(translateX, translateY);
+        // 引数を省略した場合は中央寄せでズームする
+        this.rootEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
     }
     /**
      * ズームモードから抜ける
@@ -7146,7 +7182,7 @@ class Laymic {
         if (this.thumbs && this.el)
             this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
         if (this.zoom)
-            this.zoom.updateZoomRect();
+            this.zoom.updateBaseRect();
         if (this.swiper)
             this.swiper.update();
     }

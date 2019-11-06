@@ -823,7 +823,7 @@ export default class Laymic {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
     if (this.thumbs && this.el) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
-    if (this.zoom) this.zoom.updateZoomRect();
+    if (this.zoom) this.zoom.updateBaseRect();
     if (this.swiper) this.swiper.update();
 
   }

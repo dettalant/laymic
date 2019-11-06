@@ -68,6 +68,10 @@ export const isSupportedPassive = () => {
 
 export const passiveFalseOption: AddEventListenerOptions | false = (isSupportedPassive()) ? {passive: false} : false;
 
+export const isMultiTouch = (e: TouchEvent): boolean =>  {
+  return e.targetTouches.length > 1;
+}
+
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。

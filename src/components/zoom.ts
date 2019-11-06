@@ -1,6 +1,6 @@
 import DOMBuilder from "#/components/builder";
 import { PageRect } from "#/interfaces";
-import { rafThrottle, isMobile, passiveFalseOption } from "#/utils";
+import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "#/utils";
 
 interface LaymicZoomStates {
   isZoomed: boolean,
@@ -9,6 +9,7 @@ interface LaymicZoomStates {
   isMouseDown: boolean,
   pastX: number,
   pastY: number,
+  baseRect: PageRect,
   zoomRect: PageRect,
   pinchBaseDistance: number,
 }
@@ -38,6 +39,12 @@ export default class LaymicZoom {
       isMouseDown: false,
       pastX: 0,
       pastY: 0,
+      baseRect: {
+        t: 0,
+        l: 0,
+        w: 800,
+        h: 600,
+      },
       zoomRect: {
         t: 0,
         l: 0,
@@ -67,10 +74,19 @@ export default class LaymicZoom {
     return Math.sqrt(Math.abs(distance));
   }
 
-  // getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
-  //   if (e.targetTouches.length < 2) return [0.5, 0.5];
-  //
-  // }
+  getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
+    if (e.targetTouches.length < 2) return [0.5, 0.5];
+    const {clientX: x0, clientY: y0} = e.targetTouches[0];
+    const {clientX: x1, clientY: y1} = e.targetTouches[1];
+    const {w: rw, h: rh} = this.state.zoomRect;
+
+    // between x
+    const bx = (x0 + x1) / 2;
+    // between y
+    const by = (y0 + y1) / 2;
+
+    return [bx / rw, by / rh];
+  }
 
   private get scaleProperty(): string {
     return `scale(${this.state.zoomMultiply})`;
@@ -85,45 +101,42 @@ export default class LaymicZoom {
       this.el.addEventListener("touchstart", e => {
         e.preventDefault();
         this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+        this.state.isSwiped = false;
       })
 
-      this.el.addEventListener("touchmove", e => {
-        e.preventDefault();
-        // if (this.state.pinchBaseDistance <= 1) {
-        //   this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
-        //   return;
-        // }
-        const distance = this.getDistanceBetweenTouches(e);
-        if (!this.state.pinchBaseDistance || !distance) {
-          return;
-        }
+      this.el.addEventListener("touchmove", rafThrottle(e => {
+        if (isMultiTouch(e)) {
+          // multi touch
+          e.preventDefault();
 
-        const m = distance / this.state.pinchBaseDistance;
-        // 1倍より小さい場合は1倍に固定する
-        // let multiply = m;
-        // if (m < 1) {
-        //   multiply = 1;
-        // } else if (m > 3) {
-        //   multiply = 3;
-        // }
-        let zoomMultiply = (m < 1)
+          const distance = this.getDistanceBetweenTouches(e);
+
+          const m = distance / this.state.pinchBaseDistance;
+          let zoomMultiply = (m < 1)
           ? this.state.zoomMultiply * 0.9
           : this.state.zoomMultiply * 1.1;
-        if (zoomMultiply < 1) {
-          zoomMultiply = 1;
-        } else if (zoomMultiply > 3) {
-          zoomMultiply = 3;
+          if (zoomMultiply < 1) {
+            zoomMultiply = 1;
+          } else if (zoomMultiply > 3) {
+            zoomMultiply = 3;
+          }
+          const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+
+          this.enable(zoomMultiply, zoomX, zoomY);
+        } else {
+          // single touch
+          const {clientX: x, clientY: y} = e.targetTouches[0]
+          this.state.isSwiped = true;
+          this.setRootElTranslate(x, y);
+          this.updateMousePos(x, y);
         }
+      }), passiveFalseOption)
 
-        this.state.zoomMultiply = zoomMultiply;
-        this.rootEl.style.transform = this.scaleProperty;
-      }, passiveFalseOption)
-
-      // this.el.addEventListener("touchend", () => {
-      //   if (this.state.zoomMultiply > 1) return;
-      //   // ズーム倍率が1の場合はズームモードを終了させる
-      //   this.disable();
-      // })
+      this.el.addEventListener("touchend", () => {
+        if (this.state.isSwiped || this.state.zoomMultiply > 1) return;
+        // ズーム倍率が1の場合はズームモードを終了させる
+        this.disable();
+      })
     } else {
       this.el.addEventListener("click", () => {
         // ドラッグ操作がなされている場合は処理をスキップ
@@ -139,7 +152,6 @@ export default class LaymicZoom {
         this.state.isSwiped = false;
 
         this.updateMousePos(e.clientX, e.clientY);
-        this.updateZoomRect();
       });
 
       [
@@ -166,11 +178,34 @@ export default class LaymicZoom {
     this.state.pastY = y;
   }
 
-  updateZoomRect() {
-    this.state.zoomRect = this.getZoomElRect();
+  updateZoomRect(translateX: number, translateY: number) {
+    const zoomMultiply = this.state.zoomMultiply;
+    const {w: baseW, h: baseH} = this.state.baseRect;
+    const zoomRect: PageRect = {
+      l: translateX,
+      t: translateY,
+      w: baseW * zoomMultiply,
+      h: baseH * zoomMultiply
+    };
+    this.state.zoomRect = zoomRect;
   }
 
-  private getZoomElRect(): PageRect {
+  updateBaseRect() {
+    const elRect = this.getElRect();
+    const zoomMultiply = this.state.zoomMultiply
+    const baseRect = (zoomMultiply > 1)
+      ? {
+        t: 0,
+        l: 0,
+        w: elRect.w / zoomMultiply,
+        h: elRect.h / zoomMultiply
+      }
+      : elRect
+
+    this.state.baseRect = baseRect;
+  }
+
+  private getElRect(): PageRect {
     const rect = this.el.getBoundingClientRect();
     return {
       t: rect.top,
@@ -229,12 +264,14 @@ export default class LaymicZoom {
     this.state.isZoomed = true;
 
     const {w: rw, h: rh} = this.state.zoomRect;
-    const translateX = (rw * zoomMultiply - rw) * zoomX;
-    const translateY = (rh * zoomMultiply - rh) * zoomY;
+    const translateX = -((rw * zoomMultiply - rw) * zoomX);
+    const translateY = -((rh * zoomMultiply - rh) * zoomY);
 
     this.state.zoomMultiply = zoomMultiply;
-    // 中央寄せでズームする
-    this.rootEl.style.transform = `translate(${-translateX}px, ${-translateY}px) scale(${zoomMultiply})`;
+    this.updateZoomRect(translateX, translateY);
+
+    // 引数を省略した場合は中央寄せでズームする
+    this.rootEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
   }
 
   /**
