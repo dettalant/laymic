@@ -1,5 +1,5 @@
 import DOMBuilder from "#/components/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, PreferenceUpdateEventString, UIVisibility } from "#/interfaces";
 import { isHTMLElementArray } from "#/utils";
 
 export default class LaymicPreference {
@@ -25,7 +25,7 @@ export default class LaymicPreference {
     const preferenceBtnClass = preferenceClassNames.button;
     const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
 
-    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを有効化", preferenceBtnClass);
+    const isDisableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを無効化", preferenceBtnClass);
 
     const progressBarWidths = [
       "初期値",
@@ -60,7 +60,7 @@ export default class LaymicPreference {
       progressBarWidth,
       paginationVisibility,
       isAutoFullscreen,
-      isEnableTapSlidePage,
+      isDisableTapSlidePage,
       descriptionEl
     ].forEach(el => wrapperEl.appendChild(el));
     containerEl.appendChild(wrapperEl);
@@ -70,7 +70,7 @@ export default class LaymicPreference {
     this.wrapperEl = wrapperEl;
     this.buttons = {
       isAutoFullscreen,
-      isEnableTapSlidePage,
+      isDisableTapSlidePage,
       progressBarWidth,
       paginationVisibility,
     };
@@ -81,7 +81,7 @@ export default class LaymicPreference {
   private get defaultPreferenceData(): PreferenceData {
     return {
       isAutoFullscreen: false,
-      isEnableTapSlidePage: false,
+      isDisableTapSlidePage: false,
       progressBarWidth: "auto",
       paginationVisibility: "auto",
     }
@@ -96,13 +96,14 @@ export default class LaymicPreference {
     this.savePreferenceData();
   }
 
-  get isEnableTapSlidePage(): boolean {
-    return this.data.isEnableTapSlidePage;
+  get isDisableTapSlidePage(): boolean {
+    return this.data.isDisableTapSlidePage;
   }
 
-  set isEnableTapSlidePage(bool: boolean) {
-    this.data.isEnableTapSlidePage = bool;
+  set isDisableTapSlidePage(bool: boolean) {
+    this.data.isDisableTapSlidePage = bool;
     this.savePreferenceData();
+    this.dispatchPreferenceUpdateEvent("isDisableTapSlidePage");
   }
 
 
@@ -130,7 +131,7 @@ export default class LaymicPreference {
     localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
   }
 
-  private dispatchPreferenceUpdateEvent(detail: string = "") {
+  private dispatchPreferenceUpdateEvent(detail: PreferenceUpdateEventString) {
     const ev = new CustomEvent("LaymicPreferenceUpdate", {
       detail
     });
@@ -164,14 +165,15 @@ export default class LaymicPreference {
    */
   applyPreferenceValues() {
     // 更新前のデータをdeep copy
-    const oldData = Object.assign(this.data);
+    const oldData: PreferenceData = Object.assign(this.data);
     // 設定値をlocalStorageの値と同期させる
     this.data = this.loadPreferenceData();
 
-    const dispatchs = [];
+    const dispatchs: PreferenceUpdateEventString[] = [];
     // 新旧で値が異なっていればdispatchsに追加
     if (oldData.progressBarWidth !== this.data.progressBarWidth) dispatchs.push("progressBarWidth");
     if (oldData.paginationVisibility !== this.data.paginationVisibility) dispatchs.push("paginationVisibility");
+    if (oldData.isDisableTapSlidePage !== this.data.isDisableTapSlidePage) dispatchs.push("isDisableTapSlidePage");
 
     dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
 
@@ -186,7 +188,7 @@ export default class LaymicPreference {
   private overwritePreferenceElValues() {
     const {
       isAutoFullscreen,
-      isEnableTapSlidePage,
+      isDisableTapSlidePage,
       paginationVisibility,
       progressBarWidth,
     } = this.buttons;
@@ -201,10 +203,10 @@ export default class LaymicPreference {
       isAutoFullscreen.classList.remove(active);
     }
 
-    if (this.isEnableTapSlidePage) {
-      isEnableTapSlidePage.classList.add(active);
+    if (this.isDisableTapSlidePage) {
+      isDisableTapSlidePage.classList.add(active);
     } else {
-      isEnableTapSlidePage.classList.remove(active);
+      isDisableTapSlidePage.classList.remove(active);
     }
 
     const uiVisibilityValues: UIVisibility[] = [
@@ -249,8 +251,8 @@ export default class LaymicPreference {
       this.isAutoFullscreen = !this.isAutoFullscreen;
     });
 
-    this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
-      this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
+    this.buttons.isDisableTapSlidePage.addEventListener("click", () => {
+      this.isDisableTapSlidePage = !this.isDisableTapSlidePage;
     });
 
     const paginationVisibilityHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {

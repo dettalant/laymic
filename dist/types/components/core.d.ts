@@ -141,6 +141,8 @@ export default class Laymic {
      * body要素のスクロールを再開させる
      */
     private enableBodyScroll;
+    private disablePagination;
+    private enablePagination;
     /**
      * pageSizeと関連する部分を一挙に設定する
      * @param  width  新たなページ横幅

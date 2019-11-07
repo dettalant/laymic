@@ -91,11 +91,12 @@ export interface ViewerStates {
 }
 export interface PreferenceData {
     isAutoFullscreen: boolean;
-    isEnableTapSlidePage: boolean;
+    isDisableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
 }
 export declare type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
+export declare type PreferenceUpdateEventString = keyof PreferenceData | "";
 export interface LaymicStateClassNames {
     active: string;
     hidden: string;

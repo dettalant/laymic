@@ -11,7 +11,7 @@ export default class LaymicPreference {
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
     private readonly defaultPreferenceData;
     isAutoFullscreen: boolean;
-    isEnableTapSlidePage: boolean;
+    isDisableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
     private savePreferenceData;

@@ -24,6 +24,7 @@ import {
   LaymicOptions,
   ViewerStates,
   PageRect,
+  PreferenceUpdateEventString
 } from "#/interfaces";
 
 Swiper.use([Keyboard, Pagination, Lazy]);
@@ -304,7 +305,7 @@ export default class Laymic {
     return this.state.thresholdWidth <= window.innerWidth;
   }
 
-  private laymicPreferenceUpdateHandler(e: CustomEvent<string>) {
+  private laymicPreferenceUpdateHandler(e: CustomEvent<PreferenceUpdateEventString>) {
     if (e.detail === "progressBarWidth") {
       // progressBarWidth数値を取得する
       const w = this.preference.getBarWidth(this.preference.progressBarWidth);
@@ -325,6 +326,13 @@ export default class Laymic {
         this.el.rootEl.classList.add(vpClass);
       } else {
         this.el.rootEl.classList.remove(vpClass);
+      }
+    } else if (e.detail === "isDisableTapSlidePage") {
+      if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+        // モバイル環境で設定値がtrueの際にのみ動作
+        this.disablePagination();
+      } else {
+        this.enablePagination();
       }
     } else {
       console.log("manga viewer update event");
@@ -409,17 +417,13 @@ export default class Laymic {
     ].forEach(el => {
       // クリック時のイベント
       el.addEventListener("click", e => {
-        // if (!this.state.isMobile
-        //   || this.preference.isEnableTapSlidePage)
-        // {
-        //   // 非タッチデバイス、
-        //   // またはisEnableTapSlidePageがtrueの場合の処理
-        //   this.slideClickHandler(e);
-        // } else {
-        //   // タッチデバイスでの処理
-        //   this.toggleViewerUI();
-        // }
-        this.slideClickHandler(e);
+        if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+          // モバイルブラウザでのタップページ送り無効化設定時は
+          // viewerUIのトグルだけ行う
+          this.toggleViewerUI();
+        } else {
+          this.slideClickHandler(e);
+        }
       })
 
       // ダブルクリック時のイベント
@@ -492,7 +496,7 @@ export default class Laymic {
     Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
     // カスタムイベント登録
-    this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
+    this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<PreferenceUpdateEventString>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
   }
 
   /**
@@ -985,6 +989,18 @@ export default class Laymic {
       // スクロール状況を復帰させる
       docEl.scrollTop = this.state.bodyScrollTop;
     })
+  }
+
+  private disablePagination() {
+    const { prevPage, nextPage } = this.el.buttons;
+    prevPage.style.display = "none";
+    nextPage.style.display = "none";
+  }
+
+  private enablePagination() {
+    const { prevPage, nextPage } = this.el.buttons;
+    prevPage.style.display = "";
+    nextPage.style.display = "";
   }
 
   /**

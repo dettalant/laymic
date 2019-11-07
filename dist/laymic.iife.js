@@ -5721,7 +5721,7 @@ var laymic = (function (exports) {
           wrapperEl.className = preferenceClassNames.wrapper;
           const preferenceBtnClass = preferenceClassNames.button;
           const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
-          const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを有効化", preferenceBtnClass);
+          const isDisableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを無効化", preferenceBtnClass);
           const progressBarWidths = [
               "初期値",
               "非表示",
@@ -5750,7 +5750,7 @@ var laymic = (function (exports) {
               progressBarWidth,
               paginationVisibility,
               isAutoFullscreen,
-              isEnableTapSlidePage,
+              isDisableTapSlidePage,
               descriptionEl
           ].forEach(el => wrapperEl.appendChild(el));
           containerEl.appendChild(wrapperEl);
@@ -5759,7 +5759,7 @@ var laymic = (function (exports) {
           this.wrapperEl = wrapperEl;
           this.buttons = {
               isAutoFullscreen,
-              isEnableTapSlidePage,
+              isDisableTapSlidePage,
               progressBarWidth,
               paginationVisibility,
           };
@@ -5769,7 +5769,7 @@ var laymic = (function (exports) {
       get defaultPreferenceData() {
           return {
               isAutoFullscreen: false,
-              isEnableTapSlidePage: false,
+              isDisableTapSlidePage: false,
               progressBarWidth: "auto",
               paginationVisibility: "auto",
           };
@@ -5781,12 +5781,13 @@ var laymic = (function (exports) {
           this.data.isAutoFullscreen = bool;
           this.savePreferenceData();
       }
-      get isEnableTapSlidePage() {
-          return this.data.isEnableTapSlidePage;
+      get isDisableTapSlidePage() {
+          return this.data.isDisableTapSlidePage;
       }
-      set isEnableTapSlidePage(bool) {
-          this.data.isEnableTapSlidePage = bool;
+      set isDisableTapSlidePage(bool) {
+          this.data.isDisableTapSlidePage = bool;
           this.savePreferenceData();
+          this.dispatchPreferenceUpdateEvent("isDisableTapSlidePage");
       }
       get progressBarWidth() {
           return this.data.progressBarWidth;
@@ -5807,7 +5808,7 @@ var laymic = (function (exports) {
       savePreferenceData() {
           localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
       }
-      dispatchPreferenceUpdateEvent(detail = "") {
+      dispatchPreferenceUpdateEvent(detail) {
           const ev = new CustomEvent("LaymicPreferenceUpdate", {
               detail
           });
@@ -5845,6 +5846,8 @@ var laymic = (function (exports) {
               dispatchs.push("progressBarWidth");
           if (oldData.paginationVisibility !== this.data.paginationVisibility)
               dispatchs.push("paginationVisibility");
+          if (oldData.isDisableTapSlidePage !== this.data.isDisableTapSlidePage)
+              dispatchs.push("isDisableTapSlidePage");
           dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
           // 読み込んだpreference値を各ボタン状態に適用
           this.overwritePreferenceElValues();
@@ -5854,7 +5857,7 @@ var laymic = (function (exports) {
        * 主に初期化時に用いる関数
        */
       overwritePreferenceElValues() {
-          const { isAutoFullscreen, isEnableTapSlidePage, paginationVisibility, progressBarWidth, } = this.buttons;
+          const { isAutoFullscreen, isDisableTapSlidePage, paginationVisibility, progressBarWidth, } = this.buttons;
           const { active } = this.builder.stateNames;
           if (this.isAutoFullscreen) {
               isAutoFullscreen.classList.add(active);
@@ -5862,11 +5865,11 @@ var laymic = (function (exports) {
           else {
               isAutoFullscreen.classList.remove(active);
           }
-          if (this.isEnableTapSlidePage) {
-              isEnableTapSlidePage.classList.add(active);
+          if (this.isDisableTapSlidePage) {
+              isDisableTapSlidePage.classList.add(active);
           }
           else {
-              isEnableTapSlidePage.classList.remove(active);
+              isDisableTapSlidePage.classList.remove(active);
           }
           const uiVisibilityValues = [
               "auto",
@@ -5906,8 +5909,8 @@ var laymic = (function (exports) {
           this.buttons.isAutoFullscreen.addEventListener("click", () => {
               this.isAutoFullscreen = !this.isAutoFullscreen;
           });
-          this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
-              this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
+          this.buttons.isDisableTapSlidePage.addEventListener("click", () => {
+              this.isDisableTapSlidePage = !this.isDisableTapSlidePage;
           });
           const paginationVisibilityHandler = (e, el, itemEls) => {
               if (!(e.target instanceof HTMLElement))
@@ -6738,6 +6741,15 @@ var laymic = (function (exports) {
                   this.el.rootEl.classList.remove(vpClass);
               }
           }
+          else if (e.detail === "isDisableTapSlidePage") {
+              if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+                  // モバイル環境で設定値がtrueの際にのみ動作
+                  this.disablePagination();
+              }
+              else {
+                  this.enablePagination();
+              }
+          }
           else {
               console.log("manga viewer update event");
           }
@@ -6812,17 +6824,14 @@ var laymic = (function (exports) {
           ].forEach(el => {
               // クリック時のイベント
               el.addEventListener("click", e => {
-                  // if (!this.state.isMobile
-                  //   || this.preference.isEnableTapSlidePage)
-                  // {
-                  //   // 非タッチデバイス、
-                  //   // またはisEnableTapSlidePageがtrueの場合の処理
-                  //   this.slideClickHandler(e);
-                  // } else {
-                  //   // タッチデバイスでの処理
-                  //   this.toggleViewerUI();
-                  // }
-                  this.slideClickHandler(e);
+                  if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+                      // モバイルブラウザでのタップページ送り無効化設定時は
+                      // viewerUIのトグルだけ行う
+                      this.toggleViewerUI();
+                  }
+                  else {
+                      this.slideClickHandler(e);
+                  }
               });
               // ダブルクリック時のイベント
               // el.addEventListener("dblclick", zoomHandler)
@@ -7319,6 +7328,16 @@ var laymic = (function (exports) {
               // スクロール状況を復帰させる
               docEl.scrollTop = this.state.bodyScrollTop;
           });
+      }
+      disablePagination() {
+          const { prevPage, nextPage } = this.el.buttons;
+          prevPage.style.display = "none";
+          nextPage.style.display = "none";
+      }
+      enablePagination() {
+          const { prevPage, nextPage } = this.el.buttons;
+          prevPage.style.display = "";
+          nextPage.style.display = "";
       }
       /**
        * pageSizeと関連する部分を一挙に設定する
