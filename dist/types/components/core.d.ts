@@ -33,6 +33,7 @@ export default class Laymic {
      * @return  2p表示する解像度ならばtrue
      */
     private readonly isDoubleSlideHorizView;
+    private laymicPreferenceUpdateHandler;
     /**
      * 各種イベントの登録
      * インスタンス生成時に一度だけ呼び出されることを想定

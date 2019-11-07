@@ -6241,6 +6241,7 @@ var laymic = (function (exports) {
           zoomEl.className = builder.classNames.zoom.controller;
           this.el = zoomEl;
           this.rootEl = rootEl;
+          this.zoomWrapper = builder.createZoomWrapper();
           this.builder = builder;
           this.applyEventListeners();
       }
@@ -6248,23 +6249,20 @@ var laymic = (function (exports) {
           return {
               isZoomed: false,
               zoomMultiply: 1.0,
+              minRatio: 1.0,
+              maxRatio: 3.0,
               isSwiped: false,
               isMouseDown: false,
               pastX: 0,
               pastY: 0,
-              baseRect: {
-                  t: 0,
-                  l: 0,
-                  w: 800,
-                  h: 600,
-              },
               zoomRect: {
                   t: 0,
                   l: 0,
                   w: 800,
                   h: 600,
               },
-              pinchBaseDistance: 1
+              pinchBaseDistance: 0,
+              pinchPastDistance: 0
           };
       }
       get isZoomed() {
@@ -6296,45 +6294,47 @@ var laymic = (function (exports) {
           const by = (y0 + y1) / 2;
           return [bx / rw, by / rh];
       }
+      pinchZoom(e, baseDistance) {
+          const distance = this.getDistanceBetweenTouches(e);
+          const m = distance / baseDistance;
+          const { minRatio, maxRatio } = this.state;
+          let multiply = (m < 1)
+              ? this.state.zoomMultiply * 0.9
+              : this.state.zoomMultiply * 1.1;
+          const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+          const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+          this.enable(zoomMultiply, zoomX, zoomY);
+      }
       get scaleProperty() {
           return `scale(${this.state.zoomMultiply})`;
       }
       get translateProperty() {
           return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
       }
+      touchMoveHandler(e) {
+          if (isMultiTouch(e)) {
+              // multi touch
+              e.preventDefault();
+              this.pinchZoom(e, this.state.pinchBaseDistance);
+          }
+          else {
+              // single touch
+              const { clientX: x, clientY: y } = e.targetTouches[0];
+              this.state.isSwiped = true;
+              this.setTranslate(x, y);
+              this.updateMousePos(x, y);
+          }
+      }
       applyEventListeners() {
           if (isMobile()) {
               this.el.addEventListener("touchstart", e => {
                   e.preventDefault();
-                  this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+                  const baseDistance = this.getDistanceBetweenTouches(e);
+                  this.state.pinchBaseDistance = baseDistance;
+                  this.state.pinchPastDistance = baseDistance;
                   this.state.isSwiped = false;
               });
-              this.el.addEventListener("touchmove", rafThrottle(e => {
-                  if (isMultiTouch(e)) {
-                      // multi touch
-                      e.preventDefault();
-                      const distance = this.getDistanceBetweenTouches(e);
-                      const m = distance / this.state.pinchBaseDistance;
-                      let zoomMultiply = (m < 1)
-                          ? this.state.zoomMultiply * 0.9
-                          : this.state.zoomMultiply * 1.1;
-                      if (zoomMultiply < 1) {
-                          zoomMultiply = 1;
-                      }
-                      else if (zoomMultiply > 3) {
-                          zoomMultiply = 3;
-                      }
-                      const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
-                      this.enable(zoomMultiply, zoomX, zoomY);
-                  }
-                  else {
-                      // single touch
-                      const { clientX: x, clientY: y } = e.targetTouches[0];
-                      this.state.isSwiped = true;
-                      this.setRootElTranslate(x, y);
-                      this.updateMousePos(x, y);
-                  }
-              }), passiveFalseOption);
+              this.el.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
               this.el.addEventListener("touchend", () => {
                   if (this.state.isSwiped || this.state.zoomMultiply > 1)
                       return;
@@ -6367,7 +6367,7 @@ var laymic = (function (exports) {
                   if (!this.state.isMouseDown)
                       return;
                   this.state.isSwiped = true;
-                  this.setRootElTranslate(e.clientX, e.clientY);
+                  this.setTranslate(e.clientX, e.clientY);
                   this.updateMousePos(e.clientX, e.clientY);
               }));
           }
@@ -6377,28 +6377,21 @@ var laymic = (function (exports) {
           this.state.pastY = y;
       }
       updateZoomRect(translateX, translateY) {
-          const zoomMultiply = this.state.zoomMultiply;
-          const { w: baseW, h: baseH } = this.state.baseRect;
-          const zoomRect = {
-              l: translateX,
-              t: translateY,
-              w: baseW * zoomMultiply,
-              h: baseH * zoomMultiply
-          };
+          let zoomRect;
+          if (translateX !== void 0 && translateY !== void 0) {
+              const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
+              const multiply = this.state.zoomMultiply;
+              zoomRect = {
+                  l: translateX,
+                  t: translateY,
+                  w: rootCW * multiply,
+                  h: rootCH * multiply
+              };
+          }
+          else {
+              zoomRect = this.getElRect();
+          }
           this.state.zoomRect = zoomRect;
-      }
-      updateBaseRect() {
-          const elRect = this.getElRect();
-          const zoomMultiply = this.state.zoomMultiply;
-          const baseRect = (zoomMultiply > 1)
-              ? {
-                  t: 0,
-                  l: 0,
-                  w: elRect.w / zoomMultiply,
-                  h: elRect.h / zoomMultiply
-              }
-              : elRect;
-          this.state.baseRect = baseRect;
       }
       getElRect() {
           const rect = this.el.getBoundingClientRect();
@@ -6410,11 +6403,11 @@ var laymic = (function (exports) {
           };
       }
       /**
-       * 指定された座標に応じてrootElのtranslateの値を動かす
+       * 指定された座標に応じてzoomWrapperのtranslateの値を動かす
        * @param  currentX x座標
        * @param  currentY y座標
        */
-      setRootElTranslate(currentX, currentY) {
+      setTranslate(currentX, currentY) {
           const { innerWidth: iw, innerHeight: ih } = window;
           const { pastX, pastY, zoomRect } = this.state;
           const { t: ry, l: rx, w: rw, h: rh } = zoomRect;
@@ -6443,32 +6436,38 @@ var laymic = (function (exports) {
           }
           zoomRect.l = translateX;
           zoomRect.t = translateY;
-          this.rootEl.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
+          this.zoomWrapper.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
       }
       /**
        * ズームモードに入る
        */
       enable(zoomMultiply = 1.5, zoomX = 0.5, zoomY = 0.5) {
-          const zoomed = this.builder.stateNames.zoomed;
-          this.rootEl.classList.add(zoomed);
-          this.state.isZoomed = true;
+          this.enableController();
+          this.enableZoom(zoomMultiply, zoomX, zoomY);
+      }
+      enableZoom(zoomMultiply = 1.5, zoomX = 0.5, zoomY = 0.5) {
           const { w: rw, h: rh } = this.state.zoomRect;
           const translateX = -((rw * zoomMultiply - rw) * zoomX);
           const translateY = -((rh * zoomMultiply - rh) * zoomY);
           this.state.zoomMultiply = zoomMultiply;
           this.updateZoomRect(translateX, translateY);
           // 引数を省略した場合は中央寄せでズームする
-          this.rootEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
+          this.zoomWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
+      }
+      enableController() {
+          const zoomed = this.builder.stateNames.zoomed;
+          this.zoomWrapper.classList.add(zoomed);
+          this.state.isZoomed = true;
       }
       /**
        * ズームモードから抜ける
        */
       disable() {
           const zoomed = this.builder.stateNames.zoomed;
-          this.rootEl.classList.remove(zoomed);
+          this.zoomWrapper.classList.remove(zoomed);
           this.state.isZoomed = false;
           this.state.zoomMultiply = 1.0;
-          this.rootEl.style.transform = "";
+          this.zoomWrapper.style.transform = "";
       }
   }
 
@@ -6532,10 +6531,9 @@ var laymic = (function (exports) {
           // ここからは省略表記で存在確認
           if (options.viewerId)
               this.state.viewerId = options.viewerId;
-          const zoomWrapper = builder.createZoomWrapper();
           this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
           this.help = new LaymicHelp(builder, rootEl);
-          this.zoom = new LaymicZoom(builder, zoomWrapper);
+          this.zoom = new LaymicZoom(builder, rootEl);
           // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
           rootEl.style.display = "none";
           rootEl.classList.add(classNames.root, stateNames.visibleUI);
@@ -6554,8 +6552,8 @@ var laymic = (function (exports) {
               this.thumbs.el,
               this.preference.el,
               this.help.el,
-          ].forEach(el => zoomWrapper.appendChild(el));
-          rootEl.appendChild(zoomWrapper);
+          ].forEach(el => this.zoom.zoomWrapper.appendChild(el));
+          rootEl.appendChild(this.zoom.zoomWrapper);
           controllerEl.appendChild(this.zoom.el);
           this.el = {
               rootEl,
@@ -6716,12 +6714,39 @@ var laymic = (function (exports) {
       get isDoubleSlideHorizView() {
           return this.state.thresholdWidth <= window.innerWidth;
       }
+      laymicPreferenceUpdateHandler(e) {
+          if (e.detail === "progressBarWidth") {
+              // progressBarWidth数値を取得する
+              const w = this.preference.getBarWidth(this.preference.progressBarWidth);
+              this.state.progressBarWidth = w;
+              // 設定した値を画面に適用する
+              this.cssProgressBarWidthUpdate();
+              this.viewUpdate();
+          }
+          else if (e.detail === "paginationVisibility") {
+              // ページ送り表示設定
+              // pagination visibility
+              const pv = this.preference.paginationVisibility;
+              // isVisiblePagination
+              const isVP = this.initOptions.isVisiblePagination;
+              const isVisible = pv === "visible" || pv !== "hidden" && isVP;
+              const vpClass = this.builder.stateNames.visiblePagination;
+              if (isVisible) {
+                  this.el.rootEl.classList.add(vpClass);
+              }
+              else {
+                  this.el.rootEl.classList.remove(vpClass);
+              }
+          }
+          else {
+              console.log("manga viewer update event");
+          }
+      }
       /**
        * 各種イベントの登録
        * インスタンス生成時に一度だけ呼び出されることを想定
        */
       applyEventListeners() {
-          const stateNames = this.builder.stateNames;
           this.el.buttons.help.addEventListener("click", () => {
               this.help.showHelp();
               this.hideViewerUI();
@@ -6787,16 +6812,17 @@ var laymic = (function (exports) {
           ].forEach(el => {
               // クリック時のイベント
               el.addEventListener("click", e => {
-                  if (!this.state.isMobile
-                      || this.preference.isEnableTapSlidePage) {
-                      // 非タッチデバイス、
-                      // またはisEnableTapSlidePageがtrueの場合の処理
-                      this.slideClickHandler(e);
-                  }
-                  else {
-                      // タッチデバイスでの処理
-                      this.toggleViewerUI();
-                  }
+                  // if (!this.state.isMobile
+                  //   || this.preference.isEnableTapSlidePage)
+                  // {
+                  //   // 非タッチデバイス、
+                  //   // またはisEnableTapSlidePageがtrueの場合の処理
+                  //   this.slideClickHandler(e);
+                  // } else {
+                  //   // タッチデバイスでの処理
+                  //   this.toggleViewerUI();
+                  // }
+                  this.slideClickHandler(e);
               });
               // ダブルクリック時のイベント
               // el.addEventListener("dblclick", zoomHandler)
@@ -6825,39 +6851,40 @@ var laymic = (function (exports) {
                       this.swiper.slidePrev();
                   }
               }));
+              if (this.state.isMobile) {
+                  let baseDistance = 0;
+                  el.addEventListener("touchstart", e => {
+                      baseDistance = this.zoom.getDistanceBetweenTouches(e);
+                  });
+                  el.addEventListener("touchmove", rafThrottle(e => {
+                      if (!baseDistance || !isMultiTouch(e))
+                          return;
+                      e.preventDefault();
+                      const distance = this.zoom.getDistanceBetweenTouches(e);
+                      const ratio = distance / baseDistance;
+                      if (ratio > 1) {
+                          const { minRatio, maxRatio } = this.zoom.state;
+                          let multiply = (ratio < 1)
+                              ? this.zoom.state.zoomMultiply * 0.9
+                              : this.zoom.state.zoomMultiply * 1.1;
+                          const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+                          const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
+                          this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
+                      }
+                  }), passiveFalseOption);
+                  el.addEventListener("touchend", () => {
+                      if (this.zoom.state.zoomMultiply > 1) {
+                          this.zoom.enableController();
+                          this.hideViewerUI();
+                      }
+                  });
+              }
           });
           // ユーザビリティのため「クリックしても何も起きない」
           // 場所ではイベント伝播を停止させる
           Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
-          this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => {
-              if (e.detail === "progressBarWidth") {
-                  // progressBarWidth数値を取得する
-                  const w = this.preference.getBarWidth(this.preference.progressBarWidth);
-                  this.state.progressBarWidth = w;
-                  // 設定した値を画面に適用する
-                  this.cssProgressBarWidthUpdate();
-                  this.viewUpdate();
-              }
-              else if (e.detail === "paginationVisibility") {
-                  // ページ送り表示設定
-                  // pagination visibility
-                  const pv = this.preference.paginationVisibility;
-                  // isVisiblePagination
-                  const isVP = this.initOptions.isVisiblePagination;
-                  const isVisible = pv === "visible" || pv !== "hidden" && isVP;
-                  const vpClass = stateNames.visiblePagination;
-                  if (isVisible) {
-                      this.el.rootEl.classList.add(vpClass);
-                  }
-                  else {
-                      this.el.rootEl.classList.remove(vpClass);
-                  }
-              }
-              else {
-                  console.log("manga viewer update event");
-              }
-          }));
+          this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => this.laymicPreferenceUpdateHandler(e)));
       }
       /**
        * オーバーレイ表示を展開させる
@@ -7181,7 +7208,7 @@ var laymic = (function (exports) {
           if (this.thumbs && this.el)
               this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
           if (this.zoom)
-              this.zoom.updateBaseRect();
+              this.zoom.updateZoomRect();
           if (this.swiper)
               this.swiper.update();
       }

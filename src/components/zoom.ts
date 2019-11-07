@@ -5,17 +5,20 @@ import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "#/utils
 interface LaymicZoomStates {
   isZoomed: boolean,
   zoomMultiply: number,
+  minRatio: number,
+  maxRatio: number,
   isSwiped: boolean,
   isMouseDown: boolean,
   pastX: number,
   pastY: number,
-  baseRect: PageRect,
   zoomRect: PageRect,
   pinchBaseDistance: number,
+  pinchPastDistance: number,
 }
 
 export default class LaymicZoom {
   rootEl: HTMLElement;
+  zoomWrapper: HTMLElement;
   el: HTMLElement;
   builder: DOMBuilder;
   _isZoomed: boolean = false;
@@ -26,6 +29,7 @@ export default class LaymicZoom {
 
     this.el = zoomEl;
     this.rootEl = rootEl;
+    this.zoomWrapper = builder.createZoomWrapper()
     this.builder = builder;
 
     this.applyEventListeners();
@@ -35,23 +39,20 @@ export default class LaymicZoom {
     return {
       isZoomed: false,
       zoomMultiply: 1.0,
+      minRatio: 1.0,
+      maxRatio: 3.0,
       isSwiped: false,
       isMouseDown: false,
       pastX: 0,
       pastY: 0,
-      baseRect: {
-        t: 0,
-        l: 0,
-        w: 800,
-        h: 600,
-      },
       zoomRect: {
         t: 0,
         l: 0,
         w: 800,
         h: 600,
       },
-      pinchBaseDistance: 1
+      pinchBaseDistance: 0,
+      pinchPastDistance: 0
     }
   }
 
@@ -88,6 +89,21 @@ export default class LaymicZoom {
     return [bx / rw, by / rh];
   }
 
+  private pinchZoom(e: TouchEvent, baseDistance: number) {
+    const distance = this.getDistanceBetweenTouches(e);
+
+    const m = distance / baseDistance;
+    const {minRatio, maxRatio} = this.state;
+    let multiply = (m < 1)
+    ? this.state.zoomMultiply * 0.9
+    : this.state.zoomMultiply * 1.1;
+
+    const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+    const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+
+    this.enable(zoomMultiply, zoomX, zoomY);
+  }
+
   private get scaleProperty(): string {
     return `scale(${this.state.zoomMultiply})`;
   }
@@ -96,41 +112,32 @@ export default class LaymicZoom {
     return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
   }
 
+  private touchMoveHandler(e: TouchEvent) {
+    if (isMultiTouch(e)) {
+      // multi touch
+      e.preventDefault();
+
+      this.pinchZoom(e, this.state.pinchBaseDistance)
+    } else {
+      // single touch
+      const {clientX: x, clientY: y} = e.targetTouches[0]
+      this.state.isSwiped = true;
+      this.setTranslate(x, y);
+      this.updateMousePos(x, y);
+    }
+  }
+
   private applyEventListeners() {
     if (isMobile()) {
       this.el.addEventListener("touchstart", e => {
         e.preventDefault();
-        this.state.pinchBaseDistance = this.getDistanceBetweenTouches(e);
+        const baseDistance = this.getDistanceBetweenTouches(e);
+        this.state.pinchBaseDistance = baseDistance;
+        this.state.pinchPastDistance = baseDistance;
         this.state.isSwiped = false;
       })
 
-      this.el.addEventListener("touchmove", rafThrottle(e => {
-        if (isMultiTouch(e)) {
-          // multi touch
-          e.preventDefault();
-
-          const distance = this.getDistanceBetweenTouches(e);
-
-          const m = distance / this.state.pinchBaseDistance;
-          let zoomMultiply = (m < 1)
-          ? this.state.zoomMultiply * 0.9
-          : this.state.zoomMultiply * 1.1;
-          if (zoomMultiply < 1) {
-            zoomMultiply = 1;
-          } else if (zoomMultiply > 3) {
-            zoomMultiply = 3;
-          }
-          const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
-
-          this.enable(zoomMultiply, zoomX, zoomY);
-        } else {
-          // single touch
-          const {clientX: x, clientY: y} = e.targetTouches[0]
-          this.state.isSwiped = true;
-          this.setRootElTranslate(x, y);
-          this.updateMousePos(x, y);
-        }
-      }), passiveFalseOption)
+      this.el.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption)
 
       this.el.addEventListener("touchend", () => {
         if (this.state.isSwiped || this.state.zoomMultiply > 1) return;
@@ -166,7 +173,7 @@ export default class LaymicZoom {
         if (!this.state.isMouseDown) return;
 
         this.state.isSwiped = true;
-        this.setRootElTranslate(e.clientX, e.clientY);
+        this.setTranslate(e.clientX, e.clientY);
         this.updateMousePos(e.clientX, e.clientY);
       }));
 
@@ -178,31 +185,21 @@ export default class LaymicZoom {
     this.state.pastY = y;
   }
 
-  updateZoomRect(translateX: number, translateY: number) {
-    const zoomMultiply = this.state.zoomMultiply;
-    const {w: baseW, h: baseH} = this.state.baseRect;
-    const zoomRect: PageRect = {
-      l: translateX,
-      t: translateY,
-      w: baseW * zoomMultiply,
-      h: baseH * zoomMultiply
-    };
-    this.state.zoomRect = zoomRect;
-  }
-
-  updateBaseRect() {
-    const elRect = this.getElRect();
-    const zoomMultiply = this.state.zoomMultiply
-    const baseRect = (zoomMultiply > 1)
-      ? {
-        t: 0,
-        l: 0,
-        w: elRect.w / zoomMultiply,
-        h: elRect.h / zoomMultiply
+  updateZoomRect(translateX?: number, translateY?: number) {
+    let zoomRect: PageRect;
+    if (translateX !== void 0 && translateY !== void 0) {
+      const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
+      const multiply = this.state.zoomMultiply;
+      zoomRect = {
+        l: translateX,
+        t: translateY,
+        w: rootCW * multiply,
+        h: rootCH * multiply
       }
-      : elRect
-
-    this.state.baseRect = baseRect;
+    } else {
+      zoomRect = this.getElRect();
+    }
+    this.state.zoomRect = zoomRect;
   }
 
   private getElRect(): PageRect {
@@ -216,11 +213,11 @@ export default class LaymicZoom {
   }
 
   /**
-   * 指定された座標に応じてrootElのtranslateの値を動かす
+   * 指定された座標に応じてzoomWrapperのtranslateの値を動かす
    * @param  currentX x座標
    * @param  currentY y座標
    */
-  private setRootElTranslate(currentX: number, currentY: number) {
+  private setTranslate(currentX: number, currentY: number) {
     const {innerWidth: iw, innerHeight: ih} = window
     const {pastX, pastY, zoomRect} = this.state;
     const {t: ry, l: rx, w: rw, h: rh} = zoomRect;
@@ -252,17 +249,18 @@ export default class LaymicZoom {
     zoomRect.l = translateX;
     zoomRect.t = translateY;
 
-    this.rootEl.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
+    this.zoomWrapper.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
   }
 
   /**
    * ズームモードに入る
    */
   enable(zoomMultiply: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
-    const zoomed = this.builder.stateNames.zoomed;
-    this.rootEl.classList.add(zoomed);
-    this.state.isZoomed = true;
+    this.enableController();
+    this.enableZoom(zoomMultiply, zoomX, zoomY);
+  }
 
+  enableZoom(zoomMultiply: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
     const {w: rw, h: rh} = this.state.zoomRect;
     const translateX = -((rw * zoomMultiply - rw) * zoomX);
     const translateY = -((rh * zoomMultiply - rh) * zoomY);
@@ -271,7 +269,13 @@ export default class LaymicZoom {
     this.updateZoomRect(translateX, translateY);
 
     // 引数を省略した場合は中央寄せでズームする
-    this.rootEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
+    this.zoomWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
+  }
+
+  enableController() {
+    const zoomed = this.builder.stateNames.zoomed;
+    this.zoomWrapper.classList.add(zoomed);
+    this.state.isZoomed = true;
   }
 
   /**
@@ -279,10 +283,10 @@ export default class LaymicZoom {
    */
   disable() {
     const zoomed = this.builder.stateNames.zoomed;
-    this.rootEl.classList.remove(zoomed);
+    this.zoomWrapper.classList.remove(zoomed);
     this.state.isZoomed = false;
 
     this.state.zoomMultiply = 1.0;
-    this.rootEl.style.transform = "";
+    this.zoomWrapper.style.transform = "";
   }
 }

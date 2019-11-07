@@ -417,9 +417,9 @@
 }
 
 /* for mobile */
-.laymic_isMobile .laymic_pagination,
-.laymic_isMobile .laymic_preferencePaginationVisibility {
-  display: none;
+.laymic_isMobile .laymic_pagination {
+  pointer-events: none;
+  --swiper-navigation-color: rgba(255, 255, 255, .3);
 }
 
 /* for unsupported fullscreen api  */

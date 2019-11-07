@@ -10,6 +10,8 @@ import {
   rafThrottle,
   excludeHashLocation,
   calcWindowVH,
+  isMultiTouch,
+  passiveFalseOption
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
@@ -93,11 +95,9 @@ export default class Laymic {
     // ここからは省略表記で存在確認
     if (options.viewerId) this.state.viewerId = options.viewerId;
 
-    const zoomWrapper = builder.createZoomWrapper();
-
     this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
-    this.zoom = new LaymicZoom(builder, zoomWrapper);
+    this.zoom = new LaymicZoom(builder, rootEl);
 
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
@@ -120,8 +120,8 @@ export default class Laymic {
       this.thumbs.el,
       this.preference.el,
       this.help.el,
-    ].forEach(el => zoomWrapper.appendChild(el));
-    rootEl.appendChild(zoomWrapper)
+    ].forEach(el => this.zoom.zoomWrapper.appendChild(el));
+    rootEl.appendChild(this.zoom.zoomWrapper)
     controllerEl.appendChild(this.zoom.el);
 
     this.el = {
@@ -304,12 +304,38 @@ export default class Laymic {
     return this.state.thresholdWidth <= window.innerWidth;
   }
 
+  private laymicPreferenceUpdateHandler(e: CustomEvent<string>) {
+    if (e.detail === "progressBarWidth") {
+      // progressBarWidth数値を取得する
+      const w = this.preference.getBarWidth(this.preference.progressBarWidth);
+      this.state.progressBarWidth = w;
+      // 設定した値を画面に適用する
+      this.cssProgressBarWidthUpdate();
+      this.viewUpdate();
+    } else if (e.detail === "paginationVisibility") {
+      // ページ送り表示設定
+      // pagination visibility
+      const pv = this.preference.paginationVisibility;
+      // isVisiblePagination
+      const isVP = this.initOptions.isVisiblePagination;
+      const isVisible = pv === "visible" || pv !== "hidden" && isVP;
+      const vpClass = this.builder.stateNames.visiblePagination;
+
+      if (isVisible) {
+        this.el.rootEl.classList.add(vpClass);
+      } else {
+        this.el.rootEl.classList.remove(vpClass);
+      }
+    } else {
+      console.log("manga viewer update event");
+    }
+  }
+
   /**
    * 各種イベントの登録
    * インスタンス生成時に一度だけ呼び出されることを想定
    */
   private applyEventListeners() {
-    const stateNames = this.builder.stateNames;
     this.el.buttons.help.addEventListener("click", () => {
       this.help.showHelp();
       this.hideViewerUI();
@@ -383,16 +409,17 @@ export default class Laymic {
     ].forEach(el => {
       // クリック時のイベント
       el.addEventListener("click", e => {
-        if (!this.state.isMobile
-          || this.preference.isEnableTapSlidePage)
-        {
-          // 非タッチデバイス、
-          // またはisEnableTapSlidePageがtrueの場合の処理
-          this.slideClickHandler(e);
-        } else {
-          // タッチデバイスでの処理
-          this.toggleViewerUI();
-        }
+        // if (!this.state.isMobile
+        //   || this.preference.isEnableTapSlidePage)
+        // {
+        //   // 非タッチデバイス、
+        //   // またはisEnableTapSlidePageがtrueの場合の処理
+        //   this.slideClickHandler(e);
+        // } else {
+        //   // タッチデバイスでの処理
+        //   this.toggleViewerUI();
+        // }
+        this.slideClickHandler(e);
       })
 
       // ダブルクリック時のイベント
@@ -424,6 +451,40 @@ export default class Laymic {
           this.swiper.slidePrev();
         }
       }));
+
+      if (this.state.isMobile) {
+        let baseDistance = 0;
+
+        el.addEventListener("touchstart", e => {
+          baseDistance = this.zoom.getDistanceBetweenTouches(e);
+        });
+
+        el.addEventListener("touchmove", rafThrottle(e => {
+          if (!baseDistance || !isMultiTouch(e)) return;
+          e.preventDefault();
+          const distance = this.zoom.getDistanceBetweenTouches(e);
+
+          const ratio = distance / baseDistance;
+          if (ratio > 1) {
+            const {minRatio, maxRatio} = this.zoom.state;
+            let multiply = (ratio < 1)
+            ? this.zoom.state.zoomMultiply * 0.9
+            : this.zoom.state.zoomMultiply * 1.1;
+
+            const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+
+            const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
+            this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
+          }
+        }), passiveFalseOption);
+
+        el.addEventListener("touchend", () => {
+          if (this.zoom.state.zoomMultiply > 1) {
+            this.zoom.enableController();
+            this.hideViewerUI();
+          }
+        })
+      }
     });
 
     // ユーザビリティのため「クリックしても何も起きない」
@@ -431,32 +492,7 @@ export default class Laymic {
     Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
     // カスタムイベント登録
-    this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
-      if (e.detail === "progressBarWidth") {
-        // progressBarWidth数値を取得する
-        const w = this.preference.getBarWidth(this.preference.progressBarWidth);
-        this.state.progressBarWidth = w;
-        // 設定した値を画面に適用する
-        this.cssProgressBarWidthUpdate();
-        this.viewUpdate();
-      } else if (e.detail === "paginationVisibility") {
-        // ページ送り表示設定
-        // pagination visibility
-        const pv = this.preference.paginationVisibility;
-        // isVisiblePagination
-        const isVP = this.initOptions.isVisiblePagination;
-        const isVisible = pv === "visible" || pv !== "hidden" && isVP;
-        const vpClass = stateNames.visiblePagination;
-
-        if (isVisible) {
-          this.el.rootEl.classList.add(vpClass);
-        } else {
-          this.el.rootEl.classList.remove(vpClass);
-        }
-      } else {
-        console.log("manga viewer update event");
-      }
-    }) as EventListener)
+    this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
   }
 
   /**
@@ -823,7 +859,7 @@ export default class Laymic {
     this.state.swiperRect = this.swiperElRect;
     this.cssPageWidthUpdate();
     if (this.thumbs && this.el) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
-    if (this.zoom) this.zoom.updateBaseRect();
+    if (this.zoom) this.zoom.updateZoomRect();
     if (this.swiper) this.swiper.update();
 
   }

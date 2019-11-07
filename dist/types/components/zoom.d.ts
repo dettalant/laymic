@@ -3,16 +3,19 @@ import { PageRect } from "#/interfaces";
 interface LaymicZoomStates {
     isZoomed: boolean;
     zoomMultiply: number;
+    minRatio: number;
+    maxRatio: number;
     isSwiped: boolean;
     isMouseDown: boolean;
     pastX: number;
     pastY: number;
-    baseRect: PageRect;
     zoomRect: PageRect;
     pinchBaseDistance: number;
+    pinchPastDistance: number;
 }
 export default class LaymicZoom {
     rootEl: HTMLElement;
+    zoomWrapper: HTMLElement;
     el: HTMLElement;
     builder: DOMBuilder;
     _isZoomed: boolean;
@@ -27,23 +30,26 @@ export default class LaymicZoom {
      */
     getDistanceBetweenTouches(e: TouchEvent): number;
     getNormalizePosBetweenTouches(e: TouchEvent): [number, number];
+    private pinchZoom;
     private readonly scaleProperty;
     private readonly translateProperty;
+    private touchMoveHandler;
     private applyEventListeners;
     private updateMousePos;
-    updateZoomRect(translateX: number, translateY: number): void;
-    updateBaseRect(): void;
+    updateZoomRect(translateX?: number, translateY?: number): void;
     private getElRect;
     /**
-     * 指定された座標に応じてrootElのtranslateの値を動かす
+     * 指定された座標に応じてzoomWrapperのtranslateの値を動かす
      * @param  currentX x座標
      * @param  currentY y座標
      */
-    private setRootElTranslate;
+    private setTranslate;
     /**
      * ズームモードに入る
      */
     enable(zoomMultiply?: number, zoomX?: number, zoomY?: number): void;
+    enableZoom(zoomMultiply?: number, zoomX?: number, zoomY?: number): void;
+    enableController(): void;
     /**
      * ズームモードから抜ける
      */
