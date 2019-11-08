@@ -29,11 +29,17 @@ export default class LaymicZoom {
      * @return 二点間の距離
      */
     getDistanceBetweenTouches(e: TouchEvent): number;
+    /**
+     * タッチされた二点の座標の中心点から、
+     * 正規化された拡大時中心点を返す
+     * @param  e TouchEvent
+     * @return   [zoomX, zoomY]
+     */
     getNormalizePosBetweenTouches(e: TouchEvent): [number, number];
-    private pinchZoom;
     private readonly scaleProperty;
     private readonly translateProperty;
     private touchMoveHandler;
+    private pinchZoom;
     private applyEventListeners;
     private updateMousePos;
     updateZoomRect(translateX?: number, translateY?: number): void;

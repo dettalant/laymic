@@ -51,8 +51,8 @@ export default class LaymicZoom {
         w: 800,
         h: 600,
       },
-      pinchBaseDistance: 0,
-      pinchPastDistance: 0
+      pinchBaseDistance: 1,
+      pinchPastDistance: 1
     }
   }
 
@@ -75,6 +75,12 @@ export default class LaymicZoom {
     return Math.sqrt(Math.abs(distance));
   }
 
+  /**
+   * タッチされた二点の座標の中心点から、
+   * 正規化された拡大時中心点を返す
+   * @param  e TouchEvent
+   * @return   [zoomX, zoomY]
+   */
   getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
     if (e.targetTouches.length < 2) return [0.5, 0.5];
     const {clientX: x0, clientY: y0} = e.targetTouches[0];
@@ -87,21 +93,6 @@ export default class LaymicZoom {
     const by = (y0 + y1) / 2;
 
     return [bx / rw, by / rh];
-  }
-
-  private pinchZoom(e: TouchEvent, baseDistance: number) {
-    const distance = this.getDistanceBetweenTouches(e);
-
-    const m = distance / baseDistance;
-    const {minRatio, maxRatio} = this.state;
-    let multiply = (m < 1)
-    ? this.state.zoomMultiply * 0.9
-    : this.state.zoomMultiply * 1.1;
-
-    const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
-    const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
-
-    this.enable(zoomMultiply, zoomX, zoomY);
   }
 
   private get scaleProperty(): string {
@@ -125,6 +116,31 @@ export default class LaymicZoom {
       this.setTranslate(x, y);
       this.updateMousePos(x, y);
     }
+  }
+
+  private pinchZoom(e: TouchEvent, _baseDistance: number) {
+    const distance = this.getDistanceBetweenTouches(e);
+
+    const {innerWidth: iw, innerHeight: ih} = window;
+    // 画面サイズの対角線上距離を最大距離とする
+    const maxD = Math.sqrt(iw ** 2 + ih ** 2);
+    const pinchD = distance - this.state.pinchPastDistance;
+    // const m = distance / baseDistance;
+    const {minRatio, maxRatio} = this.state;
+    // let multiply = (m < 1)
+    // ? this.state.zoomMultiply * 0.9
+    // : this.state.zoomMultiply * 1.1;
+
+    // ピンチ操作では最大で対角線上距離の半分しか使わないので
+    // 得られた倍率を二倍することで正確な数値を出せる
+    const multiply = this.state.zoomMultiply + pinchD / maxD * 2;
+
+    // maxRatio~minRatio間に収まるよう調整
+    const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+    const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+
+    this.enable(zoomMultiply, zoomX, zoomY);
+    this.state.pinchPastDistance = distance;
   }
 
   private applyEventListeners() {

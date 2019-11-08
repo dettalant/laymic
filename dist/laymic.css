@@ -690,6 +690,7 @@
 
 .laymic_isMobile .laymic_pagination {
   pointer-events: none;
+  /* モバイル環境ではアイコンハイライト色をオフにする */
   --swiper-navigation-color: rgba(255, 255, 255, .3);
 }
 
