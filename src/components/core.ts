@@ -347,7 +347,6 @@ export default class Laymic {
     this.el.buttons.help.addEventListener("click", () => {
       this.help.showHelp();
       this.hideViewerUI();
-      console.log("activeIdx: ", this.swiper.activeIndex);
     })
 
     // 縦読み/横読み切り替えボタン
@@ -457,29 +456,28 @@ export default class Laymic {
       }));
 
       if (this.state.isMobile) {
-        let baseDistance = 0;
-
         el.addEventListener("touchstart", e => {
-          baseDistance = this.zoom.getDistanceBetweenTouches(e);
+          this.zoom.updatePastDistance(e);
         });
 
         el.addEventListener("touchmove", rafThrottle(e => {
-          if (!baseDistance || !isMultiTouch(e)) return;
+          if (!isMultiTouch(e)) return;
           e.preventDefault();
-          const distance = this.zoom.getDistanceBetweenTouches(e);
-
-          const ratio = distance / baseDistance;
-          if (ratio > 1) {
-            const {minRatio, maxRatio} = this.zoom.state;
-            let multiply = (ratio < 1)
-            ? this.zoom.state.zoomMultiply * 0.9
-            : this.zoom.state.zoomMultiply * 1.1;
-
-            const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
-
-            const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
-            this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
-          }
+          this.zoom.pinchZoom(e);
+          // const distance = this.zoom.getDistanceBetweenTouches(e);
+          //
+          // const ratio = distance / baseDistance;
+          // if (ratio > 1) {
+            // const {minRatio, maxRatio} = this.zoom.state;
+            // let multiply = (ratio < 1)
+            // ? this.zoom.state.zoomMultiply * 0.9
+            // : this.zoom.state.zoomMultiply * 1.1;
+            //
+            // const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+            //
+            // const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
+            // this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
+          // }
         }), passiveFalseOption);
 
         el.addEventListener("touchend", () => {

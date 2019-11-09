@@ -12,8 +12,8 @@ interface LaymicZoomStates {
   pastX: number,
   pastY: number,
   zoomRect: PageRect,
-  pinchBaseDistance: number,
-  pinchPastDistance: number,
+  // pinch past distance
+  pastDistance: number,
 }
 
 export default class LaymicZoom {
@@ -51,8 +51,7 @@ export default class LaymicZoom {
         w: 800,
         h: 600,
       },
-      pinchBaseDistance: 1,
-      pinchPastDistance: 1
+      pastDistance: 1
     }
   }
 
@@ -81,18 +80,38 @@ export default class LaymicZoom {
    * @param  e TouchEvent
    * @return   [zoomX, zoomY]
    */
-  getNormalizePosBetweenTouches(e: TouchEvent): [number, number] {
+  getNormalizedPosBetweenTouches(e: TouchEvent): [number, number] {
     if (e.targetTouches.length < 2) return [0.5, 0.5];
+    const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
     const {clientX: x0, clientY: y0} = e.targetTouches[0];
     const {clientX: x1, clientY: y1} = e.targetTouches[1];
-    const {w: rw, h: rh} = this.state.zoomRect;
 
     // between x
-    const bx = (x0 + x1) / 2;
+    const bx = (x0 + x1 + Math.abs(rx) * 2) / 2;
     // between y
-    const by = (y0 + y1) / 2;
+    const by = (y0 + y1 + Math.abs(ry) * 2) / 2;
 
     return [bx / rw, by / rh];
+  }
+
+  /**
+   * TODO: この処理がまだガタガタ
+   * @return [description]
+   */
+  getNormalizedCurrentCenter(): [number, number] {
+    // const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const {innerWidth: cw, innerHeight: ch} = window;
+    const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
+    const maxX = rw - cw;
+    const maxY = rh - ch;
+
+    // `0 / 0`とした際はNaNとなってバグが出るので
+    // max値に1を足しておく
+    const nx = Math.abs(rx) / (maxX + 1);
+    const ny = Math.abs(ry) / (maxY + 1);
+
+    // 戻り値が[0, 0]の場合は[0.5, 0.5]を返す
+    return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
   }
 
   private get scaleProperty(): string {
@@ -103,12 +122,23 @@ export default class LaymicZoom {
     return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
   }
 
+  private touchStartHandler(e: TouchEvent) {
+    this.state.isSwiped = false;
+
+    // for swipe
+    const {clientX: x, clientY: y} = e.targetTouches[0];
+    this.updateMousePos(x, y);
+
+    // for pinch out/in
+    this.updatePastDistance(e)
+  }
+
   private touchMoveHandler(e: TouchEvent) {
     if (isMultiTouch(e)) {
       // multi touch
       e.preventDefault();
 
-      this.pinchZoom(e, this.state.pinchBaseDistance)
+      this.pinchZoom(e);
     } else {
       // single touch
       const {clientX: x, clientY: y} = e.targetTouches[0]
@@ -118,13 +148,18 @@ export default class LaymicZoom {
     }
   }
 
-  private pinchZoom(e: TouchEvent, _baseDistance: number) {
+  updatePastDistance(e: TouchEvent) {
+    const distance = this.getDistanceBetweenTouches(e);
+    this.state.pastDistance = distance;
+  }
+
+  pinchZoom(e: TouchEvent) {
     const distance = this.getDistanceBetweenTouches(e);
 
     const {innerWidth: iw, innerHeight: ih} = window;
     // 画面サイズの対角線上距離を最大距離とする
     const maxD = Math.sqrt(iw ** 2 + ih ** 2);
-    const pinchD = distance - this.state.pinchPastDistance;
+    const pinchD = distance - this.state.pastDistance;
     // const m = distance / baseDistance;
     const {minRatio, maxRatio} = this.state;
     // let multiply = (m < 1)
@@ -133,25 +168,22 @@ export default class LaymicZoom {
 
     // ピンチ操作では最大で対角線上距離の半分しか使わないので
     // 得られた倍率を二倍することで正確な数値を出せる
-    const multiply = this.state.zoomMultiply + pinchD / maxD * 2;
+    const multiply = this.state.zoomMultiply + (pinchD / maxD) * 2;
 
     // maxRatio~minRatio間に収まるよう調整
     const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
-    const [zoomX, zoomY] = this.getNormalizePosBetweenTouches(e);
+    const [bx, by] = this.getNormalizedPosBetweenTouches(e);
+    const [cx, cy] = this.getNormalizedCurrentCenter();
+    const zoomX = (bx + cx) / 2;
+    const zoomY = (by + cy) / 2;
 
-    this.enable(zoomMultiply, zoomX, zoomY);
-    this.state.pinchPastDistance = distance;
+    this.enableZoom(zoomMultiply, zoomX, zoomY);
+    this.state.pastDistance = distance;
   }
 
   private applyEventListeners() {
     if (isMobile()) {
-      this.el.addEventListener("touchstart", e => {
-        e.preventDefault();
-        const baseDistance = this.getDistanceBetweenTouches(e);
-        this.state.pinchBaseDistance = baseDistance;
-        this.state.pinchPastDistance = baseDistance;
-        this.state.isSwiped = false;
-      })
+      this.el.addEventListener("touchstart", e => this.touchStartHandler(e));
 
       this.el.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption)
 
@@ -167,7 +199,6 @@ export default class LaymicZoom {
 
         // zoom要素クリックでzoom解除
         this.disable();
-        console.log(this.el.getBoundingClientRect());
       });
 
       this.el.addEventListener("mousedown", e => {
@@ -192,7 +223,6 @@ export default class LaymicZoom {
         this.setTranslate(e.clientX, e.clientY);
         this.updateMousePos(e.clientX, e.clientY);
       }));
-
     }
   }
 
@@ -277,9 +307,10 @@ export default class LaymicZoom {
   }
 
   enableZoom(zoomMultiply: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
-    const {w: rw, h: rh} = this.state.zoomRect;
-    const translateX = -((rw * zoomMultiply - rw) * zoomX);
-    const translateY = -((rh * zoomMultiply - rh) * zoomY);
+    // const {w: rw, h: rh} = this.state.zoomRect;
+    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const translateX = -((cw * zoomMultiply - cw) * zoomX);
+    const translateY = -((ch * zoomMultiply - ch) * zoomY);
 
     this.state.zoomMultiply = zoomMultiply;
     this.updateZoomRect(translateX, translateY);

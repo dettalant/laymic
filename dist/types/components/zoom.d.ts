@@ -10,8 +10,7 @@ interface LaymicZoomStates {
     pastX: number;
     pastY: number;
     zoomRect: PageRect;
-    pinchBaseDistance: number;
-    pinchPastDistance: number;
+    pastDistance: number;
 }
 export default class LaymicZoom {
     rootEl: HTMLElement;
@@ -35,11 +34,18 @@ export default class LaymicZoom {
      * @param  e TouchEvent
      * @return   [zoomX, zoomY]
      */
-    getNormalizePosBetweenTouches(e: TouchEvent): [number, number];
+    getNormalizedPosBetweenTouches(e: TouchEvent): [number, number];
+    /**
+     * TODO: この処理がまだガタガタ
+     * @return [description]
+     */
+    getNormalizedCurrentCenter(): [number, number];
     private readonly scaleProperty;
     private readonly translateProperty;
+    private touchStartHandler;
     private touchMoveHandler;
-    private pinchZoom;
+    updatePastDistance(e: TouchEvent): void;
+    pinchZoom(e: TouchEvent): void;
     private applyEventListeners;
     private updateMousePos;
     updateZoomRect(translateX?: number, translateY?: number): void;
