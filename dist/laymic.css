@@ -361,6 +361,11 @@
   align-items: center;
 }
 
+.laymic_controller,
+.laymic_slider {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .laymic_slider,
 .laymic_helpWrapper,
 .laymic_thumbsWrapper,
