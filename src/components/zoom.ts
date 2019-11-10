@@ -86,14 +86,17 @@ export default class LaymicZoom {
    */
   getNormalizedPosBetweenTouches(e: TouchEvent): [number, number] {
     if (e.targetTouches.length < 2) return [0.5, 0.5];
-    const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
+    const {l: rl, t: rt, w: rw, h: rh} = this.state.zoomRect;
     const {clientX: x0, clientY: y0} = e.targetTouches[0];
     const {clientX: x1, clientY: y1} = e.targetTouches[1];
 
+    const rx = Math.abs(rl);
+    const ry = Math.abs(rt);
+
     // between x
-    const bx = (x0 + x1 + Math.abs(rx) * 2) / 2;
+    const bx = ((x0 + rx) + (x1 + ry)) / 2;
     // between y
-    const by = (y0 + y1 + Math.abs(ry) * 2) / 2;
+    const by = ((y0 + ry) + (y1 + ry)) / 2;
 
     return [bx / rw, by / rh];
   }
@@ -103,7 +106,8 @@ export default class LaymicZoom {
    * @return [centeringX, centeringY]
    */
   getNormalizedCurrentCenter(): [number, number] {
-    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const {innerWidth: cw, innerHeight: ch} = window;
+    // const {clientWidth: cw, clientHeight: ch} = this.rootEl;
     const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
     const maxX = rw - cw;
     const maxY = rh - ch;
@@ -168,10 +172,10 @@ export default class LaymicZoom {
 
     // 計算値そのままでは動作が硬いので
     // 感度を6倍にしてスマホブラウザ操作感と近づける
-    const multiply = this.state.zoomRatio + (pinchD / maxD) * 6;
+    const ratio = this.state.zoomRatio + (pinchD / maxD) * 6;
 
     // maxRatio~minRatio間に収まるよう調整
-    const zoomRatio = Math.max(Math.min(multiply, maxRatio), minRatio);
+    const zoomRatio = Math.max(Math.min(ratio, maxRatio), minRatio);
 
     // タッチ座標と画面中央座標を取得し、
     // その平均値をズームの中心座標とする
@@ -238,12 +242,12 @@ export default class LaymicZoom {
     let zoomRect: PageRect;
     if (translateX !== void 0 && translateY !== void 0) {
       const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
-      const multiply = this.state.zoomRatio;
+      const ratio = this.state.zoomRatio;
       zoomRect = {
         l: translateX,
         t: translateY,
-        w: rootCW * multiply,
-        h: rootCH * multiply
+        w: rootCW * ratio,
+        h: rootCH * ratio
       }
     } else {
       zoomRect = this.getElRect();
@@ -310,7 +314,6 @@ export default class LaymicZoom {
   }
 
   enableZoom(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
-    // const {w: rw, h: rh} = this.state.zoomRect;
     const {clientWidth: cw, clientHeight: ch} = this.rootEl;
     const translateX = -((cw * zoomRatio - cw) * zoomX);
     const translateY = -((ch * zoomRatio - ch) * zoomY);

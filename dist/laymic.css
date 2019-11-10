@@ -691,9 +691,10 @@
   transform: rotate(90deg);
 }
 
-/* for mobile */
+/* for mobile and zooming */
 
-.laymic_isMobile .laymic_pagination {
+.laymic_isMobile .laymic_pagination,
+.laymic_isZoomed .laymic_pagination {
   pointer-events: none;
   /* モバイル環境ではアイコンハイライト色をオフにする */
   --swiper-navigation-color: rgba(255, 255, 255, .3);
