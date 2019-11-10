@@ -1,6 +1,6 @@
 import Preference from "#/components/preference";
 import DOMBuilder from "#/components/builder";
-import { BarWidth, UIVisibility } from "#/interfaces";
+import { BarWidth, UIVisibility } from "#/interfaces/index";
 
 describe("preference class test", () => {
   const builder = new DOMBuilder();
@@ -10,7 +10,7 @@ describe("preference class test", () => {
     preference["savePreferenceData"]();
     const data = preference["loadPreferenceData"]();
     expect(typeof data.isAutoFullscreen === "boolean").toBeTruthy();
-    expect(typeof data.isEnableTapSlidePage === "boolean").toBeTruthy();
+    expect(typeof data.isDisableTapSlidePage === "boolean").toBeTruthy();
     expect(typeof data.paginationVisibility === "string").toBeTruthy();
     expect(typeof data.progressBarWidth === "string").toBeTruthy();
   })
@@ -34,10 +34,10 @@ describe("preference class test", () => {
       false
     ];
     testValues.forEach(bool => {
-      preference.isEnableTapSlidePage = bool;
+      preference.isDisableTapSlidePage = bool;
 
-      expect(preference.isEnableTapSlidePage).toBe(bool);
-      expect(preference["loadPreferenceData"]().isEnableTapSlidePage).toBe(bool);
+      expect(preference.isDisableTapSlidePage).toBe(bool);
+      expect(preference["loadPreferenceData"]().isDisableTapSlidePage).toBe(bool);
     })
   })
 
@@ -72,15 +72,15 @@ describe("preference class test", () => {
   })
 
   it("dispatchPreferenceUpdateEvent test", done => {
-    const preferenceTest = "preferenceTest";
+    const testStr = "isAutoFullscreen";
     preference.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
-      if (e.detail === preferenceTest) {
+      if (e.detail === testStr) {
         expect(true).toBeTruthy();
         done();
       }
     }) as EventListener);
 
-    preference["dispatchPreferenceUpdateEvent"](preferenceTest);
+    preference["dispatchPreferenceUpdateEvent"](testStr);
   })
 
   it("applyCurrentPreferenceValue test", () => {
@@ -91,7 +91,7 @@ describe("preference class test", () => {
     const pvValue = "visible";
 
     data.isAutoFullscreen = true;
-    data.isEnableTapSlidePage = true;
+    data.isDisableTapSlidePage = true;
     data.progressBarWidth = pbwValue;
     data.paginationVisibility = pvValue;
 
@@ -113,7 +113,7 @@ describe("preference class test", () => {
     ];
     const {
       isAutoFullscreen,
-      isEnableTapSlidePage,
+      isDisableTapSlidePage,
       progressBarWidth,
       paginationVisibility,
     } = preference2.buttons;
@@ -123,10 +123,10 @@ describe("preference class test", () => {
 
     const active = preference2.builder.stateNames.active;
 
-    preference2["applyCurrentPreferenceValue"]();
+    preference2["applyPreferenceValues"]();
 
     expect(isAutoFullscreen.classList.contains(active)).toBeTruthy();
-    expect(isEnableTapSlidePage.classList.contains(active)).toBeTruthy();
+    expect(isDisableTapSlidePage.classList.contains(active)).toBeTruthy();
 
     [
       {

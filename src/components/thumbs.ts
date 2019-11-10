@@ -1,4 +1,4 @@
-import { ViewerPages, ViewerStates } from "#/interfaces";
+import { ViewerPages, ViewerStates } from "#/interfaces/index";
 import DOMBuilder from "#/components/builder";
 
 export default class LaymicThumbnails {

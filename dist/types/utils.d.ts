@@ -1,4 +1,4 @@
-import { BarWidth } from "#/interfaces";
+import { BarWidth } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用

@@ -1,5 +1,5 @@
 import Laymic from "#/components/core";
-import { ViewerPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces";
+import { ViewerPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces/index";
 import { isBarWidth, compareString } from "#/utils";
 
 // 複数ビューワーを一括登録したり、

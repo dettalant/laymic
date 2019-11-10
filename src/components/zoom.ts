@@ -1,43 +1,31 @@
 import DOMBuilder from "#/components/builder";
-import { PageRect } from "#/interfaces";
+import { PageRect, LaymicZoomStates } from "#/interfaces/index";
 import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "#/utils";
-
-interface LaymicZoomStates {
-  isZoomed: boolean,
-  zoomRatio: number,
-  minRatio: number,
-  maxRatio: number,
-  isSwiped: boolean,
-  isMouseDown: boolean,
-  pastX: number,
-  pastY: number,
-  zoomRect: PageRect,
-  // pinch past distance
-  pastDistance: number,
-}
 
 export default class LaymicZoom {
   rootEl: HTMLElement;
-  zoomWrapper: HTMLElement;
-  el: HTMLElement;
+  wrapper: HTMLElement;
+  controller: HTMLElement;
   builder: DOMBuilder;
-  _isZoomed: boolean = false;
   state: LaymicZoomStates = this.defaultLaymicZoomStates;
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     const zoomEl = builder.createDiv();
     zoomEl.className = builder.classNames.zoom.controller;
 
-    this.el = zoomEl;
+    this.controller = zoomEl;
     this.rootEl = rootEl;
-    this.zoomWrapper = builder.createZoomWrapper()
+    this.wrapper = builder.createZoomWrapper()
     this.builder = builder;
 
     this.applyEventListeners();
   }
 
+  /**
+   * LaymicZoomStatesのデフォルト値を返す
+   * @return LaymicZoomStatesデフォルト値
+   */
   get defaultLaymicZoomStates(): LaymicZoomStates {
     return {
-      isZoomed: false,
       zoomRatio: 1.0,
       minRatio: 1.0,
       maxRatio: 3.0,
@@ -55,10 +43,18 @@ export default class LaymicZoom {
     }
   }
 
+  /**
+   * 現在ズームがなされているかを返す
+   * @return zoomRatioが1以上ならばtrue
+   */
   get isZoomed(): boolean {
-    return this.state.isZoomed;
+    return this.state.zoomRatio > 1;
   }
 
+  /**
+   * 現在のzoomRatioの値を返す
+   * @return zoomRatioの値
+   */
   get zoomRatio(): number {
     return this.state.zoomRatio;
   }
@@ -66,6 +62,7 @@ export default class LaymicZoom {
   /**
    * タッチされた二点間の距離を返す
    * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
+   *
    * @return 二点間の距離
    */
   getDistanceBetweenTouches(e: TouchEvent): number {
@@ -81,6 +78,7 @@ export default class LaymicZoom {
   /**
    * タッチされた二点の座標の中心点から、
    * 正規化された拡大時中心点を返す
+   *
    * @param  e TouchEvent
    * @return   [betweenX, betweenY]
    */
@@ -121,45 +119,176 @@ export default class LaymicZoom {
     return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
   }
 
+  /**
+   * 現在のzoomRatioの値からscale設定値を生成する
+   * @return css transformに用いる設定値
+   */
   private get scaleProperty(): string {
     return `scale(${this.state.zoomRatio})`;
   }
 
+  /**
+   * 現在のzoomRectの値からtranslate設定値を生成する
+   * @return css transformに用いる設定値
+   */
   private get translateProperty(): string {
     return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
   }
 
+  /**
+   * touchstartに対して登録する処理まとめ
+   * @param  e タッチイベント
+   */
   private touchStartHandler(e: TouchEvent) {
+    e.stopPropagation();
     this.state.isSwiped = false;
 
     // for swipe
     const {clientX: x, clientY: y} = e.targetTouches[0];
-    this.updateMousePos(x, y);
+    this.updatePastPos(x, y);
 
     // for pinch out/in
     this.updatePastDistance(e)
   }
 
+  /**
+   * touchmoveイベントに対して登録する処理まとめ
+   * @param  e タッチイベント
+   */
   private touchMoveHandler(e: TouchEvent) {
+    e.stopPropagation();
+    e.preventDefault();
     if (isMultiTouch(e)) {
       // multi touch
-      e.preventDefault();
-
       this.pinchZoom(e);
     } else {
       // single touch
-      const {clientX: x, clientY: y} = e.targetTouches[0]
+      const {clientX: x, clientY: y} = e.targetTouches[0];
       this.state.isSwiped = true;
+
       this.setTranslate(x, y);
-      this.updateMousePos(x, y);
+      this.updatePastPos(x, y);
     }
   }
 
-  updatePastDistance(e: TouchEvent) {
-    const distance = this.getDistanceBetweenTouches(e);
-    this.state.pastDistance = distance;
+  /**
+   * もろもろのEventListenerを登録する
+   * インスタンス生成時に一度だけ呼ばれることを想定
+   */
+  private applyEventListeners() {
+    if (isMobile()) {
+      this.controller.addEventListener("touchstart", e => this.touchStartHandler(e));
+
+      this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption)
+
+      this.controller.addEventListener("touchend", (e) => {
+        e.stopPropagation();
+        if (this.state.isSwiped || this.isZoomed) return;
+        // ズーム倍率が1の場合はズームモードを終了させる
+        this.disable();
+      })
+    } else {
+      this.controller.addEventListener("click", () => {
+        // ドラッグ操作がなされている場合は処理をスキップ
+        if (this.state.isSwiped) return;
+
+        // zoom要素クリックでzoom解除
+        this.disable();
+      });
+
+      this.controller.addEventListener("mousedown", e => {
+        this.state.isMouseDown = true;
+        this.state.isSwiped = false;
+
+        this.updatePastPos(e.clientX, e.clientY);
+      });
+
+      [
+        "mouseup",
+        "mouseleave"
+      ].forEach(ev => this.controller.addEventListener(ev, () => {
+        this.state.isMouseDown = false;
+      }));
+
+      this.controller.addEventListener("mousemove", rafThrottle(e =>  {
+        // mousedown状況下でなければスキップ
+        if (!this.state.isMouseDown) return;
+
+        this.state.isSwiped = true;
+        this.setTranslate(e.clientX, e.clientY);
+        this.updatePastPos(e.clientX, e.clientY);
+      }));
+    }
   }
 
+  /**
+   * 過去の座標値を更新する
+   * @param  x 新しいx座標
+   * @param  y 新しいy座標
+   */
+  private updatePastPos(x: number, y: number) {
+    this.state.pastX = x;
+    this.state.pastY = y;
+  }
+
+  /**
+   * controller要素のサイズを取得する
+   * @return PageRectの形式に整えられたサイズ値
+   */
+  private getControllerRect(): PageRect {
+    const rect = this.controller.getBoundingClientRect();
+    return {
+      t: rect.top,
+      l: rect.left,
+      w: rect.width,
+      h: rect.height,
+    }
+  }
+
+  /**
+   * 指定された座標に応じてwrapperのtranslateの値を動かす
+   * @param  currentX x座標
+   * @param  currentY y座標
+   */
+  private setTranslate(currentX: number, currentY: number) {
+    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const {pastX, pastY, zoomRect} = this.state;
+    const {t: ry, l: rx, w: rw, h: rh} = zoomRect;
+    const x = pastX - currentX;
+    const y = pastY - currentY;
+
+    // これ以上の数値にはならないしきい値
+    const maxX = -(rw - cw);
+    const maxY = -(rh - ch);
+
+    const calcX = rx - x;
+    const calcY = ry - y;
+    let translateX = calcX;
+    if (calcX < maxX) {
+      // maxXより小さければmaxXを返す
+      translateX = maxX;
+    } else if (calcX > 0) {
+      // 0より大きければ0を返す
+      translateX = 0;
+    }
+
+    let translateY = calcY;
+    if (calcY < maxY) {
+      translateY = maxY;
+    } else if (calcY > 0) {
+      translateY = 0;
+    }
+
+    zoomRect.l = translateX;
+    zoomRect.t = translateY;
+
+    this.wrapper.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
+  }
+
+  /**
+   * ピンチズーム処理を行う
+   * @param  e タッチイベント
+   */
   pinchZoom(e: TouchEvent) {
     const distance = this.getDistanceBetweenTouches(e);
 
@@ -188,56 +317,14 @@ export default class LaymicZoom {
     this.state.pastDistance = distance;
   }
 
-  private applyEventListeners() {
-    if (isMobile()) {
-      this.el.addEventListener("touchstart", e => this.touchStartHandler(e));
-
-      this.el.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption)
-
-      this.el.addEventListener("touchend", () => {
-        if (this.state.isSwiped || this.state.zoomRatio > 1) return;
-        // ズーム倍率が1の場合はズームモードを終了させる
-        this.disable();
-      })
-    } else {
-      this.el.addEventListener("click", () => {
-        // ドラッグ操作がなされている場合は処理をスキップ
-        if (this.state.isSwiped) return;
-
-        // zoom要素クリックでzoom解除
-        this.disable();
-      });
-
-      this.el.addEventListener("mousedown", e => {
-        this.state.isMouseDown = true;
-        this.state.isSwiped = false;
-
-        this.updateMousePos(e.clientX, e.clientY);
-      });
-
-      [
-        "mouseup",
-        "mouseleave"
-      ].forEach(ev => this.el.addEventListener(ev, () => {
-        this.state.isMouseDown = false;
-      }));
-
-      this.el.addEventListener("mousemove", rafThrottle(e =>  {
-        // mousedown状況下でなければスキップ
-        if (!this.state.isMouseDown) return;
-
-        this.state.isSwiped = true;
-        this.setTranslate(e.clientX, e.clientY);
-        this.updateMousePos(e.clientX, e.clientY);
-      }));
-    }
-  }
-
-  private updateMousePos(x: number, y: number) {
-    this.state.pastX = x;
-    this.state.pastY = y;
-  }
-
+  /**
+   * zoomRectの値を更新する
+   * translateXとtranslateYの値を入力していれば自前で計算し、
+   * そうでないなら`getControllerRect()`を呼び出す
+   *
+   * @param  translateX 新たなleft座標
+   * @param  translateY 新たなtop座標
+   */
   updateZoomRect(translateX?: number, translateY?: number) {
     let zoomRect: PageRect;
     if (translateX !== void 0 && translateY !== void 0) {
@@ -250,69 +337,33 @@ export default class LaymicZoom {
         h: rootCH * ratio
       }
     } else {
-      zoomRect = this.getElRect();
+      zoomRect = this.getControllerRect();
     }
     this.state.zoomRect = zoomRect;
   }
 
-  private getElRect(): PageRect {
-    const rect = this.el.getBoundingClientRect();
-    return {
-      t: rect.top,
-      l: rect.left,
-      w: rect.width,
-      h: rect.height,
-    }
-  }
-
-  /**
-   * 指定された座標に応じてzoomWrapperのtranslateの値を動かす
-   * @param  currentX x座標
-   * @param  currentY y座標
-   */
-  private setTranslate(currentX: number, currentY: number) {
-    const {innerWidth: iw, innerHeight: ih} = window
-    const {pastX, pastY, zoomRect} = this.state;
-    const {t: ry, l: rx, w: rw, h: rh} = zoomRect;
-    const x = pastX - currentX;
-    const y = pastY - currentY;
-
-    // これ以上の数値にはならないしきい値
-    const maxX = -(rw - iw);
-    const maxY = -(rh - ih);
-
-    const calcX = rx - x;
-    const calcY = ry - y;
-    let translateX = calcX;
-    if (calcX < maxX) {
-      // maxXより小さければmaxXを返す
-      translateX = maxX;
-    } else if (calcX > 0) {
-      // 0より大きければ0を返す
-      translateX = 0;
-    }
-
-    let translateY = calcY;
-    if (calcY < maxY) {
-      translateY = maxY;
-    } else if (calcY > 0) {
-      translateY = 0;
-    }
-
-    zoomRect.l = translateX;
-    zoomRect.t = translateY;
-
-    this.zoomWrapper.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
+  updatePastDistance(e: TouchEvent) {
+    const distance = this.getDistanceBetweenTouches(e);
+    this.state.pastDistance = distance;
   }
 
   /**
    * ズームモードに入る
+   * @param  zoomRatio ズーム倍率
+   * @param  zoomX     正規化されたズーム時中央横座標
+   * @param  zoomY     正規化されたズーム時中央縦座標
    */
   enable(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
     this.enableController();
     this.enableZoom(zoomRatio, zoomX, zoomY);
   }
 
+  /**
+   * 拡大縮小処理を行う
+   * @param  zoomRatio ズーム倍率
+   * @param  zoomX     正規化されたズーム時中央横座標
+   * @param  zoomY     正規化されたズーム時中央縦座標
+   */
   enableZoom(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
     const {clientWidth: cw, clientHeight: ch} = this.rootEl;
     const translateX = -((cw * zoomRatio - cw) * zoomX);
@@ -322,13 +373,15 @@ export default class LaymicZoom {
     this.updateZoomRect(translateX, translateY);
 
     // 引数を省略した場合は中央寄せでズームする
-    this.zoomWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomRatio})`;
+    this.wrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomRatio})`;
   }
 
+  /**
+   * ズーム時操作要素を前面に出す
+   */
   enableController() {
     const zoomed = this.builder.stateNames.zoomed;
-    this.zoomWrapper.classList.add(zoomed);
-    this.state.isZoomed = true;
+    this.wrapper.classList.add(zoomed);
   }
 
   /**
@@ -336,10 +389,9 @@ export default class LaymicZoom {
    */
   disable() {
     const zoomed = this.builder.stateNames.zoomed;
-    this.zoomWrapper.classList.remove(zoomed);
-    this.state.isZoomed = false;
+    this.wrapper.classList.remove(zoomed);
 
     this.state.zoomRatio = 1.0;
-    this.zoomWrapper.style.transform = "";
+    this.wrapper.style.transform = "";
   }
 }

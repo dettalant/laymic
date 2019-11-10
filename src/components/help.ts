@@ -1,4 +1,4 @@
-import DOMBuilder from "#/components/builder"
+import DOMBuilder from "#/components/builder";
 import { vertHelpImg, horizHelpImg } from "#/components/helpImg";
 
 export default class LaymicHelp {

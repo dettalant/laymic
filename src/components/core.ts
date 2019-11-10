@@ -25,7 +25,7 @@ import {
   ViewerStates,
   PageRect,
   PreferenceUpdateEventString
-} from "#/interfaces";
+} from "#/interfaces/index";
 
 Swiper.use([Keyboard, Pagination, Lazy]);
 
@@ -121,9 +121,9 @@ export default class Laymic {
       this.thumbs.el,
       this.preference.el,
       this.help.el,
-    ].forEach(el => this.zoom.zoomWrapper.appendChild(el));
-    rootEl.appendChild(this.zoom.zoomWrapper)
-    controllerEl.appendChild(this.zoom.el);
+    ].forEach(el => this.zoom.wrapper.appendChild(el));
+    rootEl.appendChild(this.zoom.wrapper)
+    controllerEl.appendChild(this.zoom.controller);
 
     this.el = {
       rootEl,
@@ -461,13 +461,15 @@ export default class Laymic {
         });
 
         el.addEventListener("touchmove", rafThrottle(e => {
+          // マルチタッチでない場合と全画面状態でない場合は早期リターン
           if (!isMultiTouch(e)) return;
+
           e.preventDefault();
           this.zoom.pinchZoom(e);
         }), passiveFalseOption);
 
         el.addEventListener("touchend", () => {
-          if (this.zoom.zoomRatio > 1) {
+          if (this.zoom.isZoomed) {
             this.zoom.enableController();
             this.hideViewerUI();
           }
@@ -861,9 +863,10 @@ export default class Laymic {
   private fullscreenHandler() {
     // フルスクリーン切り替え後に呼び出される関数
     const postToggleFullscreen = () => {
-      const isFullscreen = document.fullscreenElement;
+      if (!screenfull.isEnabled) return;
+
       const fsClass = this.builder.stateNames.fullscreen;
-      if (isFullscreen) {
+      if (screenfull.isFullscreen) {
         // 全画面有効時
         this.el.rootEl.classList.add(fsClass);
       } else {

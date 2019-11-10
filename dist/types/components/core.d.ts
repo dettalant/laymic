@@ -4,7 +4,7 @@ import LaymicPreference from "#/components/preference";
 import LaymicThumbnails from "#/components/thumbs";
 import LaymicHelp from "#/components/help";
 import LaymicZoom from "#/components/zoom";
-import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces";
+import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces/index";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;

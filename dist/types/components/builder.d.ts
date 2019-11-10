@@ -1,4 +1,4 @@
-import { ViewerPages, ViewerIcons, ViewerUIButtons, LaymicClassNames, LaymicStateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerIcons, ViewerUIButtons, LaymicClassNames, LaymicStateClassNames } from "#/interfaces/index";
 export default class DOMBuilder {
     private icons;
     readonly classNames: LaymicClassNames;

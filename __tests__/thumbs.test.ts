@@ -1,5 +1,6 @@
 import Thumbnails from "#/components/thumbs";
 import DOMBuilder from "#/components/builder";
+import { ViewerStates } from "#/interfaces/core";
 
 describe("thumbs class test", () => {
   const builder = new DOMBuilder();
@@ -8,7 +9,7 @@ describe("thumbs class test", () => {
     "test1.png",
     "test2.png",
   ]
-  const state = {
+  const state: ViewerStates = {
     viewerPadding: 10,
     // デフォルト値としてウィンドウ幅を指定
     swiperRect: {
@@ -18,7 +19,8 @@ describe("thumbs class test", () => {
       h: 800,
     },
     // インスタンスごとに固有のid数字
-    viewerId: 0,
+    viewerId: "laymic",
+    viewerIdx: 0,
     pageSize: {
       w: 400,
       h: 800
@@ -38,7 +40,10 @@ describe("thumbs class test", () => {
     thumbItemGap: 16,
     thumbsWrapperPadding: 16,
     isMobile: false,
-  };
+    isInstantOpen: true,
+    bodyScrollTop: 0,
+    thumbItemHeight: 128,
+  }
 
   const rootEl = builder.createDiv();
   const thumbs = new Thumbnails(builder, rootEl, testPics, state);
@@ -50,7 +55,7 @@ describe("thumbs class test", () => {
       expect(el.src).toBe("");
     })
 
-    thumbs.revealImgs();
+    thumbs["revealImgs"]();
 
     thumbs.thumbEls.forEach(el => {
       if (!(el instanceof HTMLImageElement)) return;

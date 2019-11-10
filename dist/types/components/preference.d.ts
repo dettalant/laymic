@@ -1,5 +1,5 @@
 import DOMBuilder from "#/components/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
+import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces/index";
 export default class LaymicPreference {
     private readonly PREFERENCE_KEY;
     rootEl: HTMLElement;
