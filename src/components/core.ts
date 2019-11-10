@@ -464,24 +464,10 @@ export default class Laymic {
           if (!isMultiTouch(e)) return;
           e.preventDefault();
           this.zoom.pinchZoom(e);
-          // const distance = this.zoom.getDistanceBetweenTouches(e);
-          //
-          // const ratio = distance / baseDistance;
-          // if (ratio > 1) {
-            // const {minRatio, maxRatio} = this.zoom.state;
-            // let multiply = (ratio < 1)
-            // ? this.zoom.state.zoomMultiply * 0.9
-            // : this.zoom.state.zoomMultiply * 1.1;
-            //
-            // const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
-            //
-            // const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
-            // this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
-          // }
         }), passiveFalseOption);
 
         el.addEventListener("touchend", () => {
-          if (this.zoom.state.zoomMultiply > 1) {
+          if (this.zoom.zoomRatio > 1) {
             this.zoom.enableController();
             this.hideViewerUI();
           }

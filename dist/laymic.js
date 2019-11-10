@@ -6252,7 +6252,7 @@ class LaymicZoom {
     get defaultLaymicZoomStates() {
         return {
             isZoomed: false,
-            zoomMultiply: 1.0,
+            zoomRatio: 1.0,
             minRatio: 1.0,
             maxRatio: 3.0,
             isSwiped: false,
@@ -6270,6 +6270,9 @@ class LaymicZoom {
     }
     get isZoomed() {
         return this.state.isZoomed;
+    }
+    get zoomRatio() {
+        return this.state.zoomRatio;
     }
     /**
      * タッチされた二点間の距離を返す
@@ -6289,7 +6292,7 @@ class LaymicZoom {
      * タッチされた二点の座標の中心点から、
      * 正規化された拡大時中心点を返す
      * @param  e TouchEvent
-     * @return   [zoomX, zoomY]
+     * @return   [betweenX, betweenY]
      */
     getNormalizedPosBetweenTouches(e) {
         if (e.targetTouches.length < 2)
@@ -6304,12 +6307,11 @@ class LaymicZoom {
         return [bx / rw, by / rh];
     }
     /**
-     * TODO: この処理がまだガタガタ
-     * @return [description]
+     * 画面中央座標を正規化して返す
+     * @return [centeringX, centeringY]
      */
     getNormalizedCurrentCenter() {
-        // const {clientWidth: cw, clientHeight: ch} = this.rootEl;
-        const { innerWidth: cw, innerHeight: ch } = window;
+        const { clientWidth: cw, clientHeight: ch } = this.rootEl;
         const { l: rx, t: ry, w: rw, h: rh } = this.state.zoomRect;
         const maxX = rw - cw;
         const maxY = rh - ch;
@@ -6321,7 +6323,7 @@ class LaymicZoom {
         return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
     }
     get scaleProperty() {
-        return `scale(${this.state.zoomMultiply})`;
+        return `scale(${this.state.zoomRatio})`;
     }
     get translateProperty() {
         return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
@@ -6358,21 +6360,19 @@ class LaymicZoom {
         // 画面サイズの対角線上距離を最大距離とする
         const maxD = Math.sqrt(iw ** 2 + ih ** 2);
         const pinchD = distance - this.state.pastDistance;
-        // const m = distance / baseDistance;
         const { minRatio, maxRatio } = this.state;
-        // let multiply = (m < 1)
-        // ? this.state.zoomMultiply * 0.9
-        // : this.state.zoomMultiply * 1.1;
-        // ピンチ操作では最大で対角線上距離の半分しか使わないので
-        // 得られた倍率を二倍することで正確な数値を出せる
-        const multiply = this.state.zoomMultiply + (pinchD / maxD) * 2;
+        // 計算値そのままでは動作が硬いので
+        // 感度を6倍にしてスマホブラウザ操作感と近づける
+        const multiply = this.state.zoomRatio + (pinchD / maxD) * 6;
         // maxRatio~minRatio間に収まるよう調整
-        const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
+        const zoomRatio = Math.max(Math.min(multiply, maxRatio), minRatio);
+        // タッチ座標と画面中央座標を取得し、
+        // その平均値をズームの中心座標とする
         const [bx, by] = this.getNormalizedPosBetweenTouches(e);
         const [cx, cy] = this.getNormalizedCurrentCenter();
         const zoomX = (bx + cx) / 2;
         const zoomY = (by + cy) / 2;
-        this.enableZoom(zoomMultiply, zoomX, zoomY);
+        this.enableZoom(zoomRatio, zoomX, zoomY);
         this.state.pastDistance = distance;
     }
     applyEventListeners() {
@@ -6380,7 +6380,7 @@ class LaymicZoom {
             this.el.addEventListener("touchstart", e => this.touchStartHandler(e));
             this.el.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
             this.el.addEventListener("touchend", () => {
-                if (this.state.isSwiped || this.state.zoomMultiply > 1)
+                if (this.state.isSwiped || this.state.zoomRatio > 1)
                     return;
                 // ズーム倍率が1の場合はズームモードを終了させる
                 this.disable();
@@ -6423,7 +6423,7 @@ class LaymicZoom {
         let zoomRect;
         if (translateX !== void 0 && translateY !== void 0) {
             const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
-            const multiply = this.state.zoomMultiply;
+            const multiply = this.state.zoomRatio;
             zoomRect = {
                 l: translateX,
                 t: translateY,
@@ -6484,19 +6484,19 @@ class LaymicZoom {
     /**
      * ズームモードに入る
      */
-    enable(zoomMultiply = 1.5, zoomX = 0.5, zoomY = 0.5) {
+    enable(zoomRatio = 1.5, zoomX = 0.5, zoomY = 0.5) {
         this.enableController();
-        this.enableZoom(zoomMultiply, zoomX, zoomY);
+        this.enableZoom(zoomRatio, zoomX, zoomY);
     }
-    enableZoom(zoomMultiply = 1.5, zoomX = 0.5, zoomY = 0.5) {
+    enableZoom(zoomRatio = 1.5, zoomX = 0.5, zoomY = 0.5) {
         // const {w: rw, h: rh} = this.state.zoomRect;
         const { clientWidth: cw, clientHeight: ch } = this.rootEl;
-        const translateX = -((cw * zoomMultiply - cw) * zoomX);
-        const translateY = -((ch * zoomMultiply - ch) * zoomY);
-        this.state.zoomMultiply = zoomMultiply;
+        const translateX = -((cw * zoomRatio - cw) * zoomX);
+        const translateY = -((ch * zoomRatio - ch) * zoomY);
+        this.state.zoomRatio = zoomRatio;
         this.updateZoomRect(translateX, translateY);
         // 引数を省略した場合は中央寄せでズームする
-        this.zoomWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomMultiply})`;
+        this.zoomWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomRatio})`;
     }
     enableController() {
         const zoomed = this.builder.stateNames.zoomed;
@@ -6510,7 +6510,7 @@ class LaymicZoom {
         const zoomed = this.builder.stateNames.zoomed;
         this.zoomWrapper.classList.remove(zoomed);
         this.state.isZoomed = false;
-        this.state.zoomMultiply = 1.0;
+        this.state.zoomRatio = 1.0;
         this.zoomWrapper.style.transform = "";
     }
 }
@@ -6909,23 +6909,9 @@ class Laymic {
                         return;
                     e.preventDefault();
                     this.zoom.pinchZoom(e);
-                    // const distance = this.zoom.getDistanceBetweenTouches(e);
-                    //
-                    // const ratio = distance / baseDistance;
-                    // if (ratio > 1) {
-                    // const {minRatio, maxRatio} = this.zoom.state;
-                    // let multiply = (ratio < 1)
-                    // ? this.zoom.state.zoomMultiply * 0.9
-                    // : this.zoom.state.zoomMultiply * 1.1;
-                    //
-                    // const zoomMultiply = Math.max(Math.min(multiply, maxRatio), minRatio);
-                    //
-                    // const [zoomX, zoomY] = this.zoom.getNormalizePosBetweenTouches(e);
-                    // this.zoom.enableZoom(zoomMultiply, zoomX, zoomY);
-                    // }
                 }), passiveFalseOption);
                 el.addEventListener("touchend", () => {
-                    if (this.zoom.state.zoomMultiply > 1) {
+                    if (this.zoom.zoomRatio > 1) {
                         this.zoom.enableController();
                         this.hideViewerUI();
                     }

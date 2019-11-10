@@ -2,7 +2,7 @@ import DOMBuilder from "#/components/builder";
 import { PageRect } from "#/interfaces";
 interface LaymicZoomStates {
     isZoomed: boolean;
-    zoomMultiply: number;
+    zoomRatio: number;
     minRatio: number;
     maxRatio: number;
     isSwiped: boolean;
@@ -22,6 +22,7 @@ export default class LaymicZoom {
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
     readonly defaultLaymicZoomStates: LaymicZoomStates;
     readonly isZoomed: boolean;
+    readonly zoomRatio: number;
     /**
      * タッチされた二点間の距離を返す
      * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
@@ -32,12 +33,12 @@ export default class LaymicZoom {
      * タッチされた二点の座標の中心点から、
      * 正規化された拡大時中心点を返す
      * @param  e TouchEvent
-     * @return   [zoomX, zoomY]
+     * @return   [betweenX, betweenY]
      */
     getNormalizedPosBetweenTouches(e: TouchEvent): [number, number];
     /**
-     * TODO: この処理がまだガタガタ
-     * @return [description]
+     * 画面中央座標を正規化して返す
+     * @return [centeringX, centeringY]
      */
     getNormalizedCurrentCenter(): [number, number];
     private readonly scaleProperty;
@@ -59,8 +60,8 @@ export default class LaymicZoom {
     /**
      * ズームモードに入る
      */
-    enable(zoomMultiply?: number, zoomX?: number, zoomY?: number): void;
-    enableZoom(zoomMultiply?: number, zoomX?: number, zoomY?: number): void;
+    enable(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
+    enableZoom(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
     enableController(): void;
     /**
      * ズームモードから抜ける
