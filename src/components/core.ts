@@ -102,6 +102,15 @@ export default class Laymic {
     // ここからは省略表記で存在確認
     if (options.viewerId) this.state.viewerId = options.viewerId;
 
+    const pagesLen = (this.state.isFirstSlideEmpty)
+    ? pages.length + 1
+    : pages.length;
+    if (options.isAppendEmptySlide === false || !(pagesLen % 2)) {
+      // 強制的にオフ設定がなされているか
+      // 合計ページ数が偶数の場合はスライドを追加しない
+      this.state.isAppendEmptySlide = false;
+    }
+
     this.thumbs = new LaymicThumbnails(builder, rootEl, pages, thumbPages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
     this.zoom = new LaymicZoom(builder, rootEl);
@@ -118,7 +127,8 @@ export default class Laymic {
     const swiperEl = builder.createSwiperContainer(
       pages,
       this.state.isLTR,
-      this.state.isFirstSlideEmpty
+      this.state.isFirstSlideEmpty,
+      this.state.isAppendEmptySlide
     );
 
     [
@@ -215,6 +225,9 @@ export default class Laymic {
       isVertView: false,
       // 空白をつけた左始めがデフォルト設定
       isFirstSlideEmpty: true,
+      // 全ページ数が奇数でいて見開き2p表示の場合
+      // 最終ページとして空白ページを追加する
+      isAppendEmptySlide: true,
       vertPageMargin: 10,
       horizPageMargin: 0,
       // mediumと同じ数値
@@ -640,20 +653,28 @@ export default class Laymic {
    * 「1p表示 <-> 2p表示」を切り替える
    */
   private switchSingleSlideState() {
+    // swiperが初期化されていないなら早期リターン
+    if (!this.swiper) return;
+
     const rootEl = this.el.rootEl;
     const state = this.builder.stateNames.singleSlide;
     const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
+    const isAppendEmptySlide = this.state.isAppendEmptySlide;
 
     if (this.isDoubleSlideHorizView) {
       // 横読み時2p表示
-      rootEl.classList.remove(state);
 
-      if (isFirstSlideEmpty && this.swiper) this.prependFirstEmptySlide();
+      if (isFirstSlideEmpty) this.prependFirstEmptySlide();
+      if (isAppendEmptySlide) this.appendLastEmptySlide();
+
+      rootEl.classList.remove(state);
     } else {
       // 横読み時1p表示
-      rootEl.classList.add(state);
 
-      if (isFirstSlideEmpty && this.swiper) this.removeFirstEmptySlide();
+      if (isFirstSlideEmpty) this.removeFirstEmptySlide();
+      if (isAppendEmptySlide) this.removeLastEmptySlide();
+
+      rootEl.classList.add(state);
     }
   }
 
@@ -683,7 +704,6 @@ export default class Laymic {
       this.swiper.updateSlides();
       this.swiper.updateProgress();
     }
-
   }
 
   /**
@@ -698,7 +718,7 @@ export default class Laymic {
     const hasEmptySlide = firstSlide.classList.contains(emptySlide);
 
     if (!hasEmptySlide) {
-      const emptyEl = this.builder.createEmptySlideEl()
+      const emptyEl = this.builder.createEmptySlideEl();
       this.swiper.prependSlide(emptyEl);
 
       // 縦読み時のみの処理
@@ -711,6 +731,51 @@ export default class Laymic {
       }
 
       // swiper側の更新も一応かけておく
+      this.swiper.updateSlides();
+      this.swiper.updateProgress();
+    }
+  }
+
+  /**
+   * 最終p空白スライドを削除する
+   */
+  private removeLastEmptySlide() {
+    if (this.swiper.slides.length === 0) return;
+    const lastIdx = this.swiper.slides.length - 1;
+    const lastSlide: HTMLElement = this.swiper.slides[lastIdx];
+    const emptySlide = this.builder.classNames.emptySlide;
+    const hasEmptySlide = lastSlide.classList.contains(emptySlide);
+
+    if (hasEmptySlide) {
+      this.swiper.removeSlide(lastIdx);
+
+      // swiperを一応更新
+      this.swiper.updateSlides();
+      this.swiper.updateProgress();
+    }
+  }
+
+  /**
+   * 最終pに空白スライドを追加する
+   */
+  private appendLastEmptySlide() {
+    if (this.swiper.slides.length === 0) return;
+    const lastIdx = this.swiper.slides.length - 1;
+    const lastSlide: HTMLElement = this.swiper.slides[lastIdx];
+    const emptySlide = this.builder.classNames.emptySlide;
+    const hasEmptySlide = lastSlide.classList.contains(emptySlide);
+
+    if (!hasEmptySlide) {
+      const emptyEl = this.builder.createEmptySlideEl();
+      this.swiper.appendSlide(emptyEl);
+
+      const isMove = this.swiper.activeIndex !== 0;
+      if (!this.state.isVertView && isMove) {
+        const idx = this.swiper.activeIndex + 2;
+        this.swiper.slideTo(idx);
+      }
+
+      // swiperを一応更新
       this.swiper.updateSlides();
       this.swiper.updateProgress();
     }

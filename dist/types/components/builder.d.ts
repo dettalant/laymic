@@ -18,7 +18,7 @@ export default class DOMBuilder {
      * @param  isLTR     左から右に流れる形式を取るならtrue
      * @return           swiper-container要素
      */
-    createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement;
+    createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean, isAppendEmptySlide?: boolean): HTMLElement;
     /**
      * 漫画ビューワーコントローラー要素を返す
      * @param  id    要素のid名となる文字列

@@ -5455,7 +5455,7 @@ var laymic = (function (exports) {
        * @param  isLTR     左から右に流れる形式を取るならtrue
        * @return           swiper-container要素
        */
-      createSwiperContainer(pages, isLTR, isFirstSlideEmpty) {
+      createSwiperContainer(pages, isLTR, isFirstSlideEmpty, isAppendEmptySlide) {
           const swiperEl = this.createDiv();
           swiperEl.className = "swiper-container " + this.classNames.slider;
           swiperEl.dir = (isLTR) ? "" : "rtl";
@@ -5480,6 +5480,12 @@ var laymic = (function (exports) {
                   divEl.appendChild(imgEl);
               }
               wrapperEl.appendChild(divEl);
+          }
+          // isAppendEmptySlide引数がtrueならば
+          // 空の要素を最後に入れる
+          if (isAppendEmptySlide) {
+              const emptyEl = this.createEmptySlideEl();
+              wrapperEl.appendChild(emptyEl);
           }
           swiperEl.appendChild(wrapperEl);
           return swiperEl;
@@ -6659,6 +6665,14 @@ var laymic = (function (exports) {
           // ここからは省略表記で存在確認
           if (options.viewerId)
               this.state.viewerId = options.viewerId;
+          const pagesLen = (this.state.isFirstSlideEmpty)
+              ? pages.length + 1
+              : pages.length;
+          if (options.isAppendEmptySlide === false || !(pagesLen % 2)) {
+              // 強制的にオフ設定がなされているか
+              // 合計ページ数が偶数の場合はスライドを追加しない
+              this.state.isAppendEmptySlide = false;
+          }
           this.thumbs = new LaymicThumbnails(builder, rootEl, pages, thumbPages, this.state);
           this.help = new LaymicHelp(builder, rootEl);
           this.zoom = new LaymicZoom(builder, rootEl);
@@ -6673,7 +6687,7 @@ var laymic = (function (exports) {
           if (!screenfull.isEnabled)
               rootEl.classList.add(stateNames.unsupportedFullscreen);
           const [controllerEl, uiButtons] = builder.createViewerController();
-          const swiperEl = builder.createSwiperContainer(pages, this.state.isLTR, this.state.isFirstSlideEmpty);
+          const swiperEl = builder.createSwiperContainer(pages, this.state.isLTR, this.state.isFirstSlideEmpty, this.state.isAppendEmptySlide);
           [
               controllerEl,
               swiperEl,
@@ -6751,6 +6765,9 @@ var laymic = (function (exports) {
               isVertView: false,
               // 空白をつけた左始めがデフォルト設定
               isFirstSlideEmpty: true,
+              // 全ページ数が奇数でいて見開き2p表示の場合
+              // 最終ページとして空白ページを追加する
+              isAppendEmptySlide: true,
               vertPageMargin: 10,
               horizPageMargin: 0,
               // mediumと同じ数値
@@ -7131,20 +7148,28 @@ var laymic = (function (exports) {
        * 「1p表示 <-> 2p表示」を切り替える
        */
       switchSingleSlideState() {
+          // swiperが初期化されていないなら早期リターン
+          if (!this.swiper)
+              return;
           const rootEl = this.el.rootEl;
           const state = this.builder.stateNames.singleSlide;
           const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
+          const isAppendEmptySlide = this.state.isAppendEmptySlide;
           if (this.isDoubleSlideHorizView) {
               // 横読み時2p表示
-              rootEl.classList.remove(state);
-              if (isFirstSlideEmpty && this.swiper)
+              if (isFirstSlideEmpty)
                   this.prependFirstEmptySlide();
+              if (isAppendEmptySlide)
+                  this.appendLastEmptySlide();
+              rootEl.classList.remove(state);
           }
           else {
               // 横読み時1p表示
-              rootEl.classList.add(state);
-              if (isFirstSlideEmpty && this.swiper)
+              if (isFirstSlideEmpty)
                   this.removeFirstEmptySlide();
+              if (isAppendEmptySlide)
+                  this.removeLastEmptySlide();
+              rootEl.classList.add(state);
           }
       }
       /**
@@ -7194,6 +7219,41 @@ var laymic = (function (exports) {
                   this.swiper.slideTo(idx);
               }
               // swiper側の更新も一応かけておく
+              this.swiper.updateSlides();
+              this.swiper.updateProgress();
+          }
+      }
+      removeLastEmptySlide() {
+          if (this.swiper.slides.length === 0)
+              return;
+          const lastIdx = this.swiper.slides.length - 1;
+          const lastSlide = this.swiper.slides[lastIdx];
+          const emptySlide = this.builder.classNames.emptySlide;
+          const hasEmptySlide = lastSlide.classList.contains(emptySlide);
+          if (hasEmptySlide) {
+              this.swiper.removeSlide(lastIdx);
+              // swiperを一応更新
+              this.swiper.updateSlides();
+              this.swiper.updateProgress();
+          }
+      }
+      appendLastEmptySlide() {
+          if (this.swiper.slides.length === 0)
+              return;
+          const lastIdx = this.swiper.slides.length - 1;
+          const lastSlide = this.swiper.slides[lastIdx];
+          const emptySlide = this.builder.classNames.emptySlide;
+          const hasEmptySlide = lastSlide.classList.contains(emptySlide);
+          console.log("appendLastEmptySlide", this.swiper.activeIndex);
+          if (!hasEmptySlide) {
+              const emptyEl = this.builder.createEmptySlideEl();
+              this.swiper.appendSlide(emptyEl);
+              const isMove = this.swiper.activeIndex !== 0;
+              if (!this.state.isVertView && isMove) {
+                  const idx = this.swiper.activeIndex + 2;
+                  this.swiper.slideTo(idx);
+              }
+              // swiperを一応更新
               this.swiper.updateSlides();
               this.swiper.updateProgress();
           }
@@ -7579,8 +7639,7 @@ var laymic = (function (exports) {
           };
           this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options));
           // 用をなしたテンプレート要素を削除
-          if (el.parentNode)
-              el.parentNode.removeChild(el);
+          // if (el.parentNode) el.parentNode.removeChild(el);
       }
       open(viewerId) {
           const laymic = this.laymicMap.get(viewerId);

@@ -106,7 +106,7 @@ export default class LaymicApplicator {
     this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options))
 
     // 用をなしたテンプレート要素を削除
-    if (el.parentNode) el.parentNode.removeChild(el);
+    // if (el.parentNode) el.parentNode.removeChild(el);
   }
 
   open(viewerId: string) {

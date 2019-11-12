@@ -70,6 +70,8 @@ export default class Laymic {
      * 重複して追加しないように、空スライドが存在しない場合のみ追加する
      */
     private prependFirstEmptySlide;
+    private removeLastEmptySlide;
+    private appendLastEmptySlide;
     /**
      * 入力したMouseEventが
      * mangaViewer画面のクリックポイントに重なっているかを返す

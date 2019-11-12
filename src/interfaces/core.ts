@@ -21,6 +21,10 @@ export interface LaymicOptions {
   // 横読み時一ページ目を空白として空ける
   // 表紙ページを単独表示することを想定
   isFirstSlideEmpty?: boolean,
+  // 全ページ数が奇数でいて見開き2p表示の場合
+  // 最終ページとして空白ページを追加する
+  // optionとして`false`を指定すると無効化できる
+  isAppendEmptySlide?: boolean,
   // アイコンを別のものに変更する
   icons?: Partial<ViewerIcons>,
   // 各種クラス名を別のものに変更する
@@ -69,6 +73,9 @@ export interface ViewerStates {
   isLTR: boolean,
   isVertView: boolean,
   isFirstSlideEmpty: boolean,
+  // 全ページ数が奇数でいて見開き2p表示の場合
+  // 最終ページとして空白ページを追加する
+  isAppendEmptySlide: boolean,
   horizPageMargin: number,
   vertPageMargin: number,
   progressBarWidth: number,

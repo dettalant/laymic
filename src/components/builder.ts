@@ -255,7 +255,7 @@ export default class DOMBuilder {
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
+  createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean, isAppendEmptySlide?: boolean): HTMLElement {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container " + this.classNames.slider;
     swiperEl.dir = (isLTR) ? "" : "rtl";
@@ -285,6 +285,14 @@ export default class DOMBuilder {
 
       wrapperEl.appendChild(divEl);
     }
+
+    // isAppendEmptySlide引数がtrueならば
+    // 空の要素を最後に入れる
+    if (isAppendEmptySlide) {
+      const emptyEl = this.createEmptySlideEl();
+      wrapperEl.appendChild(emptyEl);
+    }
+
     swiperEl.appendChild(wrapperEl);
 
     return swiperEl;
