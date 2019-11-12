@@ -76,6 +76,12 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 
 ## Laymicの引数
 
+**LaymicPages**
+|名前|型|説明|
+|---|型|---|
+|`pages`|`(string | Element)[]`|表示する漫画ページセット|
+|`thumbs`|`string[]`|サムネイルとして表示する画像セット|
+
 **LaymicOptions**
 
 |名前|初期値|説明|
@@ -93,6 +99,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`isLTR`|`false`|左から右へと流れていく表示形式を取るなら`true`|
 |`isVisiblePagination`|`false`|ページ送りボタンを表示する設定。モバイル端末だと強制的に無効化|
 |`isFirstSlideEmpty`|`true`|横読み時一ページ目を空白として空ける設定|
+|`isAppendEmptySlide`|`true`|横読み時 + ページ数が偶数の場合最終ページに空白を追加する|
 |`isInstantOpen`|`true`|`location.hash`と`viewerId`が一致していた場合、ページ読み込み直後にビューワーを開く機能。`false`で無効化|
 |`progressBarWidth`|`"auto"`|進捗バーの太さを変更する。使用できる値は`"auto"`, `"none"`, `"tint"`, `"medium"`, `"bold"`の五つ|
 
@@ -114,6 +121,32 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`ltr`|`"laymic_isLTR"`|`isLTR`設定が有効な場合に付与|
 |`mobile`|`"laymic_isMobile"`|モバイル端末の場合に付与|
 
+**ViewerIcons**
+
+`ViewerIcons`に指定する値は全て`IconData`である必要あり
+
+|名前|説明|
+|---|---|
+|`close`|閉じるアイコン|
+|`fullscreen`|全画面化アイコン|
+|`exitFullscreen`|全画面終了アイコン|
+|`preference`|設定アイコン|
+|`showThumbs`|サムネイル表示アイコン|
+|`vertView`|縦読みアイコン|
+|`horizView`|横読みアイコン|
+|`checkboxOuter`|チェックボックス外側|
+|`checkboxInner`|チェックボックス内部|
+|`showHelp`|ヘルプ表示アイコン|
+|`zoomIn`|拡大アイコン|
+
+**IconData**
+
+|名前|型|説明|
+|---|---|---|
+|`id`|`string`|アイコンidとして使われる値|
+|`className`|`string`|アイコンに付与するクラス名|
+|`viewBox`|`string`|アイコンのviewBox|
+|`pathDs`|`string[]`|アイコンのpath要素d属性に用いられる文字列配列|
 
 ## LaymicApplicator固有の引数
 
@@ -135,6 +168,12 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
 |`data-horiz-page-margin`|`horizPageMargin`と同様|
 |`data-viewer-padding`|`viewerPadding`と同様|
 |`data-progress-bar-width`|`progressBarWidth`と同様|
+
+`laymic_template`内要素固有の設定
+|名前|説明|備考|
+|---|---|---|
+|`data-src`|src属性の代わりとして使用可能|`<img>`要素のみ付与可能|
+|`data-thumb-src`|そのページのサムネイル画像を別途指定する||
 
 指定例
 
