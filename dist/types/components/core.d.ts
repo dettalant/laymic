@@ -4,7 +4,7 @@ import LaymicPreference from "#/components/preference";
 import LaymicThumbnails from "#/components/thumbs";
 import LaymicHelp from "#/components/help";
 import LaymicZoom from "#/components/zoom";
-import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces/index";
+import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions, ViewerStates } from "#/interfaces/index";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;
@@ -15,7 +15,7 @@ export default class Laymic {
     zoom: LaymicZoom;
     swiper: Swiper;
     builder: DOMBuilder;
-    constructor(pages: ViewerPages, options?: LaymicOptions);
+    constructor(laymicPages: LaymicPages | ViewerPages, options?: LaymicOptions);
     /**
      * swiper-containerの要素サイズを返す
      * @return 要素サイズオブジェクト

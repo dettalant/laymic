@@ -1,5 +1,5 @@
 import Laymic from "#/components/core";
-import { ViewerPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces/index";
+import { ViewerPages, LaymicPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces/index";
 import { isBarWidth, compareString } from "#/utils";
 
 // 複数ビューワーを一括登録したり、
@@ -80,19 +80,30 @@ export default class LaymicApplicator {
       if (isFinite(viewerPadding)) options.viewerPadding = viewerPadding;
     }
 
-    const pages: ViewerPages = Array.from(el.children)
-      .filter(el => el.tagName.toLowerCase() !== "br")
-      .map(childEl => {
-        let result: Element | string = childEl;
-        if (childEl instanceof HTMLImageElement) {
-          const src = childEl.dataset.src || childEl.src || "";
-          result = src;
-        }
+    const pageEls = Array.from(el.children).filter(el => el.tagName.toLowerCase() !== "br");
 
-        return result;
-      });
+    const pages: ViewerPages = pageEls.map(childEl => {
+      let result: Element | string = childEl;
+      if (childEl instanceof HTMLImageElement) {
+        const src = childEl.dataset.src || childEl.src || "";
+        result = src;
+      }
 
-    this.laymicMap.set(viewerId || "laymic", new Laymic(pages, options))
+      return result;
+    });
+
+    const thumbs: string[] = pageEls.map(childEl => {
+      return (childEl instanceof HTMLElement)
+        ? childEl.dataset.thumbSrc || ""
+        : "";
+    })
+
+    const laymicPages: LaymicPages = {
+      pages,
+      thumbs
+    }
+
+    this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options))
 
     // 用をなしたテンプレート要素を削除
     if (el.parentNode) el.parentNode.removeChild(el);

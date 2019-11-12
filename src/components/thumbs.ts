@@ -8,7 +8,7 @@ export default class LaymicThumbnails {
   el: HTMLElement;
   wrapperEl: HTMLElement;
   thumbEls: Element[];
-  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: ViewerStates) {
     this.builder = builder;
     const thumbsClassNames = this.builder.classNames.thumbs;
     const thumbsEl = builder.createDiv();
@@ -20,11 +20,23 @@ export default class LaymicThumbnails {
     wrapperEl.className = thumbsClassNames.wrapper;
 
     const thumbEls = [];
-    for (const p of pages) {
+    const loopLen = pages.length;
+    // idxを使いたいので古めかしいforループを使用
+    for (let i = 0; i < loopLen; i++) {
+      const p = pages[i];
+      const t = thumbPages[i] || "";
+
       let el: Element;
-      if (typeof p === "string") {
+      if (t !== "" || typeof p === "string") {
+        let src = "";
+        if (t !== "") {
+          src = t;
+        } else if (typeof p === "string") {
+          src = p;
+        }
+
         const img = new Image();
-        img.dataset.src = p;
+        img.dataset.src = src;
         img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
         el = img;
       } else {
@@ -39,6 +51,7 @@ export default class LaymicThumbnails {
       thumbEls.push(el);
       wrapperEl.appendChild(el);
     }
+
     thumbsEl.appendChild(wrapperEl);
 
     this.el = thumbsEl;

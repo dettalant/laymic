@@ -4,6 +4,11 @@ import { PageRect, PageSize } from "#/interfaces/page";
 
 export type ViewerPages = (string | Element)[];
 
+export interface LaymicPages {
+  pages: ViewerPages,
+  thumbs: string[],
+}
+
 export interface LaymicOptions {
   // ページ横幅
   pageWidth?: number,

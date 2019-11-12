@@ -7,7 +7,7 @@ export default class LaymicThumbnails {
     el: HTMLElement;
     wrapperEl: HTMLElement;
     thumbEls: Element[];
-    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates);
+    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: ViewerStates);
     /**
      * 読み込み待ち状態のimg elementを全て読み込む
      * いわゆるlazyload処理

@@ -1,4 +1,4 @@
-import { BarWidth } from "#/interfaces/index";
+import { BarWidth, LaymicPages } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -125,4 +125,8 @@ export const excludeHashLocation = () => location.protocol + "//" + location.hos
 export const calcWindowVH = (el: HTMLElement = document.documentElement) => {
   const vh = window.innerHeight * 0.01;
   el.style.setProperty("--js-vh", vh + "px");
+}
+
+export const isLaymicPages = (pages: any): pages is LaymicPages => {
+  return "pages" in pages && Array.isArray(pages.pages);
 }

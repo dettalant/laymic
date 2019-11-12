@@ -46,7 +46,7 @@ describe("thumbs class test", () => {
   }
 
   const rootEl = builder.createDiv();
-  const thumbs = new Thumbnails(builder, rootEl, testPics, state);
+  const thumbs = new Thumbnails(builder, rootEl, testPics, testPics, state);
 
   it("revealImgs test", () => {
     thumbs.thumbEls.forEach(el => {

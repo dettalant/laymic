@@ -7,6 +7,7 @@ import {
   sleep,
   readImage,
   isExistTouchEvent,
+  isLaymicPages,
   rafThrottle,
   excludeHashLocation,
   calcWindowVH,
@@ -21,6 +22,7 @@ import LaymicZoom from "#/components/zoom";
 import {
   ViewerPages,
   ViewerElements,
+  LaymicPages,
   LaymicOptions,
   ViewerStates,
   PageRect,
@@ -43,13 +45,17 @@ export default class Laymic {
   swiper: Swiper;
   builder: DOMBuilder;
 
-  constructor(pages: ViewerPages, options: LaymicOptions = {}) {
+  constructor(laymicPages: LaymicPages | ViewerPages, options: LaymicOptions = {}) {
     // 初期化引数を保管
     this.initOptions = options;
     const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
     const rootEl = builder.createDiv();
     const {stateNames, classNames} = builder;
     this.builder = builder;
+
+    const [pages, thumbPages] = (isLaymicPages(laymicPages))
+      ? [laymicPages.pages, laymicPages.thumbs || []]
+      : [laymicPages, []];
 
     if (this.state.viewerIdx === 0) {
       // 一つのページにつき一度だけの処理
@@ -96,7 +102,7 @@ export default class Laymic {
     // ここからは省略表記で存在確認
     if (options.viewerId) this.state.viewerId = options.viewerId;
 
-    this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
+    this.thumbs = new LaymicThumbnails(builder, rootEl, pages, thumbPages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
     this.zoom = new LaymicZoom(builder, rootEl);
 

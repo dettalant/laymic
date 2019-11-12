@@ -5221,6 +5221,9 @@ const calcWindowVH = (el = document.documentElement) => {
     const vh = window.innerHeight * 0.01;
     el.style.setProperty("--js-vh", vh + "px");
 };
+const isLaymicPages = (pages) => {
+    return "pages" in pages && Array.isArray(pages.pages);
+};
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -6046,7 +6049,7 @@ class LaymicPreference {
 }
 
 class LaymicThumbnails {
-    constructor(builder, rootEl, pages, state) {
+    constructor(builder, rootEl, pages, thumbPages, state) {
         this.builder = builder;
         const thumbsClassNames = this.builder.classNames.thumbs;
         const thumbsEl = builder.createDiv();
@@ -6056,11 +6059,22 @@ class LaymicThumbnails {
         const wrapperEl = builder.createDiv();
         wrapperEl.className = thumbsClassNames.wrapper;
         const thumbEls = [];
-        for (const p of pages) {
+        const loopLen = pages.length;
+        // idxを使いたいので古めかしいforループを使用
+        for (let i = 0; i < loopLen; i++) {
+            const p = pages[i];
+            const t = thumbPages[i] || "";
             let el;
-            if (typeof p === "string") {
+            if (t !== "" || typeof p === "string") {
+                let src = "";
+                if (t !== "") {
+                    src = t;
+                }
+                else if (typeof p === "string") {
+                    src = p;
+                }
                 const img = new Image();
-                img.dataset.src = p;
+                img.dataset.src = src;
                 img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
                 el = img;
             }
@@ -6585,7 +6599,7 @@ class LaymicZoom {
 
 Swiper.use([keyboard, pagination, lazy]);
 class Laymic {
-    constructor(pages, options = {}) {
+    constructor(laymicPages, options = {}) {
         // mangaViewer内部で用いるステートまとめ
         this.state = this.defaultMangaViewerStates;
         // 初期化引数を保管
@@ -6594,6 +6608,9 @@ class Laymic {
         const rootEl = builder.createDiv();
         const { stateNames, classNames } = builder;
         this.builder = builder;
+        const [pages, thumbPages] = (isLaymicPages(laymicPages))
+            ? [laymicPages.pages, laymicPages.thumbs || []]
+            : [laymicPages, []];
         if (this.state.viewerIdx === 0) {
             // 一つのページにつき一度だけの処理
             const svgCtn = builder.createSVGIcons();
@@ -6643,7 +6660,7 @@ class Laymic {
         // ここからは省略表記で存在確認
         if (options.viewerId)
             this.state.viewerId = options.viewerId;
-        this.thumbs = new LaymicThumbnails(builder, rootEl, pages, this.state);
+        this.thumbs = new LaymicThumbnails(builder, rootEl, pages, thumbPages, this.state);
         this.help = new LaymicHelp(builder, rootEl);
         this.zoom = new LaymicZoom(builder, rootEl);
         // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
@@ -7543,9 +7560,8 @@ class LaymicApplicator {
             if (isFinite(viewerPadding))
                 options.viewerPadding = viewerPadding;
         }
-        const pages = Array.from(el.children)
-            .filter(el => el.tagName.toLowerCase() !== "br")
-            .map(childEl => {
+        const pageEls = Array.from(el.children).filter(el => el.tagName.toLowerCase() !== "br");
+        const pages = pageEls.map(childEl => {
             let result = childEl;
             if (childEl instanceof HTMLImageElement) {
                 const src = childEl.dataset.src || childEl.src || "";
@@ -7553,7 +7569,16 @@ class LaymicApplicator {
             }
             return result;
         });
-        this.laymicMap.set(viewerId || "laymic", new Laymic(pages, options));
+        const thumbs = pageEls.map(childEl => {
+            return (childEl instanceof HTMLElement)
+                ? childEl.dataset.thumbSrc || ""
+                : "";
+        });
+        const laymicPages = {
+            pages,
+            thumbs
+        };
+        this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options));
         // 用をなしたテンプレート要素を削除
         if (el.parentNode)
             el.parentNode.removeChild(el);
