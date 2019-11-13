@@ -51,3 +51,9 @@ export declare const compareString: <T, U>(s: string, cmp: string, success: T, f
 export declare const excludeHashLocation: () => string;
 export declare const calcWindowVH: (el?: HTMLElement) => void;
 export declare const isLaymicPages: (pages: any) => pages is LaymicPages;
+/**
+ * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+ * @param  pages laymicに指定された全ページ
+ * @return       取得したsrc文字列。取得できなければ空欄を返す
+ */
+export declare const getBeginningSrc: (pages: (string | Element)[]) => string;

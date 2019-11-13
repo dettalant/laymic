@@ -5224,6 +5224,25 @@ const calcWindowVH = (el = document.documentElement) => {
 const isLaymicPages = (pages) => {
     return "pages" in pages && Array.isArray(pages.pages);
 };
+/**
+ * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+ * @param  pages laymicに指定された全ページ
+ * @return       取得したsrc文字列。取得できなければ空欄を返す
+ */
+const getBeginningSrc = (pages) => {
+    let result = "";
+    for (let p of pages) {
+        if (typeof p === "string") {
+            result = p;
+            break;
+        }
+        else if (p instanceof HTMLImageElement) {
+            result = p.dataset.src || p.src;
+            break;
+        }
+    }
+    return result;
+};
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -6628,22 +6647,8 @@ class Laymic {
         }
         else {
             // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-            const getBeginningSrc = (pages) => {
-                let result = "";
-                for (let p of pages) {
-                    if (typeof p === "string") {
-                        result = p;
-                        break;
-                    }
-                    else if (p instanceof HTMLImageElement) {
-                        result = p.dataset.src || p.src;
-                        break;
-                    }
-                }
-                return result;
-            };
             const src = getBeginningSrc(pages);
-            if (src !== "") {
+            if (src) {
                 // 画像src取得に失敗した場合は処理を行わない
                 this.setPageSizeFromImgPath(src);
             }
@@ -6704,6 +6709,7 @@ class Laymic {
             controllerEl,
             buttons: uiButtons,
         };
+        // 各種css変数の更新
         this.cssProgressBarWidthUpdate();
         this.cssViewerPaddingUpdate();
         this.cssJsVhUpdate();
@@ -7092,6 +7098,22 @@ class Laymic {
         }
     }
     /**
+     * swiper instanceを再初期化する
+     * @param  swiperConf 初期化時に指定するswiperOption
+     * @param  idx        初期化時に指定するindex数値
+     */
+    reinitSwiperInstance(swiperConf, idx = 0) {
+        const conf = Object.assign(swiperConf, {
+            initialSlide: idx
+        });
+        // swiperインスタンスを一旦破棄してからre-init
+        this.swiper.destroy(true, true);
+        this.swiper = new Swiper(this.el.swiperEl, conf);
+        this.viewUpdate();
+        if (this.swiper.lazy)
+            this.swiper.lazy.load();
+    }
+    /**
      * 縦読み表示へと切り替える
      */
     enableVerticalView() {
@@ -7110,14 +7132,8 @@ class Laymic {
             && this.isDoubleSlideHorizView)
             ? activeIdx - 1
             : activeIdx;
-        // 読み進めたページ数を引き継ぐ
-        const conf = Object.assign(this.mainSwiperVertViewConf, {
-            initialSlide: idx
-        });
-        // swiperインスタンスを一旦破棄してからre-init
-        this.swiper.destroy(true, true);
-        this.swiper = new Swiper(this.el.swiperEl, conf);
-        this.viewUpdate();
+        // 読み進めたページ数を引き継ぎつつ再初期化
+        this.reinitSwiperInstance(this.mainSwiperVertViewConf, idx);
     }
     /**
      * 横読み表示へと切り替える
@@ -7133,16 +7149,8 @@ class Laymic {
         const idx = (isFirstSlideEmpty && this.isDoubleSlideHorizView)
             ? activeIdx + 1
             : activeIdx;
-        // 読み進めたページ数を引き継ぐ
-        const conf = Object.assign(this.mainSwiperHorizViewConf, {
-            initialSlide: idx
-        });
-        // swiperインスタンスを一旦破棄してからre-init
-        this.swiper.destroy(true, true);
-        this.swiper = new Swiper(this.el.swiperEl, conf);
-        if (this.swiper.lazy)
-            this.swiper.lazy.load();
-        this.viewUpdate();
+        // 読み進めたページ数を引き継ぎつつ再初期化
+        this.reinitSwiperInstance(this.mainSwiperHorizViewConf, idx);
     }
     /**
      * 画面幅に応じて、横読み時の
@@ -7392,9 +7400,14 @@ class Laymic {
      * 主にswiperの表示を更新するための関数
      */
     viewUpdate() {
+        if (!this.el) {
+            console.error("this.elが定義前に呼び出された");
+            return;
+        }
         this.state.swiperRect = this.swiperElRect;
-        this.cssPageWidthUpdate();
-        if (this.thumbs && this.el)
+        this.cssPageSizeUpdate();
+        this.cssPageRealSizeUpdate();
+        if (this.thumbs)
             this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
         if (this.zoom)
             this.zoom.updateZoomRect();
@@ -7434,10 +7447,8 @@ class Laymic {
     }
     /**
      * css変数として各ページ最大サイズを再登録する
-     * cssPageWidthUpdateという関数名だけど
-     * pageHeightの値も更新するのはこれいかに
      */
-    cssPageWidthUpdate() {
+    cssPageSizeUpdate() {
         const { w: aw, h: ah } = this.state.pageAspect;
         const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
         // deduct progressbar size from rootElSize
@@ -7471,6 +7482,23 @@ class Laymic {
     cssViewerPaddingUpdate() {
         this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
     }
+    cssPageRealSizeUpdate() {
+        const { w: aw, h: ah } = this.state.pageAspect;
+        const { clientWidth: cw, clientHeight: ch } = this.el.swiperEl;
+        let width = cw / 2;
+        let height = width * ah / aw;
+        if (this.state.isVertView || !this.isDoubleSlideHorizView) {
+            height = ch;
+            width = height * aw / ah;
+        }
+        this.el.rootEl.style.setProperty("--page-real-width", width + "px");
+        this.el.rootEl.style.setProperty("--page-real-height", height + "px");
+    }
+    // private cssPageAspectUpdate() {
+    //   const {w: aw, h: ah} = this.state.pageAspect;
+    //   this.el.rootEl.style.setProperty("--page-aspect-width", aw.toString());
+    //   this.el.rootEl.style.setProperty("--page-aspect-height", ah.toString());
+    // }
     cssJsVhUpdate() {
         calcWindowVH(this.el.rootEl);
     }
@@ -7545,8 +7573,6 @@ class Laymic {
         readImage(src).then(img => {
             const { width: w, height: h } = img;
             this.setPageSize(w, h);
-            // もしここでエラーが起きても問題ないので握りつぶす
-            this.viewUpdate();
         }).catch(e => console.error(e));
     }
 }

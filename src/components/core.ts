@@ -5,7 +5,6 @@ import {
   calcGCD,
   viewerCnt,
   sleep,
-  readImage,
   isExistTouchEvent,
   isLaymicPages,
   rafThrottle,
@@ -13,7 +12,6 @@ import {
   calcWindowVH,
   isMultiTouch,
   passiveFalseOption,
-  getBeginningSrc
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
@@ -67,13 +65,6 @@ export default class Laymic {
     if (options.pageWidth && options.pageHeight) {
       const [pw, ph] = [options.pageWidth, options.pageHeight]
       this.setPageSize(pw, ph);
-    } else {
-      // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-      const src = getBeginningSrc(pages);
-      if (src) {
-        // 画像src取得に失敗した場合は処理を行わない
-        this.setPageSizeFromImgPath(src);
-      }
     }
 
     this.preference = new LaymicPreference(builder, rootEl);
@@ -1097,17 +1088,5 @@ export default class Laymic {
     }
 
     this.state.thresholdWidth = width;
-  }
-
-  /**
-   * 入力したpathの画像からpageSizeを設定する
-   * @param src 画像path
-   */
-  private setPageSizeFromImgPath(src: string) {
-    readImage(src).then(img => {
-      const {width: w, height: h} = img;
-
-      this.setPageSize(w, h);
-    }).catch(e => console.error(e));
   }
 }

@@ -49,6 +49,12 @@ export default class Laymic {
      */
     close(isHashChange?: boolean): void;
     /**
+     * swiper instanceを再初期化する
+     * @param  swiperConf 初期化時に指定するswiperOption
+     * @param  idx        初期化時に指定するindex数値
+     */
+    private reinitSwiperInstance;
+    /**
      * 縦読み表示へと切り替える
      */
     private enableVerticalView;
@@ -126,12 +132,11 @@ export default class Laymic {
     private fullscreenHandler;
     /**
      * css変数として各ページ最大サイズを再登録する
-     * cssPageWidthUpdateという関数名だけど
-     * pageHeightの値も更新するのはこれいかに
      */
-    private cssPageWidthUpdate;
+    private cssPageSizeUpdate;
     private cssProgressBarWidthUpdate;
     private cssViewerPaddingUpdate;
+    private cssPageRealSizeUpdate;
     private cssJsVhUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する

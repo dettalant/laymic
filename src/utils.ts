@@ -1,4 +1,4 @@
-import { BarWidth, LaymicPages, ViewerPages } from "#/interfaces/index";
+import { BarWidth, LaymicPages } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -32,19 +32,19 @@ export const viewerCnt = () => {
  */
 export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(res, ms))
 
-/**
- * 画像をimg要素として読み取る
- * @param   path 画像path文字列
- * @return       Promiseに包まれたHTMLImageElement
- */
-export const readImage = (path: string): Promise<HTMLImageElement> => {
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => res(img);
-    img.onerror = (e) => rej(e);
-    img.src = path;
-  })
-}
+// /**
+//  * 画像をimg要素として読み取る
+//  * @param   path 画像path文字列
+//  * @return       Promiseに包まれたHTMLImageElement
+//  */
+// export const readImage = (path: string): Promise<HTMLImageElement> => {
+//   return new Promise((res, rej) => {
+//     const img = new Image();
+//     img.onload = () => res(img);
+//     img.onerror = (e) => rej(e);
+//     img.src = path;
+//   })
+// }
 
 export const isMobile = (): boolean => {
   const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
@@ -131,21 +131,21 @@ export const isLaymicPages = (pages: any): pages is LaymicPages => {
   return "pages" in pages && Array.isArray(pages.pages);
 }
 
-/**
- * ViewerPages内はじめのHTMLImageElementのsrcを取得する
- * @param  pages laymicに指定された全ページ
- * @return       取得したsrc文字列。取得できなければ空欄を返す
- */
-export const getBeginningSrc = (pages: ViewerPages): string => {
-  let result = "";
-  for (let p of pages) {
-    if (typeof p === "string") {
-      result = p;
-      break;
-    } else if (p instanceof HTMLImageElement) {
-      result = p.dataset.src || p.src;
-      break;
-    }
-  }
-  return result;
-}
+// /**
+//  * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+//  * @param  pages laymicに指定された全ページ
+//  * @return       取得したsrc文字列。取得できなければ空欄を返す
+//  */
+// export const getBeginningSrc = (pages: ViewerPages): string => {
+//   let result = "";
+//   for (let p of pages) {
+//     if (typeof p === "string") {
+//       result = p;
+//       break;
+//     } else if (p instanceof HTMLImageElement) {
+//       result = p.dataset.src || p.src;
+//       break;
+//     }
+//   }
+//   return result;
+// }

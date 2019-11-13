@@ -33,6 +33,7 @@ describe("thumbs class test", () => {
     isLTR: false,
     isVertView: false,
     isFirstSlideEmpty: false,
+    isAppendEmptySlide: true,
     vertPageMargin: 10,
     horizPageMargin: 0,
     progressBarWidth: 8,
