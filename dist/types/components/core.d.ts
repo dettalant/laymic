@@ -70,7 +70,13 @@ export default class Laymic {
      * 重複して追加しないように、空スライドが存在しない場合のみ追加する
      */
     private prependFirstEmptySlide;
+    /**
+     * 最終p空白スライドを削除する
+     */
     private removeLastEmptySlide;
+    /**
+     * 最終pに空白スライドを追加する
+     */
     private appendLastEmptySlide;
     /**
      * 入力したMouseEventが

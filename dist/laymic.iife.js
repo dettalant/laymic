@@ -7223,6 +7223,9 @@ var laymic = (function (exports) {
               this.swiper.updateProgress();
           }
       }
+      /**
+       * 最終p空白スライドを削除する
+       */
       removeLastEmptySlide() {
           if (this.swiper.slides.length === 0)
               return;
@@ -7237,6 +7240,9 @@ var laymic = (function (exports) {
               this.swiper.updateProgress();
           }
       }
+      /**
+       * 最終pに空白スライドを追加する
+       */
       appendLastEmptySlide() {
           if (this.swiper.slides.length === 0)
               return;
@@ -7244,7 +7250,6 @@ var laymic = (function (exports) {
           const lastSlide = this.swiper.slides[lastIdx];
           const emptySlide = this.builder.classNames.emptySlide;
           const hasEmptySlide = lastSlide.classList.contains(emptySlide);
-          console.log("appendLastEmptySlide", this.swiper.activeIndex);
           if (!hasEmptySlide) {
               const emptyEl = this.builder.createEmptySlideEl();
               this.swiper.appendSlide(emptyEl);
