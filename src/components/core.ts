@@ -63,6 +63,7 @@ export default class Laymic {
     }
 
     if (options.pageWidth && options.pageHeight) {
+      // ページサイズ数値が指定されていた場合の処理
       const [pw, ph] = [options.pageWidth, options.pageHeight]
       this.setPageSize(pw, ph);
     }
@@ -220,6 +221,7 @@ export default class Laymic {
       bodyScrollTop: 0,
     }
   }
+
   private get mainSwiperHorizViewConf(): SwiperOptions {
     const breakpoints: { [index: number]: SwiperOptions } = {};
     const thresholdWidth = this.state.thresholdWidth;
@@ -301,6 +303,84 @@ export default class Laymic {
    */
   private get isDoubleSlideHorizView(): boolean {
     return this.state.thresholdWidth <= window.innerWidth;
+  }
+
+  /**
+   * オーバーレイ表示を展開させる
+   * @param  isDisableFullscreen trueならば全画面化処理を無効化する
+   */
+  open(isDisableFullscreen: boolean = false) {
+    const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
+
+
+    // ページ読み込み後一度目の展開時にのみtrue
+    const isInitialOpen = this.el.rootEl.style.display === "none";
+
+    // display:none状態の場合でだけ動く部分
+    if (isInitialOpen) {
+      this.el.rootEl.style.display = "";
+      sleep(5).then(() => {
+        // slideが追加された後に処理を行う必要があるため
+        // sleepを噛ませて非同期処理とする
+        this.switchSingleSlideState();
+      })
+    };
+
+    // preferenceかinitOptionの値を適用する
+    this.preference.applyPreferenceValues();
+
+    // 全画面化条件を満たしているなら全画面化
+    if (isFullscreen) {
+      // 全画面化ハンドラ内部で呼び出されているので
+      // this.viewUpdate()は不要
+      this.fullscreenHandler();
+    } else {
+      // 全画面化しない場合は表示更新のみ行う
+      this.viewUpdate();
+    }
+
+    // オーバーレイ要素の表示
+    this.showRootEl();
+
+    // オーバーレイ下要素のスクロール停止
+    this.disableBodyScroll();
+
+    // swiperのfreeModeには
+    // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
+    // 不具合があるようなので手動で画像読み込み
+    if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
+      this.swiper.lazy.load();
+    }
+
+    // 履歴を追加せずにhash値を書き換える
+    if (this.state.isInstantOpen) {
+      const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
+      window.location.replace(newUrl);
+    }
+  }
+
+  /**
+   * オーバーレイ表示を閉じる
+   */
+  close(isHashChange: boolean = true) {
+    this.hideRootEl();
+
+    // フルスクリーン状態にあるならそれを解除
+    if (document.fullscreenElement) {
+      this.fullscreenHandler();
+    }
+
+    // オーバーレイ下要素のスクロール再開
+    this.enableBodyScroll();
+
+    if (this.state.isInstantOpen
+      && location.hash
+      && isHashChange
+    ) {
+      // 履歴を残さずhashを削除する
+      const newUrl = excludeHashLocation() + "#";
+      window.location.replace(newUrl);
+    }
   }
 
   private laymicPreferenceUpdateHandler(e: CustomEvent<PreferenceUpdateEventString>) {
@@ -481,84 +561,6 @@ export default class Laymic {
 
     // カスタムイベント登録
     this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<PreferenceUpdateEventString>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
-  }
-
-  /**
-   * オーバーレイ表示を展開させる
-   * @param  isDisableFullscreen trueならば全画面化処理を無効化する
-   */
-  open(isDisableFullscreen: boolean = false) {
-    const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
-
-
-    // ページ読み込み後一度目の展開時にのみtrue
-    const isInitialOpen = this.el.rootEl.style.display === "none";
-
-    // display:none状態の場合でだけ動く部分
-    if (isInitialOpen) {
-      this.el.rootEl.style.display = "";
-      sleep(5).then(() => {
-        // slideが追加された後に処理を行う必要があるため
-        // sleepを噛ませて非同期処理とする
-        this.switchSingleSlideState();
-      })
-    };
-
-    // preferenceかinitOptionの値を適用する
-    this.preference.applyPreferenceValues();
-
-    // 全画面化条件を満たしているなら全画面化
-    if (isFullscreen) {
-      // 全画面化ハンドラ内部で呼び出されているので
-      // this.viewUpdate()は不要
-      this.fullscreenHandler();
-    } else {
-      // 全画面化しない場合は表示更新のみ行う
-      this.viewUpdate();
-    }
-
-    // オーバーレイ要素の表示
-    this.showRootEl();
-
-    // オーバーレイ下要素のスクロール停止
-    this.disableBodyScroll();
-
-    // swiperのfreeModeには
-    // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
-    // 不具合があるようなので手動で画像読み込み
-    if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
-      this.swiper.lazy.load();
-    }
-
-    // 履歴を追加せずにhash値を書き換える
-    if (this.state.isInstantOpen) {
-      const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
-      window.location.replace(newUrl);
-    }
-  }
-
-  /**
-   * オーバーレイ表示を閉じる
-   */
-  close(isHashChange: boolean = true) {
-    this.hideRootEl();
-
-    // フルスクリーン状態にあるならそれを解除
-    if (document.fullscreenElement) {
-      this.fullscreenHandler();
-    }
-
-    // オーバーレイ下要素のスクロール再開
-    this.enableBodyScroll();
-
-    if (this.state.isInstantOpen
-      && location.hash
-      && isHashChange
-    ) {
-      // 履歴を残さずhashを削除する
-      const newUrl = excludeHashLocation() + "#";
-      window.location.replace(newUrl);
-    }
   }
 
   /**
@@ -836,6 +838,11 @@ export default class Laymic {
     const active = this.builder.stateNames.active;
     const {controllerEl, swiperEl} = this.el;
 
+    /**
+     * swiperElとcontrollerElにおける
+     * カーソル状態を一括設定する
+     * @param isPointer trueならばポインターが乗っかっている状態とみなす
+     */
     const setCursorStyle = (isPointer: boolean) => {
       const cursor = (isPointer) ? "pointer" : "";
       controllerEl.style.cursor = cursor
@@ -858,6 +865,12 @@ export default class Laymic {
     }
   }
 
+  /**
+   * ページ送りボタンの表示/非表示設定を切り替えるハンドラ
+   *
+   * disablePagination()で強制非表示化がなされている場合は
+   * どうあがいても非表示となる
+   */
   private changePaginationVisibility() {
     const hidden = this.builder.stateNames.hidden;
     const {prevPage, nextPage} = this.el.buttons;
@@ -948,7 +961,7 @@ export default class Laymic {
   }
 
   /**
-   * css変数として各ページ最大サイズを再登録する
+   * css変数として表示可能ページ最大サイズを登録する
    */
   private cssPageSizeUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
@@ -982,14 +995,23 @@ export default class Laymic {
     this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
   }
 
+  /**
+   * プログレスバーの太さ数値をcss変数に登録する
+   */
   private cssProgressBarWidthUpdate() {
     this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
   }
 
+  /**
+   * viewerPadding数値をcss変数に登録する
+   */
   private cssViewerPaddingUpdate() {
     this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
   }
 
+  /**
+   * 各スライドの実質サイズをcss変数に登録する
+   */
   private cssPageRealSizeUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {clientWidth: cw, clientHeight: ch} = this.el.swiperEl;
@@ -1005,6 +1027,8 @@ export default class Laymic {
     this.el.rootEl.style.setProperty("--page-real-height", height + "px");
   }
 
+  // NOTE: 今は使用していないのでコメントアウト
+  //
   // private cssPageAspectUpdate() {
   //   const {w: aw, h: ah} = this.state.pageAspect;
   //   this.el.rootEl.style.setProperty("--page-aspect-width", aw.toString());
@@ -1057,12 +1081,20 @@ export default class Laymic {
     })
   }
 
+  /**
+   * ページ送りボタンを強制的非表示化する
+   * ステート状態をいじるのはバグの元なので直書きで非表示化する
+   */
   private disablePagination() {
     const { prevPage, nextPage } = this.el.buttons;
     prevPage.style.display = "none";
     nextPage.style.display = "none";
   }
 
+  /**
+   * ページ送りボタン強制的非表示化を解除する
+   * 直書きでのstyle付与を無くす
+   */
   private enablePagination() {
     const { prevPage, nextPage } = this.el.buttons;
     prevPage.style.display = "";
