@@ -89,7 +89,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`icons`||アイコンを別のものに変更する。具体的な中身はViewerIconsを参照|
 |`stateNames`||ステート変化用クラス名を別のものに変更する。具体的な中身はLaymicStateClassNamesを参照|
 |`classNames`||各種クラス名を別のものに変更する。具体的な中身はLaymicClassNamesを参照|
-|`viewerId`||インスタンスと紐付けられる文字列|
+|`viewerId`|`"laymic"`|インスタンスと紐付けられる文字列|
 |`pageWidth`|`720`|原稿画像横幅|
 |`pageHeight`|`1024`|原稿画像縦幅|
 |`vertPageMargin`|`10`|縦読み時のページ間余白ピクセル数値|
@@ -97,7 +97,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`viewerPadding`|`10`|漫画ページ表示コンテナ周囲の余白ピクセル数値|
 |`viewerDirection`|`"horizontal"`|漫画を読み進める方向のデフォルト値。横読みなら`"horizontal"`、縦読みなら`"vertical"`|
 |`isLTR`|`false`|左から右へと流れていく表示形式を取るなら`true`|
-|`isVisiblePagination`|`false`|ページ送りボタンを表示する設定。モバイル端末だと強制的に無効化|
+|`isVisiblePagination`|`false`|ページ送りボタンを表示する設定|
 |`isFirstSlideEmpty`|`true`|横読み時一ページ目を空白として空ける設定|
 |`isAppendEmptySlide`|`true`|横読み時 + ページ数が偶数の場合最終ページに空白を追加する|
 |`isInstantOpen`|`true`|`location.hash`と`viewerId`が一致していた場合、ページ読み込み直後にビューワーを開く機能。`false`で無効化|
