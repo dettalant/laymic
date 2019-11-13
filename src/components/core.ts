@@ -12,7 +12,8 @@ import {
   excludeHashLocation,
   calcWindowVH,
   isMultiTouch,
-  passiveFalseOption
+  passiveFalseOption,
+  getBeginningSrc
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
@@ -68,22 +69,8 @@ export default class Laymic {
       this.setPageSize(pw, ph);
     } else {
       // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-      const getBeginningSrc = (pages: ViewerPages): string => {
-        let result = "";
-        for (let p of pages) {
-          if (typeof p === "string") {
-            result = p;
-            break;
-          } else if (p instanceof HTMLImageElement) {
-            result = p.dataset.src || p.src;
-            break;
-          }
-        }
-        return result;
-      }
-
       const src = getBeginningSrc(pages);
-      if (src !== "") {
+      if (src) {
         // 画像src取得に失敗した場合は処理を行わない
         this.setPageSizeFromImgPath(src);
       }
@@ -147,6 +134,7 @@ export default class Laymic {
       controllerEl,
       buttons: uiButtons,
     };
+    // 各種css変数の更新
     this.cssProgressBarWidthUpdate();
     this.cssViewerPaddingUpdate();
     this.cssJsVhUpdate();
@@ -508,7 +496,7 @@ export default class Laymic {
    * オーバーレイ表示を展開させる
    * @param  isDisableFullscreen trueならば全画面化処理を無効化する
    */
-  public open(isDisableFullscreen: boolean = false) {
+  open(isDisableFullscreen: boolean = false) {
     const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
 
 
@@ -561,7 +549,7 @@ export default class Laymic {
   /**
    * オーバーレイ表示を閉じる
    */
-  public close(isHashChange: boolean = true) {
+  close(isHashChange: boolean = true) {
     this.hideRootEl();
 
     // フルスクリーン状態にあるならそれを解除
@@ -580,6 +568,25 @@ export default class Laymic {
       const newUrl = excludeHashLocation() + "#";
       window.location.replace(newUrl);
     }
+  }
+
+  /**
+   * swiper instanceを再初期化する
+   * @param  swiperConf 初期化時に指定するswiperOption
+   * @param  idx        初期化時に指定するindex数値
+   */
+  private reinitSwiperInstance(swiperConf: SwiperOptions, idx: number = 0) {
+    const conf = Object.assign(swiperConf, {
+      initialSlide: idx
+    });
+
+    // swiperインスタンスを一旦破棄してからre-init
+    this.swiper.destroy(true, true);
+    this.swiper = new Swiper(this.el.swiperEl, conf);
+
+    this.viewUpdate();
+
+    if (this.swiper.lazy) this.swiper.lazy.load();
   }
 
   /**
@@ -606,16 +613,8 @@ export default class Laymic {
       ? activeIdx - 1
       : activeIdx
 
-    // 読み進めたページ数を引き継ぐ
-    const conf = Object.assign(this.mainSwiperVertViewConf, {
-      initialSlide: idx
-    });
-
-    // swiperインスタンスを一旦破棄してからre-init
-    this.swiper.destroy(true, true);
-    this.swiper = new Swiper(this.el.swiperEl, conf);
-
-    this.viewUpdate();
+      // 読み進めたページ数を引き継ぎつつ再初期化
+    this.reinitSwiperInstance(this.mainSwiperVertViewConf, idx);
   }
 
   /**
@@ -635,17 +634,8 @@ export default class Laymic {
       ? activeIdx + 1
       : activeIdx;
 
-    // 読み進めたページ数を引き継ぐ
-    const conf = Object.assign(this.mainSwiperHorizViewConf, {
-      initialSlide: idx
-    })
-
-    // swiperインスタンスを一旦破棄してからre-init
-    this.swiper.destroy(true, true);
-    this.swiper = new Swiper(this.el.swiperEl, conf);
-    if (this.swiper.lazy) this.swiper.lazy.load();
-
-    this.viewUpdate();
+    // 読み進めたページ数を引き継ぎつつ再初期化
+    this.reinitSwiperInstance(this.mainSwiperHorizViewConf, idx);
   }
 
   /**
@@ -917,12 +907,20 @@ export default class Laymic {
    * 主にswiperの表示を更新するための関数
    */
   private viewUpdate() {
-    this.state.swiperRect = this.swiperElRect;
-    this.cssPageWidthUpdate();
-    if (this.thumbs && this.el) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
-    if (this.zoom) this.zoom.updateZoomRect();
-    if (this.swiper) this.swiper.update();
+    if (!this.el) {
+      console.error("this.elが定義前に呼び出された");
+      return;
+    }
 
+    this.state.swiperRect = this.swiperElRect;
+    this.cssPageSizeUpdate();
+    this.cssPageRealSizeUpdate();
+
+    if (this.thumbs) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
+
+    if (this.zoom) this.zoom.updateZoomRect();
+
+    if (this.swiper) this.swiper.update();
   }
 
   /**
@@ -960,10 +958,8 @@ export default class Laymic {
 
   /**
    * css変数として各ページ最大サイズを再登録する
-   * cssPageWidthUpdateという関数名だけど
-   * pageHeightの値も更新するのはこれいかに
    */
-  private cssPageWidthUpdate() {
+  private cssPageSizeUpdate() {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
     // deduct progressbar size from rootElSize
@@ -1002,6 +998,27 @@ export default class Laymic {
   private cssViewerPaddingUpdate() {
     this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
   }
+
+  private cssPageRealSizeUpdate() {
+    const {w: aw, h: ah} = this.state.pageAspect;
+    const {clientWidth: cw, clientHeight: ch} = this.el.swiperEl;
+
+    let width = cw / 2;
+    let height = width * ah / aw;
+    if (this.state.isVertView || !this.isDoubleSlideHorizView) {
+      height = ch;
+      width = height * aw / ah;
+    }
+
+    this.el.rootEl.style.setProperty("--page-real-width", width + "px");
+    this.el.rootEl.style.setProperty("--page-real-height", height + "px");
+  }
+
+  // private cssPageAspectUpdate() {
+  //   const {w: aw, h: ah} = this.state.pageAspect;
+  //   this.el.rootEl.style.setProperty("--page-aspect-width", aw.toString());
+  //   this.el.rootEl.style.setProperty("--page-aspect-height", ah.toString());
+  // }
 
   private cssJsVhUpdate() {
     calcWindowVH(this.el.rootEl);
@@ -1091,9 +1108,6 @@ export default class Laymic {
       const {width: w, height: h} = img;
 
       this.setPageSize(w, h);
-
-      // もしここでエラーが起きても問題ないので握りつぶす
-      this.viewUpdate();
     }).catch(e => console.error(e));
   }
 }

@@ -1,4 +1,4 @@
-import { BarWidth, LaymicPages } from "#/interfaces/index";
+import { BarWidth, LaymicPages, ViewerPages } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -129,4 +129,23 @@ export const calcWindowVH = (el: HTMLElement = document.documentElement) => {
 
 export const isLaymicPages = (pages: any): pages is LaymicPages => {
   return "pages" in pages && Array.isArray(pages.pages);
+}
+
+/**
+ * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+ * @param  pages laymicに指定された全ページ
+ * @return       取得したsrc文字列。取得できなければ空欄を返す
+ */
+export const getBeginningSrc = (pages: ViewerPages): string => {
+  let result = "";
+  for (let p of pages) {
+    if (typeof p === "string") {
+      result = p;
+      break;
+    } else if (p instanceof HTMLImageElement) {
+      result = p.dataset.src || p.src;
+      break;
+    }
+  }
+  return result;
 }
