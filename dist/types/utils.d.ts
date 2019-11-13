@@ -19,12 +19,6 @@ export declare const viewerCnt: () => number;
  * @return    Promiseに包まれたsetTimeout戻り値
  */
 export declare const sleep: (ms: number) => Promise<Function>;
-/**
- * 画像をimg要素として読み取る
- * @param   path 画像path文字列
- * @return       Promiseに包まれたHTMLImageElement
- */
-export declare const readImage: (path: string) => Promise<HTMLImageElement>;
 export declare const isMobile: () => boolean;
 export declare const isExistTouchEvent: () => boolean;
 export declare const isSupportedPassive: () => boolean;
@@ -51,9 +45,3 @@ export declare const compareString: <T, U>(s: string, cmp: string, success: T, f
 export declare const excludeHashLocation: () => string;
 export declare const calcWindowVH: (el?: HTMLElement) => void;
 export declare const isLaymicPages: (pages: any) => pages is LaymicPages;
-/**
- * ViewerPages内はじめのHTMLImageElementのsrcを取得する
- * @param  pages laymicに指定された全ページ
- * @return       取得したsrc文字列。取得できなければ空欄を返す
- */
-export declare const getBeginningSrc: (pages: (string | Element)[]) => string;

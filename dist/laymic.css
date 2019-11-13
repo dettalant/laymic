@@ -424,7 +424,6 @@
   max-height: 100%;
   -o-object-fit: scale-down;
   object-fit: scale-down;
-  /* NOTE: 後でprefixを足す必要あり */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;

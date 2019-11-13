@@ -5136,19 +5136,19 @@ var laymic = (function (exports) {
    * @return    Promiseに包まれたsetTimeout戻り値
    */
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-  /**
-   * 画像をimg要素として読み取る
-   * @param   path 画像path文字列
-   * @return       Promiseに包まれたHTMLImageElement
-   */
-  const readImage = (path) => {
-      return new Promise((res, rej) => {
-          const img = new Image();
-          img.onload = () => res(img);
-          img.onerror = (e) => rej(e);
-          img.src = path;
-      });
-  };
+  // /**
+  //  * 画像をimg要素として読み取る
+  //  * @param   path 画像path文字列
+  //  * @return       Promiseに包まれたHTMLImageElement
+  //  */
+  // export const readImage = (path: string): Promise<HTMLImageElement> => {
+  //   return new Promise((res, rej) => {
+  //     const img = new Image();
+  //     img.onload = () => res(img);
+  //     img.onerror = (e) => rej(e);
+  //     img.src = path;
+  //   })
+  // }
   const isMobile = () => {
       const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
       return regex.test(window.navigator.userAgent);
@@ -5223,25 +5223,24 @@ var laymic = (function (exports) {
   const isLaymicPages = (pages) => {
       return "pages" in pages && Array.isArray(pages.pages);
   };
-  /**
-   * ViewerPages内はじめのHTMLImageElementのsrcを取得する
-   * @param  pages laymicに指定された全ページ
-   * @return       取得したsrc文字列。取得できなければ空欄を返す
-   */
-  const getBeginningSrc = (pages) => {
-      let result = "";
-      for (let p of pages) {
-          if (typeof p === "string") {
-              result = p;
-              break;
-          }
-          else if (p instanceof HTMLImageElement) {
-              result = p.dataset.src || p.src;
-              break;
-          }
-      }
-      return result;
-  };
+  // /**
+  //  * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+  //  * @param  pages laymicに指定された全ページ
+  //  * @return       取得したsrc文字列。取得できなければ空欄を返す
+  //  */
+  // export const getBeginningSrc = (pages: ViewerPages): string => {
+  //   let result = "";
+  //   for (let p of pages) {
+  //     if (typeof p === "string") {
+  //       result = p;
+  //       break;
+  //     } else if (p instanceof HTMLImageElement) {
+  //       result = p.dataset.src || p.src;
+  //       break;
+  //     }
+  //   }
+  //   return result;
+  // }
 
   // svg namespace
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -6641,16 +6640,9 @@ var laymic = (function (exports) {
               document.body.appendChild(svgCtn);
           }
           if (options.pageWidth && options.pageHeight) {
+              // ページサイズ数値が指定されていた場合の処理
               const [pw, ph] = [options.pageWidth, options.pageHeight];
               this.setPageSize(pw, ph);
-          }
-          else {
-              // pageSizeが未設定の場合、一枚目画像の縦横幅からアスペクト比を計算する
-              const src = getBeginningSrc(pages);
-              if (src) {
-                  // 画像src取得に失敗した場合は処理を行わない
-                  this.setPageSizeFromImgPath(src);
-              }
           }
           this.preference = new LaymicPreference(builder, rootEl);
           // 省略表記だとバグが起きそうなので
@@ -6865,6 +6857,70 @@ var laymic = (function (exports) {
       get isDoubleSlideHorizView() {
           return this.state.thresholdWidth <= window.innerWidth;
       }
+      /**
+       * オーバーレイ表示を展開させる
+       * @param  isDisableFullscreen trueならば全画面化処理を無効化する
+       */
+      open(isDisableFullscreen = false) {
+          const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
+          // ページ読み込み後一度目の展開時にのみtrue
+          const isInitialOpen = this.el.rootEl.style.display === "none";
+          // display:none状態の場合でだけ動く部分
+          if (isInitialOpen) {
+              this.el.rootEl.style.display = "";
+              sleep(5).then(() => {
+                  // slideが追加された後に処理を行う必要があるため
+                  // sleepを噛ませて非同期処理とする
+                  this.switchSingleSlideState();
+              });
+          }
+          // preferenceかinitOptionの値を適用する
+          this.preference.applyPreferenceValues();
+          // 全画面化条件を満たしているなら全画面化
+          if (isFullscreen) {
+              // 全画面化ハンドラ内部で呼び出されているので
+              // this.viewUpdate()は不要
+              this.fullscreenHandler();
+          }
+          else {
+              // 全画面化しない場合は表示更新のみ行う
+              this.viewUpdate();
+          }
+          // オーバーレイ要素の表示
+          this.showRootEl();
+          // オーバーレイ下要素のスクロール停止
+          this.disableBodyScroll();
+          // swiperのfreeModeには
+          // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
+          // 不具合があるようなので手動で画像読み込み
+          if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
+              this.swiper.lazy.load();
+          }
+          // 履歴を追加せずにhash値を書き換える
+          if (this.state.isInstantOpen) {
+              const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
+              window.location.replace(newUrl);
+          }
+      }
+      /**
+       * オーバーレイ表示を閉じる
+       */
+      close(isHashChange = true) {
+          this.hideRootEl();
+          // フルスクリーン状態にあるならそれを解除
+          if (document.fullscreenElement) {
+              this.fullscreenHandler();
+          }
+          // オーバーレイ下要素のスクロール再開
+          this.enableBodyScroll();
+          if (this.state.isInstantOpen
+              && location.hash
+              && isHashChange) {
+              // 履歴を残さずhashを削除する
+              const newUrl = excludeHashLocation() + "#";
+              window.location.replace(newUrl);
+          }
+      }
       laymicPreferenceUpdateHandler(e) {
           if (e.detail === "progressBarWidth") {
               // progressBarWidth数値を取得する
@@ -7031,70 +7087,6 @@ var laymic = (function (exports) {
           Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
           this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => this.laymicPreferenceUpdateHandler(e)));
-      }
-      /**
-       * オーバーレイ表示を展開させる
-       * @param  isDisableFullscreen trueならば全画面化処理を無効化する
-       */
-      open(isDisableFullscreen = false) {
-          const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
-          // ページ読み込み後一度目の展開時にのみtrue
-          const isInitialOpen = this.el.rootEl.style.display === "none";
-          // display:none状態の場合でだけ動く部分
-          if (isInitialOpen) {
-              this.el.rootEl.style.display = "";
-              sleep(5).then(() => {
-                  // slideが追加された後に処理を行う必要があるため
-                  // sleepを噛ませて非同期処理とする
-                  this.switchSingleSlideState();
-              });
-          }
-          // preferenceかinitOptionの値を適用する
-          this.preference.applyPreferenceValues();
-          // 全画面化条件を満たしているなら全画面化
-          if (isFullscreen) {
-              // 全画面化ハンドラ内部で呼び出されているので
-              // this.viewUpdate()は不要
-              this.fullscreenHandler();
-          }
-          else {
-              // 全画面化しない場合は表示更新のみ行う
-              this.viewUpdate();
-          }
-          // オーバーレイ要素の表示
-          this.showRootEl();
-          // オーバーレイ下要素のスクロール停止
-          this.disableBodyScroll();
-          // swiperのfreeModeには
-          // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
-          // 不具合があるようなので手動で画像読み込み
-          if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
-              this.swiper.lazy.load();
-          }
-          // 履歴を追加せずにhash値を書き換える
-          if (this.state.isInstantOpen) {
-              const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
-              window.location.replace(newUrl);
-          }
-      }
-      /**
-       * オーバーレイ表示を閉じる
-       */
-      close(isHashChange = true) {
-          this.hideRootEl();
-          // フルスクリーン状態にあるならそれを解除
-          if (document.fullscreenElement) {
-              this.fullscreenHandler();
-          }
-          // オーバーレイ下要素のスクロール再開
-          this.enableBodyScroll();
-          if (this.state.isInstantOpen
-              && location.hash
-              && isHashChange) {
-              // 履歴を残さずhashを削除する
-              const newUrl = excludeHashLocation() + "#";
-              window.location.replace(newUrl);
-          }
       }
       /**
        * swiper instanceを再初期化する
@@ -7340,6 +7332,11 @@ var laymic = (function (exports) {
           const { nextPage, prevPage } = this.el.buttons;
           const active = this.builder.stateNames.active;
           const { controllerEl, swiperEl } = this.el;
+          /**
+           * swiperElとcontrollerElにおける
+           * カーソル状態を一括設定する
+           * @param isPointer trueならばポインターが乗っかっている状態とみなす
+           */
           const setCursorStyle = (isPointer) => {
               const cursor = (isPointer) ? "pointer" : "";
               controllerEl.style.cursor = cursor;
@@ -7362,6 +7359,12 @@ var laymic = (function (exports) {
               setCursorStyle(false);
           }
       }
+      /**
+       * ページ送りボタンの表示/非表示設定を切り替えるハンドラ
+       *
+       * disablePagination()で強制非表示化がなされている場合は
+       * どうあがいても非表示となる
+       */
       changePaginationVisibility() {
           const hidden = this.builder.stateNames.hidden;
           const { prevPage, nextPage } = this.el.buttons;
@@ -7445,7 +7448,7 @@ var laymic = (function (exports) {
           }
       }
       /**
-       * css変数として各ページ最大サイズを再登録する
+       * css変数として表示可能ページ最大サイズを登録する
        */
       cssPageSizeUpdate() {
           const { w: aw, h: ah } = this.state.pageAspect;
@@ -7475,12 +7478,21 @@ var laymic = (function (exports) {
           this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
           this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
       }
+      /**
+       * プログレスバーの太さ数値をcss変数に登録する
+       */
       cssProgressBarWidthUpdate() {
           this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
       }
+      /**
+       * viewerPadding数値をcss変数に登録する
+       */
       cssViewerPaddingUpdate() {
           this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
       }
+      /**
+       * 各スライドの実質サイズをcss変数に登録する
+       */
       cssPageRealSizeUpdate() {
           const { w: aw, h: ah } = this.state.pageAspect;
           const { clientWidth: cw, clientHeight: ch } = this.el.swiperEl;
@@ -7493,6 +7505,8 @@ var laymic = (function (exports) {
           this.el.rootEl.style.setProperty("--page-real-width", width + "px");
           this.el.rootEl.style.setProperty("--page-real-height", height + "px");
       }
+      // NOTE: 今は使用していないのでコメントアウト
+      //
       // private cssPageAspectUpdate() {
       //   const {w: aw, h: ah} = this.state.pageAspect;
       //   this.el.rootEl.style.setProperty("--page-aspect-width", aw.toString());
@@ -7537,11 +7551,19 @@ var laymic = (function (exports) {
               docEl.scrollTop = this.state.bodyScrollTop;
           });
       }
+      /**
+       * ページ送りボタンを強制的非表示化する
+       * ステート状態をいじるのはバグの元なので直書きで非表示化する
+       */
       disablePagination() {
           const { prevPage, nextPage } = this.el.buttons;
           prevPage.style.display = "none";
           nextPage.style.display = "none";
       }
+      /**
+       * ページ送りボタン強制的非表示化を解除する
+       * 直書きでのstyle付与を無くす
+       */
       enablePagination() {
           const { prevPage, nextPage } = this.el.buttons;
           prevPage.style.display = "";
@@ -7563,16 +7585,6 @@ var laymic = (function (exports) {
               h: height / gcd,
           };
           this.state.thresholdWidth = width;
-      }
-      /**
-       * 入力したpathの画像からpageSizeを設定する
-       * @param src 画像path
-       */
-      setPageSizeFromImgPath(src) {
-          readImage(src).then(img => {
-              const { width: w, height: h } = img;
-              this.setPageSize(w, h);
-          }).catch(e => console.error(e));
       }
   }
 

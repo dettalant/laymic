@@ -33,12 +33,6 @@ export default class Laymic {
      * @return  2p表示する解像度ならばtrue
      */
     private readonly isDoubleSlideHorizView;
-    private laymicPreferenceUpdateHandler;
-    /**
-     * 各種イベントの登録
-     * インスタンス生成時に一度だけ呼び出されることを想定
-     */
-    private applyEventListeners;
     /**
      * オーバーレイ表示を展開させる
      * @param  isDisableFullscreen trueならば全画面化処理を無効化する
@@ -48,6 +42,12 @@ export default class Laymic {
      * オーバーレイ表示を閉じる
      */
     close(isHashChange?: boolean): void;
+    private laymicPreferenceUpdateHandler;
+    /**
+     * 各種イベントの登録
+     * インスタンス生成時に一度だけ呼び出されることを想定
+     */
+    private applyEventListeners;
     /**
      * swiper instanceを再初期化する
      * @param  swiperConf 初期化時に指定するswiperOption
@@ -109,6 +109,12 @@ export default class Laymic {
      * @param  e  mouse event
      */
     private slideMouseHoverHandler;
+    /**
+     * ページ送りボタンの表示/非表示設定を切り替えるハンドラ
+     *
+     * disablePagination()で強制非表示化がなされている場合は
+     * どうあがいても非表示となる
+     */
     private changePaginationVisibility;
     /**
      * ビューワー操作UIをトグルさせる
@@ -131,11 +137,20 @@ export default class Laymic {
      */
     private fullscreenHandler;
     /**
-     * css変数として各ページ最大サイズを再登録する
+     * css変数として表示可能ページ最大サイズを登録する
      */
     private cssPageSizeUpdate;
+    /**
+     * プログレスバーの太さ数値をcss変数に登録する
+     */
     private cssProgressBarWidthUpdate;
+    /**
+     * viewerPadding数値をcss変数に登録する
+     */
     private cssViewerPaddingUpdate;
+    /**
+     * 各スライドの実質サイズをcss変数に登録する
+     */
     private cssPageRealSizeUpdate;
     private cssJsVhUpdate;
     /**
@@ -154,7 +169,15 @@ export default class Laymic {
      * body要素のスクロールを再開させる
      */
     private enableBodyScroll;
+    /**
+     * ページ送りボタンを強制的非表示化する
+     * ステート状態をいじるのはバグの元なので直書きで非表示化する
+     */
     private disablePagination;
+    /**
+     * ページ送りボタン強制的非表示化を解除する
+     * 直書きでのstyle付与を無くす
+     */
     private enablePagination;
     /**
      * pageSizeと関連する部分を一挙に設定する
@@ -162,9 +185,4 @@ export default class Laymic {
      * @param  height 新たなページ縦幅
      */
     private setPageSize;
-    /**
-     * 入力したpathの画像からpageSizeを設定する
-     * @param src 画像path
-     */
-    private setPageSizeFromImgPath;
 }
