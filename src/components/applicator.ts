@@ -93,7 +93,8 @@ export default class LaymicApplicator {
         return result;
       });
 
-    const opts = Object.assign(JSON.parse(JSON.stringify(initOptions)), JSON.parse(JSON.stringify(options)));
+    const opts = Object.assign({}, initOptions, JSON.parse(JSON.stringify(options)));
+
     this.laymicMap.set(viewerId || "laymic", new Laymic(pages, opts))
 
     // 用をなしたテンプレート要素を削除
