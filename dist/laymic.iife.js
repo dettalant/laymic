@@ -783,7 +783,7 @@ var laymic = (function (exports) {
   }
 
   /**
-   * Swiper 5.0.3
+   * Swiper 5.2.0
    * Most modern mobile touch slider and framework with hardware accelerated transitions
    * http://swiperjs.com
    *
@@ -791,7 +791,7 @@ var laymic = (function (exports) {
    *
    * Released under the MIT License
    *
-   * Released on: September 19, 2019
+   * Released on: October 26, 2019
    */
 
   const Methods = {
@@ -953,8 +953,7 @@ var laymic = (function (exports) {
         return !!((win.navigator.maxTouchPoints > 0) || ('ontouchstart' in win) || (win.DocumentTouch && doc instanceof win.DocumentTouch));
       }()),
 
-      pointerEvents: !!(win.navigator.pointerEnabled || win.PointerEvent || ('maxTouchPoints' in win.navigator && win.navigator.maxTouchPoints > 0)),
-      prefixedPointerEvents: !!win.navigator.msPointerEnabled,
+      pointerEvents: !!win.PointerEvent && ('maxTouchPoints' in win.navigator) && win.navigator.maxTouchPoints > 0,
 
       observer: (function checkObserver() {
         return ('MutationObserver' in win || 'WebkitMutationObserver' in win);
@@ -1263,9 +1262,11 @@ var laymic = (function (exports) {
         if (params.slidesPerColumnFill === 'row' && params.slidesPerGroup > 1) {
           const groupIndex = Math.floor(i / (params.slidesPerGroup * params.slidesPerColumn));
           const slideIndexInGroup = i - params.slidesPerColumn * params.slidesPerGroup * groupIndex;
-
-          row = Math.floor(slideIndexInGroup / params.slidesPerColumn);
-          column = (slideIndexInGroup - row * params.slidesPerGroup) + groupIndex * params.slidesPerGroup;
+          const columnsInGroup = groupIndex === 0
+            ? params.slidesPerGroup
+            : Math.min(Math.ceil((slidesLength - groupIndex * slidesPerColumn * params.slidesPerGroup) / slidesPerColumn), params.slidesPerGroup);
+          row = Math.floor(slideIndexInGroup / columnsInGroup);
+          column = (slideIndexInGroup - row * columnsInGroup) + groupIndex * params.slidesPerGroup;
 
           newSlideOrderIndex = column + ((row * slidesNumberEvenToRows) / slidesPerColumn);
           slide
@@ -1435,6 +1436,20 @@ var laymic = (function (exports) {
         if (rtl) slides.filter(slidesForMargin).css({ marginLeft: `${spaceBetween}px` });
         else slides.filter(slidesForMargin).css({ marginRight: `${spaceBetween}px` });
       } else slides.filter(slidesForMargin).css({ marginBottom: `${spaceBetween}px` });
+    }
+
+    if (params.centeredSlides && params.centeredSlidesBounds) {
+      let allSlidesSize = 0;
+      slidesSizesGrid.forEach((slideSizeValue) => {
+        allSlidesSize += slideSizeValue + (params.spaceBetween ? params.spaceBetween : 0);
+      });
+      allSlidesSize -= params.spaceBetween;
+      const maxSnap = allSlidesSize - swiperSize;
+      snapGrid = snapGrid.map((snap) => {
+        if (snap < 0) return -offsetBefore;
+        if (snap > maxSnap) return maxSnap + offsetAfter;
+        return snap;
+      });
     }
 
     if (params.centerInsufficientSlides) {
@@ -1836,11 +1851,89 @@ var laymic = (function (exports) {
     return (-this.snapGrid[this.snapGrid.length - 1]);
   }
 
+  function translateTo (translate = 0, speed = this.params.speed, runCallbacks = true, translateBounds = true, internal) {
+    const swiper = this;
+
+    const {
+      params,
+      wrapperEl,
+    } = swiper;
+
+    if (swiper.animating && params.preventInteractionOnTransition) {
+      return false;
+    }
+
+    const minTranslate = swiper.minTranslate();
+    const maxTranslate = swiper.maxTranslate();
+    let newTranslate;
+    if (translateBounds && translate > minTranslate) newTranslate = minTranslate;
+    else if (translateBounds && translate < maxTranslate) newTranslate = maxTranslate;
+    else newTranslate = translate;
+
+    // Update progress
+    swiper.updateProgress(newTranslate);
+
+    if (params.cssMode) {
+      const isH = swiper.isHorizontal();
+      if (speed === 0) {
+        wrapperEl[isH ? 'scrollLeft' : 'scrollTop'] = -newTranslate;
+      } else {
+        // eslint-disable-next-line
+        if (wrapperEl.scrollTo) {
+          wrapperEl.scrollTo({
+            [isH ? 'left' : 'top']: -newTranslate,
+            behavior: 'smooth',
+          });
+        } else {
+          wrapperEl[isH ? 'scrollLeft' : 'scrollTop'] = -newTranslate;
+        }
+      }
+      return true;
+    }
+
+    if (speed === 0) {
+      swiper.setTransition(0);
+      swiper.setTranslate(newTranslate);
+      if (runCallbacks) {
+        swiper.emit('beforeTransitionStart', speed, internal);
+        swiper.emit('transitionEnd');
+      }
+    } else {
+      swiper.setTransition(speed);
+      swiper.setTranslate(newTranslate);
+      if (runCallbacks) {
+        swiper.emit('beforeTransitionStart', speed, internal);
+        swiper.emit('transitionStart');
+      }
+      if (!swiper.animating) {
+        swiper.animating = true;
+        if (!swiper.onTranslateToWrapperTransitionEnd) {
+          swiper.onTranslateToWrapperTransitionEnd = function transitionEnd(e) {
+            if (!swiper || swiper.destroyed) return;
+            if (e.target !== this) return;
+            swiper.$wrapperEl[0].removeEventListener('transitionend', swiper.onTranslateToWrapperTransitionEnd);
+            swiper.$wrapperEl[0].removeEventListener('webkitTransitionEnd', swiper.onTranslateToWrapperTransitionEnd);
+            swiper.onTranslateToWrapperTransitionEnd = null;
+            delete swiper.onTranslateToWrapperTransitionEnd;
+            if (runCallbacks) {
+              swiper.emit('transitionEnd');
+            }
+          };
+        }
+        swiper.$wrapperEl[0].addEventListener('transitionend', swiper.onTranslateToWrapperTransitionEnd);
+        swiper.$wrapperEl[0].addEventListener('webkitTransitionEnd', swiper.onTranslateToWrapperTransitionEnd);
+      }
+    }
+
+    return true;
+  }
+
   var translate = {
     getTranslate,
     setTranslate,
     minTranslate,
     maxTranslate,
+    translateTo,
   };
 
   function setTransition (duration, byController) {
@@ -2107,21 +2200,32 @@ var laymic = (function (exports) {
   }
 
   /* eslint no-unused-vars: "off" */
-  function slideToClosest (speed = this.params.speed, runCallbacks = true, internal) {
+  function slideToClosest (speed = this.params.speed, runCallbacks = true, internal, threshold = 0.5) {
     const swiper = this;
     let index = swiper.activeIndex;
     const snapIndex = Math.floor(index / swiper.params.slidesPerGroup);
 
-    if (snapIndex < swiper.snapGrid.length - 1) {
-      const translate = swiper.rtlTranslate ? swiper.translate : -swiper.translate;
+    const translate = swiper.rtlTranslate ? swiper.translate : -swiper.translate;
 
+    if (translate >= swiper.snapGrid[snapIndex]) {
+      // The current translate is on or after the current snap index, so the choice
+      // is between the current index and the one after it.
       const currentSnap = swiper.snapGrid[snapIndex];
       const nextSnap = swiper.snapGrid[snapIndex + 1];
-
-      if ((translate - currentSnap) > (nextSnap - currentSnap) / 2) {
-        index = swiper.params.slidesPerGroup;
+      if ((translate - currentSnap) > (nextSnap - currentSnap) * threshold) {
+        index += swiper.params.slidesPerGroup;
+      }
+    } else {
+      // The current translate is before the current snap index, so the choice
+      // is between the current index and the one before it.
+      const prevSnap = swiper.snapGrid[snapIndex - 1];
+      const currentSnap = swiper.snapGrid[snapIndex];
+      if ((translate - prevSnap) <= (currentSnap - prevSnap) * threshold) {
+        index -= swiper.params.slidesPerGroup;
       }
     }
+    index = Math.max(index, 0);
+    index = Math.min(index, swiper.snapGrid.length - 1);
 
     return swiper.slideTo(index, speed, runCallbacks, internal);
   }
@@ -2202,7 +2306,7 @@ var laymic = (function (exports) {
 
     if (params.slidesPerView === 'auto' && !params.loopedSlides) params.loopedSlides = slides.length;
 
-    swiper.loopedSlides = parseInt(params.loopedSlides || params.slidesPerView, 10);
+    swiper.loopedSlides = Math.ceil(parseFloat(params.loopedSlides || params.slidesPerView, 10));
     swiper.loopedSlides += params.loopAdditionalSlides;
     if (swiper.loopedSlides > slides.length) {
       swiper.loopedSlides = slides.length;
@@ -2227,7 +2331,7 @@ var laymic = (function (exports) {
   function loopFix () {
     const swiper = this;
     const {
-      params, activeIndex, slides, loopedSlides, allowSlidePrev, allowSlideNext, snapGrid, rtlTranslate: rtl,
+      activeIndex, slides, loopedSlides, allowSlidePrev, allowSlideNext, snapGrid, rtlTranslate: rtl,
     } = swiper;
     let newIndex;
     swiper.allowSlidePrev = true;
@@ -2245,7 +2349,7 @@ var laymic = (function (exports) {
       if (slideChanged && diff !== 0) {
         swiper.setTranslate((rtl ? -swiper.translate : swiper.translate) - diff);
       }
-    } else if ((params.slidesPerView === 'auto' && activeIndex >= loopedSlides * 2) || (activeIndex >= slides.length - loopedSlides)) {
+    } else if (activeIndex >= slides.length - loopedSlides) {
       // Fix For Positive Oversliding
       newIndex = -slides.length + activeIndex + loopedSlides;
       newIndex += loopedSlides;
@@ -2451,6 +2555,7 @@ var laymic = (function (exports) {
   };
 
   const Device = (function Device() {
+    const platform = win.navigator.platform;
     const ua = win.navigator.userAgent;
 
     const device = {
@@ -2458,27 +2563,52 @@ var laymic = (function (exports) {
       android: false,
       androidChrome: false,
       desktop: false,
-      windows: false,
       iphone: false,
       ipod: false,
       ipad: false,
-      cordova: win.cordova || win.phonegap,
-      phonegap: win.cordova || win.phonegap,
+      edge: false,
+      ie: false,
+      firefox: false,
+      macos: false,
+      windows: false,
+      cordova: !!(win.cordova || win.phonegap),
+      phonegap: !!(win.cordova || win.phonegap),
+      electron: false,
     };
 
-    const windows = ua.match(/(Windows Phone);?[\s\/]+([\d.]+)?/); // eslint-disable-line
+    const screenWidth = win.screen.width;
+    const screenHeight = win.screen.height;
+
     const android = ua.match(/(Android);?[\s\/]+([\d.]+)?/); // eslint-disable-line
-    const ipad = ua.match(/(iPad).*OS\s([\d_]+)/);
+    let ipad = ua.match(/(iPad).*OS\s([\d_]+)/);
     const ipod = ua.match(/(iPod)(.*OS\s([\d_]+))?/);
     const iphone = !ipad && ua.match(/(iPhone\sOS|iOS)\s([\d_]+)/);
+    const ie = ua.indexOf('MSIE ') >= 0 || ua.indexOf('Trident/') >= 0;
+    const edge = ua.indexOf('Edge/') >= 0;
+    const firefox = ua.indexOf('Gecko/') >= 0 && ua.indexOf('Firefox/') >= 0;
+    const windows = platform === 'Win32';
+    const electron = ua.toLowerCase().indexOf('electron') >= 0;
+    let macos = platform === 'MacIntel';
 
-
-    // Windows
-    if (windows) {
-      device.os = 'windows';
-      device.osVersion = windows[2];
-      device.windows = true;
+    // iPadOs 13 fix
+    if (!ipad
+      && macos
+      && Support.touch
+      && (
+        (screenWidth === 1024 && screenHeight === 1366) // Pro 12.9
+        || (screenWidth === 834 && screenHeight === 1194) // Pro 11
+        || (screenWidth === 834 && screenHeight === 1112) // Pro 10.5
+        || (screenWidth === 768 && screenHeight === 1024) // other
+      )
+    ) {
+      ipad = ua.match(/(Version)\/([\d.]+)/);
+      macos = false;
     }
+
+    device.ie = ie;
+    device.edge = edge;
+    device.firefox = firefox;
+
     // Android
     if (android && !windows) {
       device.os = 'android';
@@ -2501,7 +2631,7 @@ var laymic = (function (exports) {
     }
     if (ipod) {
       device.osVersion = ipod[3] ? ipod[3].replace(/_/g, '.') : null;
-      device.iphone = true;
+      device.ipod = true;
     }
     // iOS 8+ changed UA
     if (device.ios && device.osVersion && ua.indexOf('Version/') >= 0) {
@@ -2510,20 +2640,24 @@ var laymic = (function (exports) {
       }
     }
 
-    // Desktop
-    device.desktop = !(device.os || device.android || device.webView);
-
     // Webview
-    device.webView = (iphone || ipad || ipod) && ua.match(/.*AppleWebKit(?!.*Safari)/i);
+    device.webView = !!((iphone || ipad || ipod) && (ua.match(/.*AppleWebKit(?!.*Safari)/i) || win.navigator.standalone))
+      || (win.matchMedia && win.matchMedia('(display-mode: standalone)').matches);
+    device.webview = device.webView;
+    device.standalone = device.webView;
 
-    // Minimal UI
-    if (device.os && device.os === 'ios') {
-      const osVersionArr = device.osVersion.split('.');
-      const metaViewport = doc.querySelector('meta[name="viewport"]');
-      device.minimalUi = !device.webView
-        && (ipod || iphone)
-        && (osVersionArr[0] * 1 === 7 ? osVersionArr[1] * 1 >= 1 : osVersionArr[0] * 1 > 7)
-        && metaViewport && metaViewport.getAttribute('content').indexOf('minimal-ui') >= 0;
+    // Desktop
+    device.desktop = !(device.ios || device.android) || electron;
+    if (device.desktop) {
+      device.electron = electron;
+      device.macos = macos;
+      device.windows = windows;
+      if (device.macos) {
+        device.os = 'macos';
+      }
+      if (device.windows) {
+        device.os = 'windows';
+      }
     }
 
     // Pixel Ratio
@@ -2624,8 +2758,9 @@ var laymic = (function (exports) {
       return;
     }
     if (data.isTouchEvent && e.type === 'mousemove') return;
-    const pageX = e.type === 'touchmove' ? e.targetTouches[0].pageX : e.pageX;
-    const pageY = e.type === 'touchmove' ? e.targetTouches[0].pageY : e.pageY;
+    const targetTouch = e.type === 'touchmove' && e.targetTouches && (e.targetTouches[0] || e.changedTouches[0]);
+    const pageX = e.type === 'touchmove' ? targetTouch.pageX : e.pageX;
+    const pageY = e.type === 'touchmove' ? targetTouch.pageY : e.pageY;
     if (e.preventedByNestedSwiper) {
       touches.startX = pageX;
       touches.startY = pageY;
@@ -2978,6 +3113,24 @@ var laymic = (function (exports) {
           } else {
             momentumDuration = Math.abs((newPosition - swiper.translate) / swiper.velocity);
           }
+          if (params.freeModeSticky) {
+            // If freeModeSticky is active and the user ends a swipe with a slow-velocity
+            // event, then durations can be 20+ seconds to slide one (or zero!) slides.
+            // It's easy to see this when simulating touch with mouse events. To fix this,
+            // limit single-slide swipes to the default slide duration. This also has the
+            // nice side effect of matching slide speed if the user stopped moving before
+            // lifting finger or mouse vs. moving slowly before lifting the finger/mouse.
+            // For faster swipes, also apply limits (albeit higher ones).
+            const moveDistance = Math.abs((rtl ? -newPosition : newPosition) - swiper.translate);
+            const currentSlideSize = swiper.slidesSizesGrid[swiper.activeIndex];
+            if (moveDistance < currentSlideSize) {
+              momentumDuration = params.speed;
+            } else if (moveDistance < 2 * currentSlideSize) {
+              momentumDuration = params.speed * 1.5;
+            } else {
+              momentumDuration = params.speed * 2.5;
+            }
+          }
         } else if (params.freeModeSticky) {
           swiper.slideToClosest();
           return;
@@ -3069,10 +3222,17 @@ var laymic = (function (exports) {
         swiper.slideTo(swiper.activeIndex);
         return;
       }
-      if (swiper.swipeDirection === 'next') {
+      const isNavButtonTarget = swiper.navigation && (e.target === swiper.navigation.nextEl || e.target === swiper.navigation.prevEl);
+      if (!isNavButtonTarget) {
+        if (swiper.swipeDirection === 'next') {
+          swiper.slideTo(stopIndex + params.slidesPerGroup);
+        }
+        if (swiper.swipeDirection === 'prev') {
+          swiper.slideTo(stopIndex);
+        }
+      } else if (e.target === swiper.navigation.nextEl) {
         swiper.slideTo(stopIndex + params.slidesPerGroup);
-      }
-      if (swiper.swipeDirection === 'prev') {
+      } else {
         swiper.slideTo(stopIndex);
       }
     }
@@ -3100,23 +3260,13 @@ var laymic = (function (exports) {
     swiper.updateSize();
     swiper.updateSlides();
 
-    if (params.freeMode) {
-      const newTranslate = Math.min(Math.max(swiper.translate, swiper.maxTranslate()), swiper.minTranslate());
-      swiper.setTranslate(newTranslate);
-      swiper.updateActiveIndex();
-      swiper.updateSlidesClasses();
-
-      if (params.autoHeight) {
-        swiper.updateAutoHeight();
-      }
+    swiper.updateSlidesClasses();
+    if ((params.slidesPerView === 'auto' || params.slidesPerView > 1) && swiper.isEnd && !swiper.params.centeredSlides) {
+      swiper.slideTo(swiper.slides.length - 1, 0, false, true);
     } else {
-      swiper.updateSlidesClasses();
-      if ((params.slidesPerView === 'auto' || params.slidesPerView > 1) && swiper.isEnd && !swiper.params.centeredSlides) {
-        swiper.slideTo(swiper.slides.length - 1, 0, false, true);
-      } else {
-        swiper.slideTo(swiper.activeIndex, 0, false, true);
-      }
+      swiper.slideTo(swiper.activeIndex, 0, false, true);
     }
+
     if (swiper.autoplay && swiper.autoplay.running && swiper.autoplay.paused) {
       swiper.autoplay.run();
     }
@@ -3165,6 +3315,9 @@ var laymic = (function (exports) {
     swiper.emit('setTranslate', swiper.translate, false);
   }
 
+  let dummyEventAttached = false;
+  function dummyEventListener() {}
+
   function attachEvents() {
     const swiper = this;
     const {
@@ -3183,7 +3336,7 @@ var laymic = (function (exports) {
     const capture = !!params.nested;
 
     // Touch Events
-    if (!Support.touch && (Support.pointerEvents || Support.prefixedPointerEvents)) {
+    if (!Support.touch && Support.pointerEvents) {
       el.addEventListener(touchEvents.start, swiper.onTouchStart, false);
       doc.addEventListener(touchEvents.move, swiper.onTouchMove, capture);
       doc.addEventListener(touchEvents.end, swiper.onTouchEnd, false);
@@ -3195,6 +3348,10 @@ var laymic = (function (exports) {
         el.addEventListener(touchEvents.end, swiper.onTouchEnd, passiveListener);
         if (touchEvents.cancel) {
           el.addEventListener(touchEvents.cancel, swiper.onTouchEnd, passiveListener);
+        }
+        if (!dummyEventAttached) {
+          doc.addEventListener('touchstart', dummyEventListener);
+          dummyEventAttached = true;
         }
       }
       if ((params.simulateTouch && !Device.ios && !Device.android) || (params.simulateTouch && !Support.touch && Device.ios)) {
@@ -3225,7 +3382,7 @@ var laymic = (function (exports) {
     const capture = !!params.nested;
 
     // Touch Events
-    if (!Support.touch && (Support.pointerEvents || Support.prefixedPointerEvents)) {
+    if (!Support.touch && Support.pointerEvents) {
       el.removeEventListener(touchEvents.start, swiper.onTouchStart, false);
       doc.removeEventListener(touchEvents.move, swiper.onTouchMove, capture);
       doc.removeEventListener(touchEvents.end, swiper.onTouchEnd, false);
@@ -3461,9 +3618,16 @@ var laymic = (function (exports) {
 
   function checkOverflow() {
     const swiper = this;
+    const params = swiper.params;
     const wasLocked = swiper.isLocked;
+    const lastSlidePosition = swiper.slides.length > 0 && (params.slidesOffsetBefore + (params.spaceBetween * (swiper.slides.length - 1)) + ((swiper.slides[0]).offsetWidth) * swiper.slides.length);
 
-    swiper.isLocked = swiper.snapGrid.length === 1;
+    if (params.slidesOffsetBefore && params.slidesOffsetAfter && lastSlidePosition) {
+      swiper.isLocked = lastSlidePosition <= swiper.size;
+    } else {
+      swiper.isLocked = swiper.snapGrid.length === 1;
+    }
+
     swiper.allowSlideNext = !swiper.isLocked;
     swiper.allowSlidePrev = !swiper.isLocked;
 
@@ -3524,6 +3688,7 @@ var laymic = (function (exports) {
     slidesPerColumnFill: 'column',
     slidesPerGroup: 1,
     centeredSlides: false,
+    centeredSlidesBounds: false,
     slidesOffsetBefore: 0, // in px
     slidesOffsetAfter: 0, // in px
     normalizeSlideIndex: true,
@@ -3771,8 +3936,6 @@ var laymic = (function (exports) {
           let desktop = ['mousedown', 'mousemove', 'mouseup'];
           if (Support.pointerEvents) {
             desktop = ['pointerdown', 'pointermove', 'pointerup'];
-          } else if (Support.prefixedPointerEvents) {
-            desktop = ['MSPointerDown', 'MSPointerMove', 'MSPointerUp'];
           }
           swiper.touchEventsTouch = {
             start: touch[0],
@@ -4433,6 +4596,7 @@ var laymic = (function (exports) {
           });
         } else {
           const $bullet = bullets.eq(current);
+          const bulletIndex = $bullet.index();
           $bullet.addClass(params.bulletActiveClass);
           if (params.dynamicBullets) {
             const $firstDisplayedBullet = bullets.eq(firstIndex);
@@ -4440,16 +4604,36 @@ var laymic = (function (exports) {
             for (let i = firstIndex; i <= lastIndex; i += 1) {
               bullets.eq(i).addClass(`${params.bulletActiveClass}-main`);
             }
-            $firstDisplayedBullet
-              .prev()
-              .addClass(`${params.bulletActiveClass}-prev`)
-              .prev()
-              .addClass(`${params.bulletActiveClass}-prev-prev`);
-            $lastDisplayedBullet
-              .next()
-              .addClass(`${params.bulletActiveClass}-next`)
-              .next()
-              .addClass(`${params.bulletActiveClass}-next-next`);
+            if (swiper.params.loop) {
+              if (bulletIndex >= bullets.length - params.dynamicMainBullets) {
+                for (let i = params.dynamicMainBullets; i >= 0; i -= 1) {
+                  bullets.eq(bullets.length - i).addClass(`${params.bulletActiveClass}-main`);
+                }
+                bullets.eq(bullets.length - params.dynamicMainBullets - 1).addClass(`${params.bulletActiveClass}-prev`);
+              } else {
+                $firstDisplayedBullet
+                  .prev()
+                  .addClass(`${params.bulletActiveClass}-prev`)
+                  .prev()
+                  .addClass(`${params.bulletActiveClass}-prev-prev`);
+                $lastDisplayedBullet
+                  .next()
+                  .addClass(`${params.bulletActiveClass}-next`)
+                  .next()
+                  .addClass(`${params.bulletActiveClass}-next-next`);
+              }
+            } else {
+              $firstDisplayedBullet
+                .prev()
+                .addClass(`${params.bulletActiveClass}-prev`)
+                .prev()
+                .addClass(`${params.bulletActiveClass}-prev-prev`);
+              $lastDisplayedBullet
+                .next()
+                .addClass(`${params.bulletActiveClass}-next`)
+                .next()
+                .addClass(`${params.bulletActiveClass}-next-next`);
+            }
           }
         }
         if (params.dynamicBullets) {
@@ -5241,6 +5425,26 @@ var laymic = (function (exports) {
   //   }
   //   return result;
   // }
+  const orientationChangeFuncs = [];
+  const orientationChangeHandler = () => {
+      orientationChangeFuncs.forEach(func => func());
+  };
+  const getDeviceOrientation = () => {
+      let orientation = "unknown";
+      if (screen.orientation) {
+          const type = screen.orientation.type;
+          if (type.includes("landscape"))
+              orientation = "landscape";
+          if (type.includes("portrait"))
+              orientation = "portrait";
+      }
+      else if (window.orientation) {
+          orientation = (parseInt(window.orientation.toString(), 10) % 180)
+              ? "landscape"
+              : "portrait";
+      }
+      return orientation;
+  };
 
   // svg namespace
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -6638,6 +6842,8 @@ var laymic = (function (exports) {
               // 一つのページにつき一度だけの処理
               const svgCtn = builder.createSVGIcons();
               document.body.appendChild(svgCtn);
+              // 向き変更イベント自体は一度のみ登録する
+              window.addEventListener("orientationchange", () => orientationChangeHandler());
           }
           if (options.pageWidth && options.pageHeight) {
               // ページサイズ数値が指定されていた場合の処理
@@ -6706,7 +6912,10 @@ var laymic = (function (exports) {
           this.cssJsVhUpdate();
           // 一旦DOMから外していたroot要素を再度放り込む
           document.body.appendChild(this.el.rootEl);
-          this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
+          const conf = (this.isMobile2pView)
+              ? this.swiper2pHorizViewConf
+              : this.swiperResponsiveHorizViewConf;
+          this.swiper = new Swiper(this.el.swiperEl, conf);
           if (options.viewerDirection === "vertical")
               this.enableVerticalView();
           // 各種イベントの登録
@@ -6777,20 +6986,16 @@ var laymic = (function (exports) {
               isMobile: isExistTouchEvent(),
               isInstantOpen: true,
               bodyScrollTop: 0,
+              isActive: false,
+              deviceOrientation: getDeviceOrientation(),
           };
       }
-      get mainSwiperHorizViewConf() {
-          const breakpoints = {};
-          const thresholdWidth = this.state.thresholdWidth;
-          breakpoints[thresholdWidth] = {
-              slidesPerView: 2,
-              slidesPerGroup: 2,
-          };
+      get swiper2pHorizViewConf() {
           return {
               direction: "horizontal",
               speed: 200,
-              slidesPerView: 1,
-              slidesPerGroup: 1,
+              slidesPerView: 2,
+              slidesPerGroup: 2,
               spaceBetween: this.state.horizPageMargin,
               on: {
                   reachBeginning: () => this.changePaginationVisibility(),
@@ -6814,10 +7019,22 @@ var laymic = (function (exports) {
                   loadPrevNext: true,
                   loadPrevNextAmount: 4,
               },
-              breakpoints
           };
       }
-      get mainSwiperVertViewConf() {
+      get swiperResponsiveHorizViewConf() {
+          const breakpoints = {};
+          const thresholdWidth = this.state.thresholdWidth;
+          breakpoints[thresholdWidth] = {
+              slidesPerView: 2,
+              slidesPerGroup: 2,
+          };
+          const conf = this.swiper2pHorizViewConf;
+          conf.slidesPerView = 1;
+          conf.slidesPerGroup = 1;
+          conf.breakpoints = breakpoints;
+          return conf;
+      }
+      get swiperVertViewConf() {
           return {
               direction: "vertical",
               spaceBetween: this.state.vertPageMargin,
@@ -6855,7 +7072,14 @@ var laymic = (function (exports) {
        * @return  2p表示する解像度ならばtrue
        */
       get isDoubleSlideHorizView() {
-          return this.state.thresholdWidth <= window.innerWidth;
+          return this.isMobile2pView || this.state.thresholdWidth <= window.innerWidth;
+      }
+      /**
+       * モバイル端末での強制2p見開き表示モードか否かを判定する
+       * @return 2p見開き表示条件ならばtrue
+       */
+      get isMobile2pView() {
+          return this.state.isMobile && this.state.deviceOrientation === "landscape";
       }
       /**
        * オーバーレイ表示を展開させる
@@ -6893,7 +7117,7 @@ var laymic = (function (exports) {
           // swiperのfreeModeには
           // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
           // 不具合があるようなので手動で画像読み込み
-          if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
+          if (this.state.isVertView && this.swiper.activeIndex === 0 && this.swiper.lazy) {
               this.swiper.lazy.load();
           }
           // 履歴を追加せずにhash値を書き換える
@@ -6901,6 +7125,8 @@ var laymic = (function (exports) {
               const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
               window.location.replace(newUrl);
           }
+          // アクティブ状態に変更
+          this.state.isActive = true;
       }
       /**
        * オーバーレイ表示を閉じる
@@ -6920,6 +7146,8 @@ var laymic = (function (exports) {
               const newUrl = excludeHashLocation() + "#";
               window.location.replace(newUrl);
           }
+          // 非アクティブ状態に変更
+          this.state.isActive = false;
       }
       laymicPreferenceUpdateHandler(e) {
           if (e.detail === "progressBarWidth") {
@@ -7087,6 +7315,8 @@ var laymic = (function (exports) {
           Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
           // カスタムイベント登録
           this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => this.laymicPreferenceUpdateHandler(e)));
+          // orientationchangeイベント登録
+          orientationChangeFuncs.push(this.orientationChange.bind(this));
       }
       /**
        * swiper instanceを再初期化する
@@ -7124,7 +7354,7 @@ var laymic = (function (exports) {
               ? activeIdx - 1
               : activeIdx;
           // 読み進めたページ数を引き継ぎつつ再初期化
-          this.reinitSwiperInstance(this.mainSwiperVertViewConf, idx);
+          this.reinitSwiperInstance(this.swiperVertViewConf, idx);
       }
       /**
        * 横読み表示へと切り替える
@@ -7141,7 +7371,7 @@ var laymic = (function (exports) {
               ? activeIdx + 1
               : activeIdx;
           // 読み進めたページ数を引き継ぎつつ再初期化
-          this.reinitSwiperInstance(this.mainSwiperHorizViewConf, idx);
+          this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx);
       }
       /**
        * 画面幅に応じて、横読み時の
@@ -7171,6 +7401,7 @@ var laymic = (function (exports) {
                   this.removeLastEmptySlide();
               rootEl.classList.add(state);
           }
+          this.swiper.update();
       }
       /**
        * 1p目空スライドを削除する
@@ -7192,9 +7423,8 @@ var laymic = (function (exports) {
                   // 一つずらしている形
                   this.swiper.slideTo(idx);
               }
-              // swiper側の更新も一応かけておく
-              this.swiper.updateSlides();
-              this.swiper.updateProgress();
+              // this.swiper.updateSlides();
+              // this.swiper.updateProgress();
           }
       }
       /**
@@ -7218,9 +7448,8 @@ var laymic = (function (exports) {
                   const idx = this.swiper.activeIndex - 1;
                   this.swiper.slideTo(idx);
               }
-              // swiper側の更新も一応かけておく
-              this.swiper.updateSlides();
-              this.swiper.updateProgress();
+              // this.swiper.updateSlides();
+              // this.swiper.updateProgress();
           }
       }
       /**
@@ -7235,10 +7464,9 @@ var laymic = (function (exports) {
           const hasEmptySlide = lastSlide.classList.contains(emptySlide);
           if (hasEmptySlide) {
               this.swiper.removeSlide(lastIdx);
-              // swiperを一応更新
-              this.swiper.updateSlides();
-              this.swiper.updateProgress();
           }
+          // this.swiper.updateSlides();
+          // this.swiper.updateProgress();
       }
       /**
        * 最終pに空白スライドを追加する
@@ -7258,9 +7486,8 @@ var laymic = (function (exports) {
                   const idx = this.swiper.activeIndex + 2;
                   this.swiper.slideTo(idx);
               }
-              // swiperを一応更新
-              this.swiper.updateSlides();
-              this.swiper.updateProgress();
+              // this.swiper.updateSlides();
+              // this.swiper.updateProgress();
           }
       }
       /**
@@ -7585,6 +7812,26 @@ var laymic = (function (exports) {
               h: height / gcd,
           };
           this.state.thresholdWidth = width;
+      }
+      /**
+       * orientationcange eventに登録する処理
+       */
+      orientationChange() {
+          const orientation = getDeviceOrientation();
+          this.state.deviceOrientation = orientation;
+          // PC、または縦読みモードの際は早期リターン
+          if (!this.state.isMobile || this.state.isVertView)
+              return;
+          const idx = (this.swiper) ? this.swiper.activeIndex : 0;
+          if (orientation === "landscape") {
+              // 横画面処理
+              this.reinitSwiperInstance(this.swiper2pHorizViewConf, idx);
+          }
+          else {
+              // 縦画面処理
+              this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx);
+          }
+          this.switchSingleSlideState();
       }
   }
 

@@ -5,3 +5,4 @@ export * from "#/interfaces/page";
 export * from "#/interfaces/preference";
 export * from "#/interfaces/ui";
 export * from "#/interfaces/zoom";
+export * from "#/interfaces/utils";

@@ -26,13 +26,19 @@ export default class Laymic {
      * @return this.stateの初期値
      */
     private readonly defaultMangaViewerStates;
-    private readonly mainSwiperHorizViewConf;
-    private readonly mainSwiperVertViewConf;
+    private readonly swiper2pHorizViewConf;
+    private readonly swiperResponsiveHorizViewConf;
+    private readonly swiperVertViewConf;
     /**
      * 横読み2p表示するか否かの判定を行う
      * @return  2p表示する解像度ならばtrue
      */
     private readonly isDoubleSlideHorizView;
+    /**
+     * モバイル端末での強制2p見開き表示モードか否かを判定する
+     * @return 2p見開き表示条件ならばtrue
+     */
+    private readonly isMobile2pView;
     /**
      * オーバーレイ表示を展開させる
      * @param  isDisableFullscreen trueならば全画面化処理を無効化する
@@ -185,4 +191,8 @@ export default class Laymic {
      * @param  height 新たなページ縦幅
      */
     private setPageSize;
+    /**
+     * orientationcange eventに登録する処理
+     */
+    private orientationChange;
 }

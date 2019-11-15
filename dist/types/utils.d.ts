@@ -1,4 +1,4 @@
-import { BarWidth, LaymicPages } from "#/interfaces/index";
+import { BarWidth, LaymicPages, OrientationString } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -45,3 +45,6 @@ export declare const compareString: <T, U>(s: string, cmp: string, success: T, f
 export declare const excludeHashLocation: () => string;
 export declare const calcWindowVH: (el?: HTMLElement) => void;
 export declare const isLaymicPages: (pages: any) => pages is LaymicPages;
+export declare const orientationChangeFuncs: Function[];
+export declare const orientationChangeHandler: () => void;
+export declare const getDeviceOrientation: () => OrientationString;

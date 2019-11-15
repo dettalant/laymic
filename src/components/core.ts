@@ -373,7 +373,7 @@ export default class Laymic {
     // swiperのfreeModeには
     // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
     // 不具合があるようなので手動で画像読み込み
-    if (this.swiper.activeIndex === 0 && this.swiper.lazy) {
+    if (this.state.isVertView && this.swiper.activeIndex === 0 && this.swiper.lazy) {
       this.swiper.lazy.load();
     }
 
