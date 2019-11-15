@@ -1,4 +1,4 @@
-import { BarWidth, LaymicPages } from "#/interfaces/index";
+import { BarWidth, LaymicPages, OrientationString } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -149,3 +149,24 @@ export const isLaymicPages = (pages: any): pages is LaymicPages => {
 //   }
 //   return result;
 // }
+
+export const orientationChangeFuncs: Function[] = []
+
+export const orientationChangeHandler = () => {
+  orientationChangeFuncs.forEach(func => func())
+}
+
+export const getDeviceOrientation = (): OrientationString => {
+  let orientation: OrientationString = "unknown";
+  if (screen.orientation) {
+    const type = screen.orientation.type;
+    if (type.includes("landscape")) orientation = "landscape";
+    if (type.includes("portrait")) orientation = "portrait";
+  } else if (window.orientation) {
+    orientation = (parseInt(window.orientation.toString(), 10) % 180)
+    ? "landscape"
+    : "portrait";
+  }
+
+  return orientation;
+}

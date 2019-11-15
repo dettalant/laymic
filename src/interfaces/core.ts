@@ -1,6 +1,7 @@
 import { LaymicClassNames, LaymicStateClassNames } from "#/interfaces/classname";
 import { BarWidth, ViewerIcons, ViewerUIButtons } from "#/interfaces/ui";
 import { PageRect, PageSize } from "#/interfaces/page";
+import { OrientationString } from "#/interfaces/utils";
 
 export type ViewerPages = (string | Element)[];
 
@@ -87,4 +88,7 @@ export interface ViewerStates {
   isInstantOpen: boolean,
   // スクロール状況を復帰させるためのバッファ
   bodyScrollTop: number,
+  // laymicがアクティブ状態ならばtrue
+  isActive: boolean,
+  deviceOrientation: OrientationString,
 }

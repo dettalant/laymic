@@ -12,6 +12,9 @@ import {
   calcWindowVH,
   isMultiTouch,
   passiveFalseOption,
+  orientationChangeHandler,
+  orientationChangeFuncs,
+  getDeviceOrientation,
 } from "#/utils";
 import DOMBuilder from "#/components/builder";
 import LaymicPreference from "#/components/preference";
@@ -60,6 +63,9 @@ export default class Laymic {
       // 一つのページにつき一度だけの処理
       const svgCtn = builder.createSVGIcons();
       document.body.appendChild(svgCtn);
+
+      // 向き変更イベント自体は一度のみ登録する
+      window.addEventListener("orientationchange", () => orientationChangeHandler());
     }
 
     if (options.pageWidth && options.pageHeight) {
@@ -134,7 +140,10 @@ export default class Laymic {
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
 
-    this.swiper = new Swiper(this.el.swiperEl, this.mainSwiperHorizViewConf);
+    const conf = (this.isMobile2pView)
+      ? this.swiper2pHorizViewConf
+      : this.swiperResponsiveHorizViewConf;
+    this.swiper = new Swiper(this.el.swiperEl, conf);
 
     if (options.viewerDirection === "vertical") this.enableVerticalView()
 
@@ -219,22 +228,17 @@ export default class Laymic {
       isMobile: isExistTouchEvent(),
       isInstantOpen: true,
       bodyScrollTop: 0,
+      isActive: false,
+      deviceOrientation: getDeviceOrientation(),
     }
   }
 
-  private get mainSwiperHorizViewConf(): SwiperOptions {
-    const breakpoints: { [index: number]: SwiperOptions } = {};
-    const thresholdWidth = this.state.thresholdWidth;
-    breakpoints[thresholdWidth] = {
-      slidesPerView: 2,
-      slidesPerGroup: 2,
-    };
-
+  private get swiper2pHorizViewConf(): SwiperOptions {
     return {
       direction: "horizontal",
       speed: 200,
-      slidesPerView: 1,
-      slidesPerGroup: 1,
+      slidesPerView: 2,
+      slidesPerGroup: 2,
       spaceBetween: this.state.horizPageMargin,
 
       on: {
@@ -259,11 +263,25 @@ export default class Laymic {
         loadPrevNext: true,
         loadPrevNextAmount: 4,
       },
-      breakpoints
     }
   }
 
-  private get mainSwiperVertViewConf(): SwiperOptions {
+  private get swiperResponsiveHorizViewConf(): SwiperOptions {
+    const breakpoints: { [index: number]: SwiperOptions } = {};
+    const thresholdWidth = this.state.thresholdWidth;
+    breakpoints[thresholdWidth] = {
+      slidesPerView: 2,
+      slidesPerGroup: 2,
+    };
+
+    const conf = this.swiper2pHorizViewConf;
+    conf.slidesPerView = 1;
+    conf.slidesPerGroup = 1;
+    conf.breakpoints = breakpoints;
+    return conf;
+  }
+
+  private get swiperVertViewConf(): SwiperOptions {
     return {
       direction: "vertical",
       spaceBetween: this.state.vertPageMargin,
@@ -302,7 +320,15 @@ export default class Laymic {
    * @return  2p表示する解像度ならばtrue
    */
   private get isDoubleSlideHorizView(): boolean {
-    return this.state.thresholdWidth <= window.innerWidth;
+    return this.isMobile2pView || this.state.thresholdWidth <= window.innerWidth;
+  }
+
+  /**
+   * モバイル端末での強制2p見開き表示モードか否かを判定する
+   * @return 2p見開き表示条件ならばtrue
+   */
+  private get isMobile2pView(): boolean {
+    return this.state.isMobile && this.state.deviceOrientation === "landscape";
   }
 
   /**
@@ -311,7 +337,6 @@ export default class Laymic {
    */
   open(isDisableFullscreen: boolean = false) {
     const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
-
 
     // ページ読み込み後一度目の展開時にのみtrue
     const isInitialOpen = this.el.rootEl.style.display === "none";
@@ -357,6 +382,9 @@ export default class Laymic {
       const newUrl = excludeHashLocation() + "#" + this.state.viewerId;
       window.location.replace(newUrl);
     }
+
+    // アクティブ状態に変更
+    this.state.isActive = true;
   }
 
   /**
@@ -381,6 +409,9 @@ export default class Laymic {
       const newUrl = excludeHashLocation() + "#";
       window.location.replace(newUrl);
     }
+
+    // 非アクティブ状態に変更
+    this.state.isActive = false;
   }
 
   private laymicPreferenceUpdateHandler(e: CustomEvent<PreferenceUpdateEventString>) {
@@ -553,6 +584,7 @@ export default class Laymic {
           }
         })
       }
+
     });
 
     // ユーザビリティのため「クリックしても何も起きない」
@@ -561,6 +593,9 @@ export default class Laymic {
 
     // カスタムイベント登録
     this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<PreferenceUpdateEventString>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
+
+    // orientationchangeイベント登録
+    orientationChangeFuncs.push(this.orientationChange.bind(this));
   }
 
   /**
@@ -607,7 +642,7 @@ export default class Laymic {
       : activeIdx
 
       // 読み進めたページ数を引き継ぎつつ再初期化
-    this.reinitSwiperInstance(this.mainSwiperVertViewConf, idx);
+    this.reinitSwiperInstance(this.swiperVertViewConf, idx);
   }
 
   /**
@@ -628,7 +663,7 @@ export default class Laymic {
       : activeIdx;
 
     // 読み進めたページ数を引き継ぎつつ再初期化
-    this.reinitSwiperInstance(this.mainSwiperHorizViewConf, idx);
+    this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx);
   }
 
   /**
@@ -656,9 +691,10 @@ export default class Laymic {
 
       if (isFirstSlideEmpty) this.removeFirstEmptySlide();
       if (isAppendEmptySlide) this.removeLastEmptySlide();
-
       rootEl.classList.add(state);
     }
+
+    this.swiper.update();
   }
 
   /**
@@ -683,9 +719,8 @@ export default class Laymic {
         this.swiper.slideTo(idx);
       }
 
-      // swiper側の更新も一応かけておく
-      this.swiper.updateSlides();
-      this.swiper.updateProgress();
+      // this.swiper.updateSlides();
+      // this.swiper.updateProgress();
     }
   }
 
@@ -713,9 +748,8 @@ export default class Laymic {
         this.swiper.slideTo(idx);
       }
 
-      // swiper側の更新も一応かけておく
-      this.swiper.updateSlides();
-      this.swiper.updateProgress();
+      // this.swiper.updateSlides();
+      // this.swiper.updateProgress();
     }
   }
 
@@ -731,11 +765,10 @@ export default class Laymic {
 
     if (hasEmptySlide) {
       this.swiper.removeSlide(lastIdx);
-
-      // swiperを一応更新
-      this.swiper.updateSlides();
-      this.swiper.updateProgress();
     }
+
+    // this.swiper.updateSlides();
+    // this.swiper.updateProgress();
   }
 
   /**
@@ -758,9 +791,8 @@ export default class Laymic {
         this.swiper.slideTo(idx);
       }
 
-      // swiperを一応更新
-      this.swiper.updateSlides();
-      this.swiper.updateProgress();
+      // this.swiper.updateSlides();
+      // this.swiper.updateProgress();
     }
   }
 
@@ -1121,4 +1153,36 @@ export default class Laymic {
 
     this.state.thresholdWidth = width;
   }
+
+  /**
+   * orientationcange eventに登録する処理
+   */
+  private orientationChange() {
+    const orientation = getDeviceOrientation();
+    this.state.deviceOrientation = orientation;
+
+    // PC、または縦読みモードの際は早期リターン
+    if (!this.state.isMobile || this.state.isVertView) return;
+
+    const idx = (this.swiper) ? this.swiper.activeIndex : 0;
+    if (orientation === "landscape") {
+      // 横画面処理
+      this.reinitSwiperInstance(this.swiper2pHorizViewConf, idx);
+    } else {
+      // 縦画面処理
+      this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx)
+    }
+    this.switchSingleSlideState();
+  }
+
+  // private forceLazyImgLoad() {
+  //   if (!this.swiper.lazy) return;
+  //
+  //   const loadingClassName = "swiper-lazy-loading"
+  //   const loadingImgs = this.swiper.wrapperEl.getElementsByClassName(loadingClassName);
+  //
+  //   Array.from(loadingImgs).forEach(img => img.classList.remove(loadingClassName));
+  //
+  //   this.swiper.lazy.load();
+  // }
 }
