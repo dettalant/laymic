@@ -104,11 +104,10 @@ export default class LaymicApplicator {
       thumbs
     }
 
-    const opts = Object.assign(JSON.parse(JSON.stringify(initOptions)), JSON.parse(JSON.stringify(options)));
+    // JSON.stringifyを経由させてundefined部分を抹消する
+    const opts = Object.assign({}, initOptions, JSON.parse(JSON.stringify(options)));
 
     this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, opts))
-    // 用をなしたテンプレート要素を削除
-    // if (el.parentNode) el.parentNode.removeChild(el);
   }
 
   open(viewerId: string) {

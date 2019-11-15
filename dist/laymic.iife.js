@@ -5396,8 +5396,8 @@ var laymic = (function (exports) {
   const isBarWidth = (s) => {
       return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
   };
-  const compareString = (s, cmp, success, failed) => {
-      return s.toLowerCase() === cmp.toLowerCase() ? success : failed;
+  const compareString = (s, cmp, success) => {
+      return s.toLowerCase() === cmp.toLowerCase() ? success : undefined;
   };
   const excludeHashLocation = () => location.protocol + "//" + location.host + location.pathname + location.search;
   const calcWindowVH = (el = document.documentElement) => {
@@ -7882,7 +7882,7 @@ var laymic = (function (exports) {
           const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
           const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
           const isLTR = compareString(el.dir, "ltr", true);
-          const options = Object.assign(initOptions, {
+          const options = {
               viewerId,
               progressBarWidth,
               viewerDirection,
@@ -7890,7 +7890,7 @@ var laymic = (function (exports) {
               isInstantOpen,
               isVisiblePagination,
               isLTR,
-          });
+          };
           {
               // わかりやすくスコープを分けておく
               const pageWidth = parseInt(el.dataset.pageWidth || "", 10);
@@ -7927,9 +7927,9 @@ var laymic = (function (exports) {
               pages,
               thumbs
           };
-          this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options));
-          // 用をなしたテンプレート要素を削除
-          // if (el.parentNode) el.parentNode.removeChild(el);
+          // JSON.stringifyを経由させてundefined部分を抹消する
+          const opts = Object.assign({}, initOptions, JSON.parse(JSON.stringify(options)));
+          this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, opts));
       }
       open(viewerId) {
           const laymic = this.laymicMap.get(viewerId);
