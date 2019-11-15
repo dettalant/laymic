@@ -55,7 +55,8 @@ export default class LaymicApplicator {
     const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
     const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
     const isLTR = compareString(el.dir, "ltr", true);
-    const options: LaymicOptions = Object.assign(initOptions, {
+
+    const options: LaymicOptions = {
       viewerId,
       progressBarWidth,
       viewerDirection,
@@ -63,7 +64,7 @@ export default class LaymicApplicator {
       isInstantOpen,
       isVisiblePagination,
       isLTR,
-    });
+    }
 
     {
       // わかりやすくスコープを分けておく
@@ -103,8 +104,9 @@ export default class LaymicApplicator {
       thumbs
     }
 
-    this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, options))
+    const opts = Object.assign(JSON.parse(JSON.stringify(initOptions)), JSON.parse(JSON.stringify(options)));
 
+    this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, opts))
     // 用をなしたテンプレート要素を削除
     // if (el.parentNode) el.parentNode.removeChild(el);
   }
