@@ -458,6 +458,11 @@
   z-index: 20;
 }
 
+/* disable zoom button for mobile  */
+.laymic_isMobile .laymic_zoom {
+  display: none;
+}
+
 /* laymic template */
 .laymic_template {
   /* 中身だけ取り出すので表示する必要はない */

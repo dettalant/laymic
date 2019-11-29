@@ -732,6 +732,12 @@
   z-index: 20;
 }
 
+/* disable zoom button for mobile  */
+
+.laymic_isMobile .laymic_zoom {
+  display: none;
+}
+
 /* laymic template */
 
 .laymic_template {
