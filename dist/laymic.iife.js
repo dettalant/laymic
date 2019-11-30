@@ -7100,6 +7100,10 @@ var laymic = (function (exports) {
           }
           // preferenceかinitOptionの値を適用する
           this.preference.applyPreferenceValues();
+          // キーボードイベントが停止していたならば再開させる
+          if (this.swiper.keyboard && !this.swiper.keyboard.enabled) {
+              this.swiper.keyboard.enable();
+          }
           // 全画面化条件を満たしているなら全画面化
           if (isFullscreen) {
               // 全画面化ハンドラ内部で呼び出されているので
@@ -7133,6 +7137,10 @@ var laymic = (function (exports) {
        */
       close(isHashChange = true) {
           this.hideRootEl();
+          // 閉じていてもキーボード操作を受け付けてしまう不具合対処
+          if (this.swiper.keyboard) {
+              this.swiper.keyboard.disable();
+          }
           // フルスクリーン状態にあるならそれを解除
           if (document.fullscreenElement) {
               this.fullscreenHandler();
