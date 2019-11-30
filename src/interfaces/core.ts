@@ -70,7 +70,7 @@ export interface ViewerStates {
   pageSize: PageSize,
   pageAspect: PageSize,
   thresholdWidth: number,
-  swiperRect: PageRect,
+  rootRect: PageRect,
   isLTR: boolean,
   isVertView: boolean,
   isFirstSlideEmpty: boolean,
