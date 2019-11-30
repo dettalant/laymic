@@ -119,7 +119,7 @@ describe("utils function test", () => {
 
     // 失敗時の返り値をnullとした場合
     for (const [s, cmp, success] of falseData) {
-      const value = compareString(s, cmp, success, null);
+      const value = compareString(s, cmp, success);
       expect(value).toBeNull();
     }
   })
