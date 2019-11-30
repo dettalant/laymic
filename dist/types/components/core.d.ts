@@ -4,6 +4,7 @@ import LaymicPreference from "#/components/preference";
 import LaymicThumbnails from "#/components/thumbs";
 import LaymicHelp from "#/components/help";
 import LaymicZoom from "#/components/zoom";
+import LaymicCSSVariables from "#/components/cssVar";
 import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions, ViewerStates } from "#/interfaces/index";
 export default class Laymic {
     el: ViewerElements;
@@ -13,14 +14,15 @@ export default class Laymic {
     thumbs: LaymicThumbnails;
     help: LaymicHelp;
     zoom: LaymicZoom;
+    cssVar: LaymicCSSVariables;
     swiper: Swiper;
     builder: DOMBuilder;
     constructor(laymicPages: LaymicPages | ViewerPages, options?: LaymicOptions);
     /**
-     * swiper-containerの要素サイズを返す
+     * rootElの要素サイズを返す
      * @return 要素サイズオブジェクト
      */
-    private readonly swiperElRect;
+    private readonly rootElRect;
     /**
      * 初期状態のmangaViewerステートオブジェクトを返す
      * @return this.stateの初期値
@@ -142,23 +144,6 @@ export default class Laymic {
      * 全画面状態であるならそれを解除する
      */
     private fullscreenHandler;
-    /**
-     * css変数として表示可能ページ最大サイズを登録する
-     */
-    private cssPageSizeUpdate;
-    /**
-     * プログレスバーの太さ数値をcss変数に登録する
-     */
-    private cssProgressBarWidthUpdate;
-    /**
-     * viewerPadding数値をcss変数に登録する
-     */
-    private cssViewerPaddingUpdate;
-    /**
-     * 各スライドの実質サイズをcss変数に登録する
-     */
-    private cssPageRealSizeUpdate;
-    private cssJsVhUpdate;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */

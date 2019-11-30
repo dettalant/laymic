@@ -6824,6 +6824,74 @@ var laymic = (function (exports) {
       }
   }
 
+  class LaymicCSSVariables {
+      constructor(el, state) {
+          this.el = el;
+          this.state = state;
+      }
+      /**
+       * css変数として表示可能ページ最大サイズを登録する
+       */
+      pageSizeUpdate() {
+          const { w: aw, h: ah } = this.state.pageAspect;
+          const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
+          // deduct progressbar size from rootElSize
+          const [dw, dh] = [
+              ow - this.state.progressBarWidth,
+              oh - this.state.progressBarWidth
+          ];
+          const paddingNum = this.state.viewerPadding * 2;
+          let { w: pageWidth, h: pageHeight } = this.state.pageSize;
+          // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
+          // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
+          if (!this.state.isVertView && ow < pageWidth * 2
+              || dw > pageWidth && oh < pageHeight) {
+              // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
+              const h = dh - paddingNum;
+              pageWidth = Math.round(h * aw / ah);
+              pageHeight = Math.round(pageWidth * ah / aw);
+          }
+          else if (oh < pageHeight) {
+              // 縦読み時で縦幅が狭い場合のサイズ計算
+              const w = dw - paddingNum;
+              pageHeight = Math.round(w * ah / aw);
+              pageWidth = Math.round(pageHeight * aw / ah);
+          }
+          this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
+          this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+      }
+      /**
+       * プログレスバーの太さ数値をcss変数に登録する
+       */
+      progressBarWidthUpdate() {
+          this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
+      }
+      /**
+       * viewerPadding数値をcss変数に登録する
+       */
+      viewerPaddingUpdate() {
+          this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+      }
+      /**
+       * 各スライドの実質サイズをcss変数に登録する
+       */
+      pageRealSizeUpdate(isDoubleSlideHorizView) {
+          const { w: aw, h: ah } = this.state.pageAspect;
+          const { clientWidth: cw, clientHeight: ch } = this.el.swiperEl;
+          let width = cw / 2;
+          let height = width * ah / aw;
+          if (this.state.isVertView || !isDoubleSlideHorizView) {
+              height = ch;
+              width = height * aw / ah;
+          }
+          this.el.rootEl.style.setProperty("--page-real-width", width + "px");
+          this.el.rootEl.style.setProperty("--page-real-height", height + "px");
+      }
+      jsVhUpdate() {
+          calcWindowVH(this.el.rootEl);
+      }
+  }
+
   Swiper.use([keyboard, pagination, lazy]);
   class Laymic {
       constructor(laymicPages, options = {}) {
@@ -6906,10 +6974,11 @@ var laymic = (function (exports) {
               controllerEl,
               buttons: uiButtons,
           };
+          this.cssVar = new LaymicCSSVariables(this.el, this.state);
           // 各種css変数の更新
-          this.cssProgressBarWidthUpdate();
-          this.cssViewerPaddingUpdate();
-          this.cssJsVhUpdate();
+          this.cssVar.progressBarWidthUpdate();
+          this.cssVar.viewerPaddingUpdate();
+          this.cssVar.jsVhUpdate();
           // 一旦DOMから外していたroot要素を再度放り込む
           document.body.appendChild(this.el.rootEl);
           const conf = (this.isMobile2pView)
@@ -6927,10 +6996,10 @@ var laymic = (function (exports) {
           }
       }
       /**
-       * swiper-containerの要素サイズを返す
+       * rootElの要素サイズを返す
        * @return 要素サイズオブジェクト
        */
-      get swiperElRect() {
+      get rootElRect() {
           const { height: h, width: w, left: l, top: t, } = this.el.rootEl.getBoundingClientRect();
           return {
               w,
@@ -6953,7 +7022,7 @@ var laymic = (function (exports) {
           return {
               viewerPadding: 10,
               // デフォルト値としてウィンドウ幅を指定
-              swiperRect: {
+              rootRect: {
                   l: 0,
                   t: 0,
                   w: iw,
@@ -7001,7 +7070,7 @@ var laymic = (function (exports) {
                   reachBeginning: () => this.changePaginationVisibility(),
                   resize: () => {
                       this.switchSingleSlideState();
-                      this.cssJsVhUpdate();
+                      this.cssVar.jsVhUpdate();
                       this.viewUpdate();
                   },
                   slideChange: () => {
@@ -7048,7 +7117,7 @@ var laymic = (function (exports) {
                   reachBeginning: () => this.changePaginationVisibility(),
                   resize: () => {
                       this.switchSingleSlideState();
-                      this.cssJsVhUpdate();
+                      this.cssVar.jsVhUpdate();
                       this.viewUpdate();
                   },
                   slideChange: () => {
@@ -7163,7 +7232,7 @@ var laymic = (function (exports) {
               const w = this.preference.getBarWidth(this.preference.progressBarWidth);
               this.state.progressBarWidth = w;
               // 設定した値を画面に適用する
-              this.cssProgressBarWidthUpdate();
+              this.cssVar.progressBarWidthUpdate();
               this.viewUpdate();
           }
           else if (e.detail === "paginationVisibility") {
@@ -7510,7 +7579,7 @@ var laymic = (function (exports) {
        * @return   [次に進むクリックポイントに重なっているか, 前に戻るクリックポイントに重なっているか]
        */
       getClickPoint(e) {
-          const { l, t, w, h } = this.state.swiperRect;
+          const { l, t, w, h } = this.state.rootRect;
           const [x, y] = [e.clientX - l, e.clientY - t];
           let [isNextClick, isPrevClick] = [false, false];
           if (this.state.isVertView) {
@@ -7641,9 +7710,9 @@ var laymic = (function (exports) {
               console.error("this.elが定義前に呼び出された");
               return;
           }
-          this.state.swiperRect = this.swiperElRect;
-          this.cssPageSizeUpdate();
-          this.cssPageRealSizeUpdate();
+          this.state.rootRect = this.rootElRect;
+          this.cssVar.pageSizeUpdate();
+          this.cssVar.pageRealSizeUpdate(this.isDoubleSlideHorizView);
           if (this.thumbs)
               this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
           if (this.zoom)
@@ -7681,74 +7750,6 @@ var laymic = (function (exports) {
                   // フルスクリーン切り替え後処理
                   .then(() => postToggleFullscreen());
           }
-      }
-      /**
-       * css変数として表示可能ページ最大サイズを登録する
-       */
-      cssPageSizeUpdate() {
-          const { w: aw, h: ah } = this.state.pageAspect;
-          const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
-          // deduct progressbar size from rootElSize
-          const [dw, dh] = [
-              ow - this.state.progressBarWidth,
-              oh - this.state.progressBarWidth
-          ];
-          const paddingNum = this.state.viewerPadding * 2;
-          let { w: pageWidth, h: pageHeight } = this.state.pageSize;
-          // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
-          // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
-          if (!this.state.isVertView && ow < pageWidth * 2
-              || dw > pageWidth && oh < pageHeight) {
-              // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
-              const h = dh - paddingNum;
-              pageWidth = Math.round(h * aw / ah);
-              pageHeight = Math.round(pageWidth * ah / aw);
-          }
-          else if (oh < pageHeight) {
-              // 縦読み時で縦幅が狭い場合のサイズ計算
-              const w = dw - paddingNum;
-              pageHeight = Math.round(w * ah / aw);
-              pageWidth = Math.round(pageHeight * aw / ah);
-          }
-          this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
-          this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
-      }
-      /**
-       * プログレスバーの太さ数値をcss変数に登録する
-       */
-      cssProgressBarWidthUpdate() {
-          this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
-      }
-      /**
-       * viewerPadding数値をcss変数に登録する
-       */
-      cssViewerPaddingUpdate() {
-          this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
-      }
-      /**
-       * 各スライドの実質サイズをcss変数に登録する
-       */
-      cssPageRealSizeUpdate() {
-          const { w: aw, h: ah } = this.state.pageAspect;
-          const { clientWidth: cw, clientHeight: ch } = this.el.swiperEl;
-          let width = cw / 2;
-          let height = width * ah / aw;
-          if (this.state.isVertView || !this.isDoubleSlideHorizView) {
-              height = ch;
-              width = height * aw / ah;
-          }
-          this.el.rootEl.style.setProperty("--page-real-width", width + "px");
-          this.el.rootEl.style.setProperty("--page-real-height", height + "px");
-      }
-      // NOTE: 今は使用していないのでコメントアウト
-      //
-      // private cssPageAspectUpdate() {
-      //   const {w: aw, h: ah} = this.state.pageAspect;
-      //   this.el.rootEl.style.setProperty("--page-aspect-width", aw.toString());
-      //   this.el.rootEl.style.setProperty("--page-aspect-height", ah.toString());
-      // }
-      cssJsVhUpdate() {
-          calcWindowVH(this.el.rootEl);
       }
       /**
        * mangaViewerと紐付いたrootElを表示する
