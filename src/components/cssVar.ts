@@ -1,7 +1,8 @@
 import { calcWindowVH } from "#/utils";
 import {
   ViewerStates,
-  ViewerElements
+  ViewerElements,
+  PageSize
 } from "#/interfaces/index";
 export default class LaymicCSSVariables {
   el: ViewerElements;
@@ -12,9 +13,75 @@ export default class LaymicCSSVariables {
   }
 
   /**
+   * laymicインスタンスの初期化時に行うcss変数登録まとめ関数
+   */
+  initCSSVars() {
+    this.pageMaxSizeUpdate();
+    this.progressBarWidthUpdate();
+    this.viewerPaddingUpdate();
+    this.jsVhUpdate();
+  }
+
+  /**
    * css変数として表示可能ページ最大サイズを登録する
    */
   pageSizeUpdate() {
+    const {w: pageWidth, h: pageHeight} = this.getPageSize();
+
+    this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
+    this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+  }
+
+  /**
+   * laymicに登録されたページ最大サイズをcss変数に登録する
+   */
+  pageMaxSizeUpdate() {
+    const {w: pageW, h: pageH} = this.state.pageSize;
+    this.el.rootEl.style.setProperty("--page-max-width", pageW + "px");
+    this.el.rootEl.style.setProperty("--page-max-height", pageH + "px");
+  }
+
+  /**
+   * プログレスバーの太さ数値をcss変数に登録する
+   */
+  progressBarWidthUpdate() {
+    this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
+  }
+
+  /**
+   * viewerPadding数値をcss変数に登録する
+   */
+  viewerPaddingUpdate() {
+    this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+  }
+
+  /**
+   * 各スライドの実質サイズをcss変数に登録する
+   */
+  pageRealSizeUpdate(isDoubleSlideHorizView: boolean) {
+    const {w, h} = this.getPageRealSize(isDoubleSlideHorizView);
+
+    this.el.rootEl.style.setProperty("--page-real-width", w + "px");
+    this.el.rootEl.style.setProperty("--page-real-height", h + "px");
+  }
+
+  /**
+   * 各スライド実寸サイズ / 最大表示サイズの比率をcss変数に登録する
+   * この数値を使えば正確なscaleが行えるようになるはず
+   *
+   * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
+   */
+  pageScaleRatioUpdate(isDoubleSlideHorizView: boolean) {
+    const ratio = this.getPageScaleRatio(isDoubleSlideHorizView);
+
+    this.el.rootEl.style.setProperty("--page-scale-ratio", ratio.toString());
+  }
+
+  jsVhUpdate() {
+    calcWindowVH(this.el.rootEl);
+  }
+
+  private getPageSize(): PageSize {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
     // deduct progressbar size from rootElSize
@@ -42,28 +109,29 @@ export default class LaymicCSSVariables {
       pageWidth = Math.round(pageHeight * aw / ah);
     }
 
-    this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
-    this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+    return {
+      w: pageWidth,
+      h: pageHeight
+    }
+  }
+
+  private getPageScaleRatio(isDoubleSlideHorizView: boolean = false): number {
+    const {w: realW, h: realH} = this.getPageRealSize(isDoubleSlideHorizView);
+    const {w: pageW, h: pageH} = this.state.pageSize;
+
+    // diagonal line
+    const realD = Math.sqrt(realW ** 2 + realH ** 2);
+    const pageD = Math.sqrt(pageW ** 2 + pageH ** 2);
+
+    return realD / pageD;
   }
 
   /**
-   * プログレスバーの太さ数値をcss変数に登録する
+   * ページの実寸表示数値を出力する
+   * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
+   * @return                        実寸のページサイズ
    */
-  progressBarWidthUpdate() {
-    this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
-  }
-
-  /**
-   * viewerPadding数値をcss変数に登録する
-   */
-  viewerPaddingUpdate() {
-    this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
-  }
-
-  /**
-   * 各スライドの実質サイズをcss変数に登録する
-   */
-  pageRealSizeUpdate(isDoubleSlideHorizView: boolean) {
+  private getPageRealSize(isDoubleSlideHorizView: boolean = false): PageSize {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {clientWidth: cw, clientHeight: ch} = this.el.swiperEl;
 
@@ -74,12 +142,10 @@ export default class LaymicCSSVariables {
       width = height * aw / ah;
     }
 
-    this.el.rootEl.style.setProperty("--page-real-width", width + "px");
-    this.el.rootEl.style.setProperty("--page-real-height", height + "px");
-  }
-
-  jsVhUpdate() {
-    calcWindowVH(this.el.rootEl);
+    return {
+      w: width,
+      h: height
+    }
   }
 
   // NOTE: 今は使用していないのでコメントアウト

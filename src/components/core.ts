@@ -136,9 +136,7 @@ export default class Laymic {
     this.cssVar = new LaymicCSSVariables(this.el, this.state);
 
     // 各種css変数の更新
-    this.cssVar.progressBarWidthUpdate();
-    this.cssVar.viewerPaddingUpdate();
-    this.cssVar.jsVhUpdate();
+    this.cssVar.initCSSVars();
 
     // 一旦DOMから外していたroot要素を再度放り込む
     document.body.appendChild(this.el.rootEl);
@@ -964,7 +962,9 @@ export default class Laymic {
 
     this.state.rootRect = this.rootElRect;
     this.cssVar.pageSizeUpdate();
-    this.cssVar.pageRealSizeUpdate(this.isDoubleSlideHorizView);
+    const isDSHV = this.isDoubleSlideHorizView;
+    this.cssVar.pageRealSizeUpdate(isDSHV);
+    this.cssVar.pageScaleRatioUpdate(isDSHV);
 
     if (this.thumbs) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
 
