@@ -5523,6 +5523,7 @@ class DOMBuilder {
                 button: "laymic_preferenceButton",
                 paginationVisibility: "laymic_preferencePaginationVisibility",
                 isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
+                zoomButtonRatio: "laymic_preferenceZoomButtonRatio"
             },
             help: {
                 container: "laymic_help",
@@ -5954,20 +5955,9 @@ class LaymicPreference {
         const preferenceBtnClass = preferenceClassNames.button;
         const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
         const isDisableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを無効化", preferenceBtnClass);
-        const progressBarWidths = [
-            "初期値",
-            "非表示",
-            "細い",
-            "普通",
-            "太い"
-        ];
-        const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
-        const uiVisibilityValues = [
-            "初期値",
-            "非表示",
-            "表示",
-        ];
-        const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
+        const progressBarWidth = builder.createSelectButton("進捗バー表示設定", this.barWidthLabels, preferenceBtnClass);
+        const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", this.uiVisibilityLabels, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
+        const zoomButtonRatio = builder.createSelectButton("ズームボタン倍率設定", this.zoomButtonRatioLabels, `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`);
         const descriptionEl = builder.createDiv();
         [
             "",
@@ -5981,6 +5971,7 @@ class LaymicPreference {
         [
             progressBarWidth,
             paginationVisibility,
+            zoomButtonRatio,
             isAutoFullscreen,
             isDisableTapSlidePage,
             descriptionEl
@@ -5990,10 +5981,11 @@ class LaymicPreference {
         this.el = containerEl;
         this.wrapperEl = wrapperEl;
         this.buttons = {
-            isAutoFullscreen,
-            isDisableTapSlidePage,
             progressBarWidth,
             paginationVisibility,
+            zoomButtonRatio,
+            isAutoFullscreen,
+            isDisableTapSlidePage,
         };
         // 各種イベントをボタンに適用
         this.applyEventListeners();
@@ -6004,7 +5996,56 @@ class LaymicPreference {
             isDisableTapSlidePage: false,
             progressBarWidth: "auto",
             paginationVisibility: "auto",
+            zoomButtonRatio: 1.5,
         };
+    }
+    get barWidthValues() {
+        return [
+            "auto",
+            "none",
+            "tint",
+            "medium",
+            "bold",
+        ];
+    }
+    get barWidthLabels() {
+        return [
+            "初期値",
+            "非表示",
+            "細い",
+            "普通",
+            "太い"
+        ];
+    }
+    get uiVisibilityValues() {
+        return [
+            "auto",
+            "hidden",
+            "visible",
+        ];
+    }
+    get uiVisibilityLabels() {
+        return [
+            "初期値",
+            "非表示",
+            "表示",
+        ];
+    }
+    get zoomButtonRatioValues() {
+        return [
+            1.5,
+            2.0,
+            2.5,
+            3.0
+        ];
+    }
+    get zoomButtonRatioLabels() {
+        return [
+            "1.5倍",
+            "2.0倍",
+            "2.5倍",
+            "3.0倍"
+        ];
     }
     get isAutoFullscreen() {
         return this.data.isAutoFullscreen;
@@ -6036,6 +6077,13 @@ class LaymicPreference {
         this.data.paginationVisibility = visibility;
         this.savePreferenceData();
         this.dispatchPreferenceUpdateEvent("paginationVisibility");
+    }
+    get zoomButtonRatio() {
+        return this.data.zoomButtonRatio;
+    }
+    set zoomButtonRatio(ratio) {
+        this.data.zoomButtonRatio = ratio;
+        this.savePreferenceData();
     }
     savePreferenceData() {
         localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
@@ -6089,7 +6137,7 @@ class LaymicPreference {
      * 主に初期化時に用いる関数
      */
     overwritePreferenceElValues() {
-        const { isAutoFullscreen, isDisableTapSlidePage, paginationVisibility, progressBarWidth, } = this.buttons;
+        const { isAutoFullscreen, isDisableTapSlidePage, paginationVisibility, progressBarWidth, zoomButtonRatio, } = this.buttons;
         const { active } = this.builder.stateNames;
         if (this.isAutoFullscreen) {
             isAutoFullscreen.classList.add(active);
@@ -6103,28 +6151,21 @@ class LaymicPreference {
         else {
             isDisableTapSlidePage.classList.remove(active);
         }
-        const uiVisibilityValues = [
-            "auto",
-            "hidden",
-            "visible",
-        ];
-        const barWidthValues = [
-            "auto",
-            "none",
-            "tint",
-            "medium",
-            "bold",
-        ];
         [
             {
                 // pagination visibility
                 els: this.getSelectItemEls(paginationVisibility),
-                idx: uiVisibilityValues.indexOf(this.paginationVisibility)
+                idx: this.uiVisibilityValues.indexOf(this.paginationVisibility)
             },
             {
                 // progress bar width
                 els: this.getSelectItemEls(progressBarWidth),
-                idx: barWidthValues.indexOf(this.progressBarWidth)
+                idx: this.barWidthValues.indexOf(this.progressBarWidth)
+            },
+            {
+                // zoom button ratio
+                els: this.getSelectItemEls(zoomButtonRatio),
+                idx: this.zoomButtonRatioValues.indexOf(this.zoomButtonRatio)
             }
         ].forEach(obj => {
             const { els, idx } = obj;
@@ -6148,17 +6189,17 @@ class LaymicPreference {
             if (!(e.target instanceof HTMLElement))
                 return;
             const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-            if (idx === 0) {
-                // auto
-                this.paginationVisibility = "auto";
-            }
-            else if (idx === 1) {
+            if (idx === 1) {
                 // horizontal
                 this.paginationVisibility = "hidden";
             }
             else if (idx === 2) {
                 // vertical
                 this.paginationVisibility = "visible";
+            }
+            else {
+                // auto
+                this.paginationVisibility = "auto";
             }
             itemEls.forEach(el => el.style.order = "");
             el.style.order = "-1";
@@ -6167,16 +6208,10 @@ class LaymicPreference {
             if (!(e.target instanceof HTMLElement))
                 return;
             const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-            if (idx === 0) {
-                // auto
-                this.progressBarWidth = "auto";
-            }
-            else if (idx === 1) {
-                // horizontal
+            if (idx === 1) {
                 this.progressBarWidth = "none";
             }
             else if (idx === 2) {
-                // vertical
                 this.progressBarWidth = "tint";
             }
             else if (idx === 3) {
@@ -6185,7 +6220,36 @@ class LaymicPreference {
             else if (idx === 4) {
                 this.progressBarWidth = "bold";
             }
+            else {
+                // auto
+                this.progressBarWidth = "auto";
+            }
             itemEls.forEach(el => el.style.order = "");
+            el.style.order = "-1";
+        };
+        const zoomButtonRatioHandler = (e, el, itemEls) => {
+            if (!(e.target instanceof HTMLElement))
+                return;
+            const idx = parseInt(e.target.dataset.itemIdx || "", 10);
+            if (idx === 1) {
+                // 2.0倍
+                this.zoomButtonRatio = 2.0;
+            }
+            else if (idx === 2) {
+                // 2.5倍
+                this.zoomButtonRatio = 2.5;
+            }
+            else if (idx === 3) {
+                // 3.0倍
+                this.zoomButtonRatio = 3.0;
+            }
+            else {
+                // 1.5
+                this.zoomButtonRatio = 1.5;
+            }
+            // 全ての子要素を一旦初期値に戻す
+            itemEls.forEach(el => el.style.order = "");
+            // クリックされた要素を一番上に押し上げる
             el.style.order = "-1";
         };
         // 各種selectButton要素のイベントリスナーを登録
@@ -6198,6 +6262,10 @@ class LaymicPreference {
                 el: this.buttons.progressBarWidth,
                 callback: (e, el, itemEls) => progressBarWidthHandler(e, el, itemEls)
             },
+            {
+                el: this.buttons.zoomButtonRatio,
+                callback: (e, el, itemEls) => zoomButtonRatioHandler(e, el, itemEls)
+            }
         ].forEach(obj => {
             const { el: parentEl, callback } = obj;
             const els = this.getSelectItemEls(parentEl);
@@ -6831,9 +6899,64 @@ class LaymicCSSVariables {
         this.state = state;
     }
     /**
+     * laymicインスタンスの初期化時に行うcss変数登録まとめ関数
+     */
+    initCSSVars() {
+        this.pageMaxSizeUpdate();
+        this.progressBarWidthUpdate();
+        this.viewerPaddingUpdate();
+        this.jsVhUpdate();
+    }
+    /**
      * css変数として表示可能ページ最大サイズを登録する
      */
     pageSizeUpdate() {
+        const { w: pageWidth, h: pageHeight } = this.getPageSize();
+        this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
+        this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+    }
+    /**
+     * laymicに登録されたページ最大サイズをcss変数に登録する
+     */
+    pageMaxSizeUpdate() {
+        const { w: pageW, h: pageH } = this.state.pageSize;
+        this.el.rootEl.style.setProperty("--page-max-width", pageW + "px");
+        this.el.rootEl.style.setProperty("--page-max-height", pageH + "px");
+    }
+    /**
+     * プログレスバーの太さ数値をcss変数に登録する
+     */
+    progressBarWidthUpdate() {
+        this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
+    }
+    /**
+     * viewerPadding数値をcss変数に登録する
+     */
+    viewerPaddingUpdate() {
+        this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
+    }
+    /**
+     * 各スライドの実質サイズをcss変数に登録する
+     */
+    pageRealSizeUpdate(isDoubleSlideHorizView) {
+        const { w, h } = this.getPageRealSize(isDoubleSlideHorizView);
+        this.el.rootEl.style.setProperty("--page-real-width", w + "px");
+        this.el.rootEl.style.setProperty("--page-real-height", h + "px");
+    }
+    /**
+     * 各スライド実寸サイズ / 最大表示サイズの比率をcss変数に登録する
+     * この数値を使えば正確なscaleが行えるようになるはず
+     *
+     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
+     */
+    pageScaleRatioUpdate(isDoubleSlideHorizView) {
+        const ratio = this.getPageScaleRatio(isDoubleSlideHorizView);
+        this.el.rootEl.style.setProperty("--page-scale-ratio", ratio.toString());
+    }
+    jsVhUpdate() {
+        calcWindowVH(this.el.rootEl);
+    }
+    getPageSize() {
         const { w: aw, h: ah } = this.state.pageAspect;
         const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
         // deduct progressbar size from rootElSize
@@ -6858,25 +6981,25 @@ class LaymicCSSVariables {
             pageHeight = Math.round(w * ah / aw);
             pageWidth = Math.round(pageHeight * aw / ah);
         }
-        this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
-        this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+        return {
+            w: pageWidth,
+            h: pageHeight
+        };
+    }
+    getPageScaleRatio(isDoubleSlideHorizView = false) {
+        const { w: realW, h: realH } = this.getPageRealSize(isDoubleSlideHorizView);
+        const { w: pageW, h: pageH } = this.state.pageSize;
+        // diagonal line
+        const realD = Math.sqrt(realW ** 2 + realH ** 2);
+        const pageD = Math.sqrt(pageW ** 2 + pageH ** 2);
+        return realD / pageD;
     }
     /**
-     * プログレスバーの太さ数値をcss変数に登録する
+     * ページの実寸表示数値を出力する
+     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
+     * @return                        実寸のページサイズ
      */
-    progressBarWidthUpdate() {
-        this.el.rootEl.style.setProperty("--progressbar-width", this.state.progressBarWidth + "px");
-    }
-    /**
-     * viewerPadding数値をcss変数に登録する
-     */
-    viewerPaddingUpdate() {
-        this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
-    }
-    /**
-     * 各スライドの実質サイズをcss変数に登録する
-     */
-    pageRealSizeUpdate(isDoubleSlideHorizView) {
+    getPageRealSize(isDoubleSlideHorizView = false) {
         const { w: aw, h: ah } = this.state.pageAspect;
         const { clientWidth: cw, clientHeight: ch } = this.el.swiperEl;
         let width = cw / 2;
@@ -6885,11 +7008,10 @@ class LaymicCSSVariables {
             height = ch;
             width = height * aw / ah;
         }
-        this.el.rootEl.style.setProperty("--page-real-width", width + "px");
-        this.el.rootEl.style.setProperty("--page-real-height", height + "px");
-    }
-    jsVhUpdate() {
-        calcWindowVH(this.el.rootEl);
+        return {
+            w: width,
+            h: height
+        };
     }
 }
 
@@ -6977,9 +7099,7 @@ class Laymic {
         };
         this.cssVar = new LaymicCSSVariables(this.el, this.state);
         // 各種css変数の更新
-        this.cssVar.progressBarWidthUpdate();
-        this.cssVar.viewerPaddingUpdate();
-        this.cssVar.jsVhUpdate();
+        this.cssVar.initCSSVars();
         // 一旦DOMから外していたroot要素を再度放り込む
         document.body.appendChild(this.el.rootEl);
         const conf = (this.isMobile2pView)
@@ -7252,6 +7372,7 @@ class Laymic {
             }
         }
         else if (e.detail === "isDisableTapSlidePage") {
+            // タップでのページ送りを停止する設定
             if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
                 // モバイル環境で設定値がtrueの際にのみ動作
                 this.disablePagination();
@@ -7293,19 +7414,19 @@ class Laymic {
             this.thumbs.hideThumbs();
             this.swiper.slideTo(i);
         }));
-        const zoomHandler = () => {
+        // ズームボタンのクリックイベント
+        this.el.buttons.zoom.addEventListener("click", () => {
             if (this.zoom.isZoomed) {
                 // ズーム時
                 this.zoom.disable();
             }
             else {
                 // 非ズーム時
-                this.zoom.enable();
+                const ratio = this.preference.zoomButtonRatio;
+                this.zoom.enable(ratio);
             }
             this.hideViewerUI();
-        };
-        // ズームボタンのクリックイベント
-        this.el.buttons.zoom.addEventListener("click", zoomHandler);
+        });
         // 全画面化ボタンのクリックイベント
         this.el.buttons.fullscreen.addEventListener("click", () => {
             this.fullscreenHandler();
@@ -7713,7 +7834,9 @@ class Laymic {
         }
         this.state.rootRect = this.rootElRect;
         this.cssVar.pageSizeUpdate();
-        this.cssVar.pageRealSizeUpdate(this.isDoubleSlideHorizView);
+        const isDSHV = this.isDoubleSlideHorizView;
+        this.cssVar.pageRealSizeUpdate(isDSHV);
+        this.cssVar.pageScaleRatioUpdate(isDSHV);
         if (this.thumbs)
             this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
         if (this.zoom)

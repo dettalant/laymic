@@ -10,10 +10,17 @@ export default class LaymicPreference {
     data: PreferenceData;
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
     private readonly defaultPreferenceData;
+    private readonly barWidthValues;
+    private readonly barWidthLabels;
+    private readonly uiVisibilityValues;
+    private readonly uiVisibilityLabels;
+    private readonly zoomButtonRatioValues;
+    private readonly zoomButtonRatioLabels;
     isAutoFullscreen: boolean;
     isDisableTapSlidePage: boolean;
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
+    zoomButtonRatio: number;
     private savePreferenceData;
     private dispatchPreferenceUpdateEvent;
     /**
