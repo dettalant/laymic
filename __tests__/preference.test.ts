@@ -71,6 +71,25 @@ describe("preference class test", () => {
     })
   })
 
+  it("zoomButtonRatio test", () => {
+    const testValues = [
+      2.5,
+      3.0,
+      2.0,
+      // ここから実用はしないけど指定できる数値
+      2.2,
+      3.3,
+      10,
+      1.5,
+    ];
+
+    testValues.forEach(value => {
+      preference.zoomButtonRatio = value;
+      expect(preference.zoomButtonRatio).toBe(value);
+      expect(preference["loadPreferenceData"]().zoomButtonRatio).toBe(value);
+    })
+  })
+
   it("dispatchPreferenceUpdateEvent test", done => {
     const testStr = "isAutoFullscreen";
     preference.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
@@ -89,37 +108,32 @@ describe("preference class test", () => {
 
     const pbwValue = "none";
     const pvValue = "visible";
+    const zbrValue = 2.5;
 
     data.isAutoFullscreen = true;
     data.isDisableTapSlidePage = true;
     data.progressBarWidth = pbwValue;
     data.paginationVisibility = pvValue;
+    data.zoomButtonRatio = zbrValue;
 
     localStorage.setItem(key, JSON.stringify(data));
 
     const preference2 = new Preference(builder, rootEl);
-    const uiVisibilityValues: UIVisibility[] = [
-      "auto",
-      "hidden",
-      "visible",
-    ];
+    const uiVisibilityValues = preference2["uiVisibilityValues"];
 
-    const barWidthValues: BarWidth[] = [
-      "auto",
-      "none",
-      "tint",
-      "medium",
-      "bold",
-    ];
+    const barWidthValues = preference2["barWidthValues"];
+    const zoomButtonRatioValues = preference2["zoomButtonRatioValues"];
     const {
       isAutoFullscreen,
       isDisableTapSlidePage,
       progressBarWidth,
       paginationVisibility,
+      zoomButtonRatio
     } = preference2.buttons;
 
     const progressbarIdx = barWidthValues.indexOf(pbwValue);
     const paginationIdx = uiVisibilityValues.indexOf(pvValue);
+    const zoomIdx = zoomButtonRatioValues.indexOf(zbrValue);
 
     const active = preference2.builder.stateNames.active;
 
@@ -136,6 +150,10 @@ describe("preference class test", () => {
       {
         el: paginationVisibility,
         idx: paginationIdx,
+      },
+      {
+        el: zoomButtonRatio,
+        idx: zoomIdx
       }
     ].forEach(obj => {
       const els = preference2["getSelectItemEls"](obj.el) as HTMLElement[];

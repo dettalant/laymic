@@ -116,11 +116,5 @@ describe("utils function test", () => {
       const value = compareString(s, cmp, success);
       expect(value).toBeUndefined();
     }
-
-    // 失敗時の返り値をnullとした場合
-    for (const [s, cmp, success] of falseData) {
-      const value = compareString(s, cmp, success);
-      expect(value).toBeNull();
-    }
   })
 })

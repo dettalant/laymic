@@ -76,6 +76,7 @@ export interface LaymicPreferenceClassNames {
   button: string,
   paginationVisibility: string,
   isAutoFullscreen: string,
+  zoomButtonRatio: string
 }
 
 export interface LaymicHelpClassNames {

@@ -450,6 +450,7 @@ export default class Laymic {
         this.el.rootEl.classList.remove(vpClass);
       }
     } else if (e.detail === "isDisableTapSlidePage") {
+      // タップでのページ送りを停止する設定
       if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
         // モバイル環境で設定値がtrueの際にのみ動作
         this.disablePagination();
@@ -493,18 +494,18 @@ export default class Laymic {
       this.swiper.slideTo(i);
     }));
 
-    const zoomHandler = () => {
+    // ズームボタンのクリックイベント
+    this.el.buttons.zoom.addEventListener("click", () => {
       if (this.zoom.isZoomed) {
         // ズーム時
         this.zoom.disable();
       } else {
         // 非ズーム時
-        this.zoom.enable();
+        const ratio = this.preference.zoomButtonRatio;
+        this.zoom.enable(ratio);
       }
       this.hideViewerUI();
-    }
-    // ズームボタンのクリックイベント
-    this.el.buttons.zoom.addEventListener("click", zoomHandler)
+    })
 
     // 全画面化ボタンのクリックイベント
     this.el.buttons.fullscreen.addEventListener("click", () => {
