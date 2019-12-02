@@ -199,8 +199,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, .5);
+  background: rgba(0, 0, 0, .7);
   z-index: 18;
+  /* 初期状態では非表示とする */
   visibility: hidden;
   opacity: 0;
   transition: opacity .3s, visibility .3s;
@@ -215,15 +216,87 @@
 
 /* help */
 .laymic_helpWrapper {
-  max-width: 90%;
-  max-height: 90%;
   height: 100%;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-flow: column nowrap;
+  color: #fafafa;
 }
 
+/* helpWrapper内に直置きされるタッチアイコン */
+.laymic_helpWrapper > .icon_touchApp {
+	--icon-size: calc(4vmin + 2rem);
+  /* 上下余白幅を若干確保して、`.laymic_helpInnerWrapper`を上に押し上げる */
+  margin: 2vmin 0;
+}
+
+.laymic_helpInnerWrapper {
+  background: rgba(0, 0, 0, .5);
+  /* フォントサイズはアイコンより少し小さく */
+  font-size: calc(3vmin + .2rem);
+  /* フォントサイズを起点に余白指定 */
+  padding: .5em;
+}
+
+.laymic_helpInnerItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.laymic_helpIconWrapper {
+  display: flex;
+}
+
+.laymic_helpIconWrapper .laymic_svgIcon {
+  /* 画面サイズと比例させつつ固定値も混ぜる */
+  --icon-size: calc(3vmin + .5rem);
+}
+
+.laymic_helpIconLabel {
+  margin-left: .5vmin;
+}
+
+.laymic_helpChevrons {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 念の為helpInnerWrapperより後ろにしておく */
+  z-index: -1;
+}
+
+.laymic_isVertView .laymic_helpChevrons {
+  width: auto;
+  height: 100%;
+  flex-direction: column;
+}
+
+/* ページ送り方向を示唆するヘルプ要素 */
+.laymic_helpChevrons .icon_chevronLeft {
+  --icon-size: calc(4vmin + 2rem);
+}
+
+.laymic_helpChevrons .icon_chevronLeft.laymic_isReversed {
+  transform: rotateY(180deg);
+}
+
+/* 縦読み時は二つのchevronを適切に回転させる */
+.laymic_isVertView .laymic_helpChevrons .icon_chevronLeft {
+  transform: rotate(90deg);
+}
+
+.laymic_isVertView .laymic_helpChevrons .icon_chevronLeft.laymic_isReversed {
+  transform: rotate(270deg)
+}
+
+/* NOTE: 現在未使用
 .laymic_helpHorizImg,
 .laymic_helpVertImg {
   max-width: 100%;
@@ -239,7 +312,7 @@
 .laymic_helpVertImg,
 .laymic_isVertView .laymic_helpHorizImg {
   display: none;
-}
+} */
 
 /* thumbs */
 .laymic_thumbsWrapper {
@@ -496,4 +569,12 @@
 .laymic_isFullscreen .icon_exitFullscreen,
 .laymic_preferenceButton.laymic_isActive .icon_checkBoxInner {
   display: block;
+}
+
+/*
+  helpでのページ送り方向アイコン
+  縦読みモードでは90度回転させる
+*/
+.laymic_isVertView .icon_viewerDirection {
+  transform: rotate(90deg);
 }

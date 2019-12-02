@@ -93,6 +93,11 @@ export default class DOMBuilder {
         wrapper: "laymic_helpWrapper",
         vertImg: "laymic_helpVertImg",
         horizImg: "laymic_helpHorizImg",
+        innerWrapper: "laymic_helpInnerWrapper",
+        innerItem: "laymic_helpInnerItem",
+        iconWrapper: "laymic_helpIconWrapper",
+        iconLabel: "laymic_helpIconLabel",
+        chevronsContainer: "laymic_helpChevrons"
       },
       zoom: {
         controller: "laymic_zoomController",
@@ -105,6 +110,7 @@ export default class DOMBuilder {
     return {
       active: "laymic_isActive",
       hidden: "laymic_isHidden",
+      reversed: "laymic_isReversed",
       showHelp: "laymic_isShowHelp",
       showThumbs: "laymic_isShowThumbs",
       showPreference: "laymic_isShowPreference",
@@ -234,6 +240,34 @@ export default class DOMBuilder {
       ]
     }
 
+    // material.io: unfold_more(modified)
+    const viewerDirection = {
+      id: "laymic_svgViewerDirection",
+      className: "icon_viewerDirection",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M18.17 12.002l-4.243 4.242 1.41 1.41 5.662-5.652-5.657-5.658-1.41 1.42zm-12.34 0l4.24-4.242-1.41-1.41L3 12.002l5.662 5.662 1.41-1.42z"
+      ]
+    };
+
+    const touchApp = {
+      id: "laymic_svgTouchApp",
+      className: "icon_touchApp",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M9.156 9.854v-3.56a2.381 2.381 0 014.76 0v3.56a4.27 4.27 0 001.904-3.56 4.279 4.279 0 00-4.284-4.285 4.279 4.279 0 00-4.284 4.284 4.27 4.27 0 001.904 3.561zm9.368 4.408l-4.322-2.152a1.34 1.34 0 00-.514-.104h-.724V6.293c0-.79-.638-1.428-1.428-1.428-.79 0-1.428.638-1.428 1.428V16.52l-3.266-.686c-.076-.01-.143-.029-.228-.029-.295 0-.562.124-.752.315l-.752.761 4.703 4.703c.257.258.619.42 1.009.42h6.464c.714 0 1.267-.524 1.371-1.22l.714-5.017c.01-.066.02-.133.02-.19 0-.59-.362-1.104-.867-1.314z"
+      ]
+    }
+
+    const chevronLeft = {
+      id: "laymic_svgChevronLeft",
+      className: "icon_chevronLeft",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M18 4.12L10.12 12 18 19.88 15.88 22l-10-10 10-10z"
+      ]
+    }
+
     return {
       close,
       fullscreen,
@@ -246,6 +280,9 @@ export default class DOMBuilder {
       checkboxOuter,
       showHelp,
       zoomIn,
+      viewerDirection,
+      touchApp,
+      chevronLeft
     }
   }
 
@@ -557,6 +594,103 @@ export default class DOMBuilder {
     const emptyEl = this.createDiv();
     emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
     return emptyEl;
+  }
+
+  /**
+   * ヘルプとして表示する部分を出力する
+   * @return helpWrapperとして用いられるHTMLElement
+   */
+  createHelpWrapperEl(): HTMLElement {
+    const helpClassNames = this.classNames.help;
+    const wrapperEl = this.createDiv();
+    wrapperEl.className = helpClassNames.wrapper;
+
+    const innerWrapperEl = this.createHelpInnerWrapperEl();
+
+    const touchAppIcon = this.createSvgUseElement(this.icons.touchApp);
+
+    const chevronsContainer = this.createDiv();
+    chevronsContainer.className = helpClassNames.chevronsContainer;
+    const iconChevron = this.icons.chevronLeft;
+    // 右向き矢印は一度生成してから反転クラス名を付与する
+    const chevronRight = this.createSvgUseElement(iconChevron);
+    chevronRight.classList.add(this.stateNames.reversed);
+
+    [
+      this.createSvgUseElement(iconChevron),
+      chevronRight
+    ].forEach(el => chevronsContainer.appendChild(el));
+
+    [
+      chevronsContainer,
+      innerWrapperEl,
+      touchAppIcon,
+    ].forEach(el => wrapperEl.appendChild(el));
+
+    return wrapperEl;
+  }
+
+  /**
+   * ヘルプ内のアイコン説明部分を出力する
+   * @return アイコン説明を散りばめたHTMLElement
+   */
+  private createHelpInnerWrapperEl(): HTMLElement {
+    const helpClassNames = this.classNames.help;
+    const innerWrapper = this.createDiv();
+    innerWrapper.className = helpClassNames.innerWrapper;
+
+    [
+      {
+        icons: [this.icons.close],
+        label: "閉じる"
+      },
+      {
+        icons: [this.icons.preference],
+        label: "設定"
+      },
+      {
+        icons: [this.icons.fullscreen, this.icons.exitFullscreen],
+        label: "全画面切り替え"
+      },
+      {
+        icons: [this.icons.showThumbs],
+        label: "サムネイル"
+      },
+      {
+        icons: [this.icons.vertView, this.icons.horizView],
+        label: "縦読み/横読み"
+      },
+      {
+        icons: [this.icons.showHelp],
+        label: "ヘルプ"
+      },
+      {
+        icons: [this.icons.viewerDirection],
+        label: "ページ送り"
+      },
+      {
+        icons: [this.icons.touchApp],
+        label: "機能呼び出し"
+      }
+    ].forEach(obj => {
+      const item = this.createDiv();
+      item.className = helpClassNames.innerItem;
+
+      const iconWrapper = this.createDiv();
+      iconWrapper.className = helpClassNames.iconWrapper;
+
+      obj.icons.forEach(icon => iconWrapper.appendChild(this.createSvgUseElement(icon)))
+
+      const label = this.createSpan();
+      label.textContent = obj.label;
+      label.className = helpClassNames.iconLabel;
+
+      [iconWrapper, label].forEach(el => item.appendChild(el));
+
+      innerWrapper.appendChild(item);
+    })
+
+    return innerWrapper;
   }
 
   /**

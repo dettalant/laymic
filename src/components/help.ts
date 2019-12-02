@@ -1,5 +1,4 @@
 import DOMBuilder from "#/components/builder";
-import { vertHelpImg, horizHelpImg } from "#/components/helpImg";
 
 export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
@@ -19,24 +18,7 @@ export default class LaymicHelp {
     const containerEl = builder.createDiv();
     containerEl.className = helpClassNames.container;
 
-    const wrapperEl = builder.createDiv();
-    wrapperEl.className = helpClassNames.wrapper;
-
-    [
-      {
-        src: horizHelpImg,
-        className: helpClassNames.horizImg
-      },
-      {
-        src: vertHelpImg,
-        className: helpClassNames.vertImg
-      }
-    ].forEach(obj => {
-      const img = new Image();
-      img.src = obj.src;
-      img.className = obj.className;
-      wrapperEl.appendChild(img);
-    })
+    const wrapperEl = builder.createHelpWrapperEl();
 
     containerEl.appendChild(wrapperEl);
 

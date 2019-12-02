@@ -24,6 +24,11 @@ export interface ViewerIcons {
   checkboxInner: IconData,
   showHelp: IconData,
   zoomIn: IconData,
+  viewerDirection: IconData,
+  touchApp: IconData,
+  // ページ送り方向を示唆するアイコン
+  // 左向きだけ用意して、後はcssで回転させて用いる
+  chevronLeft: IconData
 }
 
 // mangaViewer UI要素として組み込むボタン要素まとめ

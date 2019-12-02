@@ -5,6 +5,8 @@ export interface LaymicStateClassNames {
   active: string,
   // 汎用的な非表示時ステート
   hidden: string,
+  // 汎用的な反転時ステート
+  reversed: string,
   // 横読み時1p表示がなされている際に付与
   singleSlide: string,
   // 設定画面展開中に付与
@@ -84,6 +86,11 @@ export interface LaymicHelpClassNames {
   wrapper: string,
   vertImg: string,
   horizImg: string,
+  innerWrapper: string,
+  innerItem: string,
+  iconWrapper: string,
+  iconLabel: string,
+  chevronsContainer: string,
 }
 
 export interface LaymicZoomClassNames {
