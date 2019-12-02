@@ -6,6 +6,9 @@
   "author": "dettalant (https://dettalant.com/)",
   "license": "MIT",
   "private": true,
+  "browserslist": [
+    "> 1% in JP"
+  ],
   "devDependencies": {
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
