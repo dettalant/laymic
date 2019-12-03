@@ -91,6 +91,8 @@ export interface LaymicHelpClassNames {
   iconWrapper: string,
   iconLabel: string,
   chevronsContainer: string,
+  zoomItem: string,
+  fullscreenItem: string,
 }
 
 export interface LaymicZoomClassNames {

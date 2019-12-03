@@ -97,7 +97,9 @@ export default class DOMBuilder {
         innerItem: "laymic_helpInnerItem",
         iconWrapper: "laymic_helpIconWrapper",
         iconLabel: "laymic_helpIconLabel",
-        chevronsContainer: "laymic_helpChevrons"
+        chevronsContainer: "laymic_helpChevrons",
+        zoomItem: "laymic_helpZoomItem",
+        fullscreenItem: "laymic_helpFullscreenItem",
       },
       zoom: {
         controller: "laymic_zoomController",
@@ -650,7 +652,13 @@ export default class DOMBuilder {
       },
       {
         icons: [this.icons.fullscreen, this.icons.exitFullscreen],
-        label: "全画面切り替え"
+        label: "全画面切り替え",
+        className: helpClassNames.fullscreenItem,
+      },
+      {
+        icons: [this.icons.zoomIn],
+        label: "拡大表示",
+        className: helpClassNames.zoomItem,
       },
       {
         icons: [this.icons.showThumbs],
@@ -675,6 +683,7 @@ export default class DOMBuilder {
     ].forEach(obj => {
       const item = this.createDiv();
       item.className = helpClassNames.innerItem;
+      if (obj.className) item.classList.add(obj.className);
 
       const iconWrapper = this.createDiv();
       iconWrapper.className = helpClassNames.iconWrapper;

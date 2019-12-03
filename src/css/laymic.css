@@ -238,6 +238,8 @@
   font-size: calc(3vmin + .2rem);
   /* フォントサイズを起点に余白指定 */
   padding: .5em;
+  /* 気持ち上に引き上げておいたほうがなんか良い気がする */
+  margin-top: -2vmin;
 }
 
 .laymic_helpInnerItem {
@@ -294,6 +296,12 @@
 
 .laymic_isVertView .laymic_helpChevrons .icon_chevronLeft.laymic_isReversed {
   transform: rotate(270deg)
+}
+
+/* UI内に当該ボタンが表示されていない場合は説明の上でも非表示とする */
+.laymic_isUnsupportedFullscreen .laymic_helpFullscreenItem,
+.laymic_isMobile .laymic_helpZoomItem {
+  display: none;
 }
 
 /* NOTE: 現在未使用
