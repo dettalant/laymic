@@ -56,6 +56,16 @@ export default class DOMBuilder {
     createSelectButton(label: string, values: string[], className?: string): HTMLButtonElement;
     createEmptySlideEl(): HTMLElement;
     /**
+     * ヘルプとして表示する部分を出力する
+     * @return helpWrapperとして用いられるHTMLElement
+     */
+    createHelpWrapperEl(): HTMLElement;
+    /**
+     * ヘルプ内のアイコン説明部分を出力する
+     * @return アイコン説明を散りばめたHTMLElement
+     */
+    private createHelpInnerWrapperEl;
+    /**
      * IconData形式のオブジェクトであるかを判別する
      * type guard用の関数
      * @param  icon 型診断を行う対象
