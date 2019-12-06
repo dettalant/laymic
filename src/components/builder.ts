@@ -68,7 +68,9 @@ export default class DOMBuilder {
         container: "laymic_select",
         label: "laymic_selectLabel",
         wrapper: "laymic_selectWrapper",
+        current: "laymic_selectCurrentItem",
         item: "laymic_selectItem",
+        itemWrapper: "laymic_selectItemWrapper"
       },
       thumbs: {
         container: "laymic_thumbs",

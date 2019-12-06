@@ -1,4 +1,6 @@
 import { BarWidth, UIVisibility } from "#/interfaces/ui"
+import { SimpleSelect } from "@dettalant/simple_choices";
+
 
 export interface PreferenceData {
   // 自動的に全画面化するかの設定値
@@ -13,6 +15,17 @@ export interface PreferenceData {
   zoomButtonRatio: number,
 }
 
+// export interface PreferenceButtons extends Record<keyof PreferenceData, HTMLButtonElement>{}
 export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
+//
+// export interface PreferenceButtons {
+//   isAutoFullscreen: HTMLButtonElement,
+//   isDisableTapSlidePage: HTMLButtonElement,
+//   progressBarWidth: SimpleSelect,
+//   paginationVisibility: SimpleSelect,
+//   zoomButtonRatio: SimpleSelect,
+// }
+
+export type PreferenceChoices = Record<keyof Omit<PreferenceData, "isAutoFullscreen" | "isDisableTapSlidePage">, SimpleSelect>
 
 export type PreferenceUpdateEventString = keyof PreferenceData | "";

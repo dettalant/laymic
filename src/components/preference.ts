@@ -1,12 +1,14 @@
+import { SimpleSelectBuilder, SelectItem } from "@dettalant/simple_choices";
 import DOMBuilder from "#/components/builder";
 import {
   PreferenceData,
+  PreferenceChoices,
   BarWidth,
   PreferenceButtons,
   PreferenceUpdateEventString,
   UIVisibility
 } from "#/interfaces/index";
-import { isHTMLElementArray } from "#/utils";
+import { isBarWidth, isUIVisibility } from "#/utils";
 
 export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";
@@ -16,11 +18,14 @@ export default class LaymicPreference {
   // preference wrapper el
   wrapperEl: HTMLElement;
   buttons: PreferenceButtons;
+  choices: PreferenceChoices;
   builder: DOMBuilder;
   // preference save data
   data: PreferenceData = this.defaultPreferenceData;
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     this.builder = builder;
+    const selectBuilder = new SimpleSelectBuilder(this.builder.classNames.select);
+
     const containerEl = builder.createDiv();
     const preferenceClassNames = this.builder.classNames.preference;
     containerEl.className = preferenceClassNames.container;
@@ -33,21 +38,17 @@ export default class LaymicPreference {
 
     const isDisableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを無効化", preferenceBtnClass);
 
-    const progressBarWidth = builder.createSelectButton(
-      "進捗バー表示設定",
-      this.barWidthLabels,
-      preferenceBtnClass
-    );
+    const progressBarWidth = selectBuilder.create("進捗バー表示設定", this.barWidthItems, preferenceBtnClass);
 
-    const paginationVisibility = builder.createSelectButton(
+    const paginationVisibility = selectBuilder.create(
       "ページ送りボタン表示設定",
-      this.uiVisibilityLabels,
+      this.uiVisibilityItems,
       `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`
     );
 
-    const zoomButtonRatio = builder.createSelectButton(
+    const zoomButtonRatio = selectBuilder.create(
       "ズームボタン倍率設定",
-      this.zoomButtonRatioLabels,
+      this.zoomButtonRatioItems,
       `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`
     );
 
@@ -63,9 +64,9 @@ export default class LaymicPreference {
     });
 
     [
-      progressBarWidth,
-      paginationVisibility,
-      zoomButtonRatio,
+      progressBarWidth.el.container,
+      paginationVisibility.el.container,
+      zoomButtonRatio.el.container,
       isAutoFullscreen,
       isDisableTapSlidePage,
       descriptionEl
@@ -76,12 +77,19 @@ export default class LaymicPreference {
     this.el = containerEl;
     this.wrapperEl = wrapperEl;
     this.buttons = {
-      progressBarWidth,
-      paginationVisibility,
-      zoomButtonRatio,
+      progressBarWidth: progressBarWidth.el.container,
+      paginationVisibility: paginationVisibility.el.container,
+      zoomButtonRatio: paginationVisibility.el.container,
       isAutoFullscreen,
       isDisableTapSlidePage,
     };
+
+    this.choices = {
+      progressBarWidth,
+      paginationVisibility,
+      zoomButtonRatio,
+    };
+
     // 各種イベントをボタンに適用
     this.applyEventListeners();
   }
@@ -96,57 +104,30 @@ export default class LaymicPreference {
     }
   }
 
-  private get barWidthValues(): BarWidth[] {
+  private get barWidthItems(): SelectItem[] {
     return [
-      "auto",
-      "none",
-      "tint",
-      "medium",
-      "bold",
+      {value: "auto", label: "初期値"},
+      {value: "none", label: "非表示"},
+      {value: "tint", label: "細い"},
+      {value: "medium", label: "普通"},
+      {value: "bold", label: "太い"},
     ]
   }
 
-  private get barWidthLabels(): string[] {
+  private get uiVisibilityItems(): SelectItem[] {
     return [
-      "初期値",
-      "非表示",
-      "細い",
-      "普通",
-      "太い"
+      {value: "auto", label: "初期値"},
+      {value: "hidden", label: "非表示"},
+      {value: "visible", label: "表示"},
     ]
   }
 
-  private get uiVisibilityValues(): UIVisibility[] {
+  private get zoomButtonRatioItems(): SelectItem[] {
     return [
-      "auto",
-      "hidden",
-      "visible",
-    ]
-  }
-
-  private get uiVisibilityLabels(): string[] {
-    return [
-      "初期値",
-      "非表示",
-      "表示",
-    ]
-  }
-
-  private get zoomButtonRatioValues(): number[] {
-    return [
-      1.5,
-      2.0,
-      2.5,
-      3.0
-    ]
-  }
-
-  private get zoomButtonRatioLabels(): string[] {
-    return [
-      "1.5倍",
-      "2.0倍",
-      "2.5倍",
-      "3.0倍"
+      { value: 1.5, label: "1.5倍"},
+      { value: 2.0, label: "2.0倍"},
+      { value: 2.5, label: "2.5倍"},
+      { value: 3.0, label: "3.0倍"},
     ]
   }
 
@@ -174,8 +155,8 @@ export default class LaymicPreference {
     return this.data.progressBarWidth
   }
 
-  set progressBarWidth(Width: BarWidth) {
-    this.data.progressBarWidth = Width;
+  set progressBarWidth(width: BarWidth) {
+    this.data.progressBarWidth = width;
     this.savePreferenceData();
     this.dispatchPreferenceUpdateEvent("progressBarWidth");
   }
@@ -261,10 +242,12 @@ export default class LaymicPreference {
     const {
       isAutoFullscreen,
       isDisableTapSlidePage,
+    } = this.buttons;
+    const {
       paginationVisibility,
       progressBarWidth,
       zoomButtonRatio,
-    } = this.buttons;
+    } = this.choices;
 
     const {
       active
@@ -284,25 +267,19 @@ export default class LaymicPreference {
 
     [
       {
-        // pagination visibility
-        els: this.getSelectItemEls(paginationVisibility),
-        idx: this.uiVisibilityValues.indexOf(this.paginationVisibility)
+        choice: paginationVisibility,
+        idx: this.uiVisibilityItems.findIndex(item => item.value === this.paginationVisibility)
       },
       {
-        // progress bar width
-        els: this.getSelectItemEls(progressBarWidth),
-        idx: this.barWidthValues.indexOf(this.progressBarWidth)
+        choice: progressBarWidth,
+        idx: this.barWidthItems.findIndex(item => item.value === this.progressBarWidth)
       },
       {
-        // zoom button ratio
-        els: this.getSelectItemEls(zoomButtonRatio),
-        idx: this.zoomButtonRatioValues.indexOf(this.zoomButtonRatio)
+        choice: zoomButtonRatio,
+        idx: this.zoomButtonRatioItems.findIndex(item => item.value === this.zoomButtonRatio)
       }
     ].forEach(obj => {
-      const {els, idx} = obj;
-      if (isHTMLElementArray(els) && els[idx]) {
-        els[idx].style.order = "-1";
-      }
+      if (obj.idx !== -1) obj.choice.updateCurrentItem(obj.idx, false);
     })
   }
 
@@ -319,117 +296,47 @@ export default class LaymicPreference {
       this.isDisableTapSlidePage = !this.isDisableTapSlidePage;
     });
 
-    const paginationVisibilityHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
-      if (!(e.target instanceof HTMLElement)) return;
-
-      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-
-      if (idx === 1) {
-        // horizontal
-        this.paginationVisibility = "hidden";
-      } else if (idx === 2) {
-        // vertical
-        this.paginationVisibility = "visible";
-      } else {
-        // auto
-        this.paginationVisibility = "auto";
-      }
-
-      itemEls.forEach(el => el.style.order = "");
-
-      el.style.order = "-1";
+    const paginationVisibilityHandler = (item: SelectItem) => {
+      if (isUIVisibility(item.value))
+      this.paginationVisibility = item.value;
     }
 
-    const progressBarWidthHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
-      if (!(e.target instanceof HTMLElement)) return;
-
-      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-
-      if (idx === 1) {
-        this.progressBarWidth = "none";
-      } else if (idx === 2) {
-        this.progressBarWidth = "tint";
-      } else if (idx === 3) {
-        this.progressBarWidth = "medium";
-      } else if (idx === 4) {
-        this.progressBarWidth = "bold";
-      } else {
-        // auto
-        this.progressBarWidth = "auto";
-      }
-
-      itemEls.forEach(el => el.style.order = "");
-
-      el.style.order = "-1";
+    const progressBarWidthHandler = (item: SelectItem) => {
+      if (isBarWidth(item.value)) this.progressBarWidth = item.value;
     }
 
-    const zoomButtonRatioHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
-      if (!(e.target instanceof HTMLElement)) return;
+    const zoomButtonRatioHandler = (item: SelectItem) => {
+      const ratio = item.value;
+      if (Number.isFinite(ratio)) this.zoomButtonRatio = ratio;
+    }
 
-      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-
-      if (idx === 1) {
-        // 2.0倍
-        this.zoomButtonRatio = 2.0;
-      } else if (idx === 2) {
-        // 2.5倍
-        this.zoomButtonRatio = 2.5;
-      } else if (idx === 3) {
-        // 3.0倍
-        this.zoomButtonRatio = 3.0;
-      } else {
-        // 1.5
-        this.zoomButtonRatio = 1.5;
-      }
-
-      // 全ての子要素を一旦初期値に戻す
-      itemEls.forEach(el => el.style.order = "");
-
-      // クリックされた要素を一番上に押し上げる
-      el.style.order = "-1";
-    };
-
-    // 各種selectButton要素のイベントリスナーを登録
     [
       {
-        el: this.buttons.paginationVisibility,
-        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => paginationVisibilityHandler(e, el, itemEls)
+        choice: this.choices.paginationVisibility,
+        handler: paginationVisibilityHandler
       },
       {
-        el: this.buttons.progressBarWidth,
-        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => progressBarWidthHandler(e, el, itemEls)
+        choice: this.choices.progressBarWidth,
+        handler: progressBarWidthHandler,
       },
       {
-        el: this.buttons.zoomButtonRatio,
-        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => zoomButtonRatioHandler(e, el, itemEls)
+        choice: this.choices.zoomButtonRatio,
+        handler: zoomButtonRatioHandler
       }
     ].forEach(obj => {
-      const {el: parentEl, callback} = obj;
-      const els = this.getSelectItemEls(parentEl);
-      if (isHTMLElementArray(els)) {
-        els.forEach(el => el.addEventListener("click", e => {
-          // 親要素がアクティブな時 === selectButtonが選択された時
-          // この時だけ処理を動かす
-          const isActive = parentEl.classList.contains(this.builder.stateNames.active);
-          if (isActive) {
-            callback(e, el, els);
-          }
-        }));
-      }
+      obj.choice.el.container.addEventListener("SimpleSelectItemEvent", ((e: CustomEvent<SelectItem>) => {
+        obj.handler(e.detail);
+      }) as EventListener)
     })
 
     // preference wrapperのクリックイベント
     this.wrapperEl.addEventListener("click", e => {
-      // セレクトボタン要素を全て非アクティブ化
-      this.deactivateSelectButtons();
-
       // クリックイベントをpreference containerへ伝播させない
       e.stopPropagation();
     })
 
     // preference containerのクリックイベント
     this.el.addEventListener("click", () => {
-      this.deactivateSelectButtons();
       this.hidePreference();
     })
   }
@@ -446,27 +353,6 @@ export default class LaymicPreference {
    */
   hidePreference() {
     this.rootEl.classList.remove(this.builder.stateNames.showPreference);
-  }
-
-  /**
-   * 全てのセレクトボタンを非アクティブ状態にする
-   * 設定画面が閉じられる際に呼び出される
-   */
-  private deactivateSelectButtons() {
-    [
-      this.buttons.progressBarWidth,
-      this.buttons.paginationVisibility,
-    ].forEach(el => el.classList.remove(this.builder.stateNames.active));
-  }
-
-  /**
-   * 入力した要素内部にあるselectItem要素を配列として返す
-   * @param  el selectButtonを想定した引数
-   * @return    クラス名で抽出したElement配列
-   */
-  private getSelectItemEls(el: HTMLElement): Element[] {
-    const selectItemClass = this.builder.classNames.select.item;
-    return Array.from(el.getElementsByClassName(selectItemClass) || [])
   }
 
   /**

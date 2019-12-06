@@ -1,4 +1,4 @@
-import { BarWidth, LaymicPages, OrientationString } from "#/interfaces/index";
+import { BarWidth, UIVisibility, LaymicPages, OrientationString } from "#/interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -114,6 +114,10 @@ export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
 
 export const isBarWidth = (s: any): s is BarWidth => {
   return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
+}
+
+export const isUIVisibility = (s: any): s is UIVisibility => {
+  return s === "auto" || s === "none" || s === "visible";
 }
 
 export const compareString = <T>(s: string, cmp: string, success: T): T | undefined => {

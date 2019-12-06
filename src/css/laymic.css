@@ -399,17 +399,24 @@
 }
 
 .laymic_select {
-  max-height: 2rem;
+  --padding-size: .5rem;
+  --font-size: 16px;
+  font-size: var(--font-size);
+  max-height: calc(var(--font-size) + var(--padding-size) * 2);
 }
 
 .laymic_selectWrapper {
   display: flex;
   flex-flow: column nowrap;
-  overflow: hidden;
   max-height: inherit;
   position: relative;
-  z-index: 10;
-  flex: 0 0 5rem;
+  min-width: 5rem;
+  color: #333;
+}
+
+.laymic_selectCurrentItem {
+  padding: var(--padding-size);
+  background: #e0e0e0;
 }
 
 .laymic_checkboxLabel,
@@ -418,20 +425,32 @@
 }
 
 .laymic_selectItem {
-  padding: 0.5rem 1rem;
+  padding: var(--padding-size);
   background: #fafafa;
   color: #333;
-  pointer-events: none;
 }
 
-.laymic_select.laymic_isActive .laymic_selectWrapper {
+.laymic_selectItemWrapper {
+  visibility: hidden;
+  background: #fafafa;
+  z-index: 1;
+}
+
+.laymic_selectItemWrapper[aria-expanded="true"] {
+  visibility: visible;
+}
+.laymic_selectItem[aria-selected="true"] {
+  background: #e0e0e0;
+}
+
+/* .laymic_select.laymic_isActive .laymic_selectWrapper {
   overflow: visible;
   z-index: 12;
 }
 
 .laymic_select.laymic_isActive .laymic_selectItem {
   pointer-events: auto;
-}
+} */
 
 .laymic_pagination {
   --swiper-navigation-color: rgba(255, 255, 255, .3);
