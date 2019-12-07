@@ -1,4 +1,5 @@
 import DOMBuilder from "#/components/builder";
+import { setAriaExpanded } from "#/utils";
 
 export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
@@ -17,6 +18,7 @@ export default class LaymicHelp {
 
     const containerEl = builder.createDiv();
     containerEl.className = helpClassNames.container;
+    setAriaExpanded(containerEl, false);
 
     const wrapperEl = builder.createHelpWrapperEl();
 
@@ -30,7 +32,7 @@ export default class LaymicHelp {
 
     this.loadIsDisplayedData();
     if (!this.isDisplayed) {
-      this.showHelp();
+      this.show();
     }
   }
 
@@ -50,18 +52,21 @@ export default class LaymicHelp {
     localStorage.setItem(this.ISDISPLAYED_KEY, "true");
   }
 
-  showHelp() {
+  show() {
     this.rootEl.classList.add(this.builder.stateNames.showHelp);
+    setAriaExpanded(this.rootEl, true);
   }
 
-  hideHelp() {
+  hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showHelp);
+    setAriaExpanded(this.rootEl, false);
+
     this.isHelpDisplayed = true;
   }
 
   private applyEventListeners() {
     this.el.addEventListener("click", () => {
-      this.hideHelp();
+      this.hide();
     })
   }
 }

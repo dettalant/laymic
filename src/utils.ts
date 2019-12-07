@@ -51,9 +51,9 @@ export const isMobile = (): boolean => {
   return regex.test(window.navigator.userAgent);
 }
 
-export const isExistTouchEvent = (): boolean => {
-  return "ontouchmove" in window;
-}
+// export const isExistTouchEvent = (): boolean => {
+//   return "ontouchmove" in window;
+// }
 
 export const isSupportedPassive = () => {
   let passive = false;
@@ -97,20 +97,20 @@ export const rafThrottle = function<T extends Element, E extends Event>(callback
   }
 }
 
-export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
-  let bool = true;
-
-  if (Array.isArray(array) && array.length > 0) {
-    array.forEach(v => {
-      const b = v instanceof HTMLElement;
-      if (!b) bool = false;
-    })
-  } else {
-    bool = false;
-  }
-
-  return bool;
-}
+// export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
+//   let bool = true;
+//
+//   if (Array.isArray(array) && array.length > 0) {
+//     array.forEach(v => {
+//       const b = v instanceof HTMLElement;
+//       if (!b) bool = false;
+//     })
+//   } else {
+//     bool = false;
+//   }
+//
+//   return bool;
+// }
 
 export const isBarWidth = (s: any): s is BarWidth => {
   return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
@@ -174,3 +174,7 @@ export const getDeviceOrientation = (): OrientationString => {
 
   return orientation;
 }
+
+export const setAriaExpanded = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-expanded", bool.toString());
+
+export const setRole = (el: HTMLElement, role: string) => el.setAttribute("role", role);

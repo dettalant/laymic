@@ -1,5 +1,5 @@
 import { ViewerUIButtons } from "#/interfaces/ui";
-import { SelectClassNames } from "@dettalant/simple_choices";
+import { SelectClassNames, CheckboxClassNames } from "@dettalant/simple_choices";
 
 export interface LaymicStateClassNames {
   // 汎用的なアクティブ時ステート
@@ -47,12 +47,6 @@ export interface LaymicControllerClassNames {
   controllerTop: string,
   controllerBottom: string,
   progressbar: string,
-}
-
-export interface LaymicCheckboxClassNames {
-  container: string,
-  label: string
-  iconWrapper: string,
 }
 
 export interface LaymicThumbsClassNames {
@@ -103,7 +97,7 @@ export interface LaymicClassNames {
   controller: LaymicControllerClassNames,
   buttons: LaymicUIButtonClassNames,
   svg: LaymicSVGClassNames,
-  checkbox: LaymicCheckboxClassNames,
+  checkbox: CheckboxClassNames,
   select: SelectClassNames,
   thumbs: LaymicThumbsClassNames,
   preference: LaymicPreferenceClassNames,

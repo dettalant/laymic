@@ -6,6 +6,7 @@ import {
   LaymicClassNames,
   LaymicStateClassNames
 } from "#/interfaces/index";
+import { setRole } from "#/utils";
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -15,7 +16,7 @@ const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 // mangaViewerで用いるDOMを生成するやつ
 export default class DOMBuilder {
   // 使用するアイコンセット
-  private icons: ViewerIcons = this.defaultMangaViewerIcons;
+  icons: ViewerIcons = this.defaultMangaViewerIcons;
   readonly classNames = this.defaultLaymicClassNames;
   readonly stateNames = this.defaultLaymicStateClassNames;
   constructor(
@@ -356,6 +357,8 @@ export default class DOMBuilder {
 
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = ctrlClassNames.controllerTop;
+    ctrlTopEl.setAttribute("aria-orientation", "horizontal");
+    setRole(ctrlTopEl, "menu");
 
     const direction = this.createButton();
     direction.classList.add(btnClassNames.direction);
@@ -399,6 +402,12 @@ export default class DOMBuilder {
     ].forEach(icon => zoom.appendChild(icon));
 
     [
+      preference,
+      thumbs,
+      help,
+    ].forEach(el => el.setAttribute("aria-haspopup", "true"));
+
+    [
       help,
       direction,
       thumbs,
@@ -406,7 +415,10 @@ export default class DOMBuilder {
       fullscreen,
       preference,
       close
-    ].forEach(btn => ctrlTopEl.appendChild(btn));
+    ].forEach(btn => {
+      setRole(btn, "menuitem");
+      ctrlTopEl.appendChild(btn);
+    });
 
     const paginationClass = this.classNames.pagination
     const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
@@ -450,7 +462,7 @@ export default class DOMBuilder {
    * @param  className 返す要素に追加するクラス名
    * @return           SVGElement
    */
-  private createSvgUseElement(icon: IconData): SVGElement {
+  createSvgUseElement(icon: IconData): SVGElement {
     const svgClassNames = this.classNames.svg;
     const svgEl = document.createElementNS(SVG_NS, "svg");
     svgEl.setAttribute("class", `${svgClassNames.icon} ${icon.className}`);
@@ -534,66 +546,6 @@ export default class DOMBuilder {
     return document.createElement("p");
   }
 
-  createCheckBoxButton(label: string, className: string = ""): HTMLButtonElement {
-    const checkboxClassNames = this.classNames.checkbox
-    const btn = this.createButton(`${checkboxClassNames.container} ${className}`);
-    const labelEl = this.createSpan();
-    labelEl.className = checkboxClassNames.label;
-    labelEl.textContent = label;
-
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = checkboxClassNames.iconWrapper;
-
-    [
-      this.createSvgUseElement(this.icons.checkboxOuter),
-      this.createSvgUseElement(this.icons.checkboxInner),
-    ].forEach(el => wrapperEl.appendChild(el));
-
-    [
-      labelEl,
-      wrapperEl,
-    ].forEach(el => btn.appendChild(el));
-
-    btn.addEventListener("click", e => {
-      btn.classList.toggle(this.stateNames.active);
-      e.stopPropagation();
-    });
-    return btn;
-  }
-
-  createSelectButton(label: string, values: string[], className: string = ""): HTMLButtonElement {
-    const selectClassNames = this.classNames.select;
-    const btn = this.createButton(`${selectClassNames.container} ${className}`);
-
-    const labelEl = this.createSpan();
-    labelEl.className = selectClassNames.label;
-    labelEl.textContent = label;
-
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = selectClassNames.wrapper;
-
-    values.forEach((item, i) => {
-      const el = this.createDiv();
-      el.className =  `${selectClassNames.item} ${selectClassNames.item + i}`;
-
-      el.textContent = item;
-      el.dataset.itemIdx = i.toString();
-      wrapperEl.appendChild(el);
-    });
-
-    [
-      labelEl,
-      wrapperEl,
-    ].forEach(el => btn.appendChild(el));
-
-    btn.addEventListener("click", e => {
-      btn.classList.toggle(this.stateNames.active);
-      e.stopPropagation();
-    })
-
-    return btn;
-  }
-
   createEmptySlideEl(): HTMLElement {
     const emptyEl = this.createDiv();
     emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
@@ -642,6 +594,7 @@ export default class DOMBuilder {
     const helpClassNames = this.classNames.help;
     const innerWrapper = this.createDiv();
     innerWrapper.className = helpClassNames.innerWrapper;
+    setRole(innerWrapper, "list");
 
     [
       {
@@ -685,6 +638,8 @@ export default class DOMBuilder {
     ].forEach(obj => {
       const item = this.createDiv();
       item.className = helpClassNames.innerItem;
+      setRole(item, "listitem");
+
       if (obj.className) item.classList.add(obj.className);
 
       const iconWrapper = this.createDiv();

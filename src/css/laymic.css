@@ -439,6 +439,7 @@
 .laymic_selectItemWrapper[aria-expanded="true"] {
   visibility: visible;
 }
+
 .laymic_selectItem[aria-selected="true"] {
   background: #e0e0e0;
 }
@@ -594,7 +595,7 @@
 
 .laymic_isVertView .icon_horizView,
 .laymic_isFullscreen .icon_exitFullscreen,
-.laymic_preferenceButton.laymic_isActive .icon_checkBoxInner {
+.laymic_preferenceButton[aria-checked="true"] .icon_checkBoxInner {
   display: block;
 }
 

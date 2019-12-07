@@ -41,34 +41,6 @@ describe("builder class test", () => {
     expect(builder["isIconData"](falseDummy)).toBeFalsy();
   })
 
-  it("createSelectButton test", () => {
-    const selectBtn = builder.createSelectButton("select test", [
-      "test1", "test2", "test3"
-    ]);
-
-    const active = builder.stateNames.active;
-
-    expect(selectBtn.classList.contains(active)).toBeFalsy();
-    selectBtn.click();
-    expect(selectBtn.classList.contains(active)).toBeTruthy();
-
-    selectBtn.click();
-    expect(selectBtn.classList.contains(active)).toBeFalsy();
-  })
-
-  it("createCheckBoxButton test", () => {
-    const btn = builder.createCheckBoxButton("checkbox test");
-    const active = builder.stateNames.active;
-
-    expect(btn.classList.contains(active)).toBeFalsy();
-
-    btn.click();
-    expect(btn.classList.contains(active)).toBeTruthy();
-
-    btn.click();
-    expect(btn.classList.contains(active)).toBeFalsy();
-  });
-
   it("createSvgUseElement test", () => {
     const dummy = {
       id: "dummyId",

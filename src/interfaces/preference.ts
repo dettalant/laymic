@@ -1,5 +1,5 @@
 import { BarWidth, UIVisibility } from "#/interfaces/ui"
-import { SimpleSelect } from "@dettalant/simple_choices";
+import { SimpleSelect, SimpleCheckbox } from "@dettalant/simple_choices";
 
 
 export interface PreferenceData {
@@ -15,17 +15,11 @@ export interface PreferenceData {
   zoomButtonRatio: number,
 }
 
-// export interface PreferenceButtons extends Record<keyof PreferenceData, HTMLButtonElement>{}
-export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
-//
-// export interface PreferenceButtons {
-//   isAutoFullscreen: HTMLButtonElement,
-//   isDisableTapSlidePage: HTMLButtonElement,
-//   progressBarWidth: SimpleSelect,
-//   paginationVisibility: SimpleSelect,
-//   zoomButtonRatio: SimpleSelect,
-// }
+// export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
 
-export type PreferenceChoices = Record<keyof Omit<PreferenceData, "isAutoFullscreen" | "isDisableTapSlidePage">, SimpleSelect>
+type PreferenceCheckboxs = Record<"isAutoFullscreen" | "isDisableTapSlidePage", SimpleCheckbox>;
+type PreferenceSelects = Record<keyof Omit<PreferenceData, keyof PreferenceCheckboxs>, SimpleSelect>;
+
+export type PreferenceChoices = PreferenceCheckboxs & PreferenceSelects;
 
 export type PreferenceUpdateEventString = keyof PreferenceData | "";

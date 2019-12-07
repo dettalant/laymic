@@ -5,7 +5,7 @@ import {
   calcGCD,
   viewerCnt,
   sleep,
-  isExistTouchEvent,
+  isMobile,
   isLaymicPages,
   rafThrottle,
   excludeHashLocation,
@@ -226,7 +226,7 @@ export default class Laymic {
       thumbItemWidth: 96,
       thumbItemGap: 16,
       thumbsWrapperPadding: 16,
-      isMobile: isExistTouchEvent(),
+      isMobile: isMobile(),
       isInstantOpen: true,
       bodyScrollTop: 0,
       isActive: false,
@@ -455,8 +455,6 @@ export default class Laymic {
       } else {
         this.enablePagination();
       }
-    } else {
-      console.log("manga viewer update event");
     }
   }
 
@@ -466,7 +464,7 @@ export default class Laymic {
    */
   private applyEventListeners() {
     this.el.buttons.help.addEventListener("click", () => {
-      this.help.showHelp();
+      this.help.show();
       this.hideViewerUI();
     })
 
@@ -481,14 +479,14 @@ export default class Laymic {
 
     // サムネイル表示ボタン
     this.el.buttons.thumbs.addEventListener("click", () => {
-      this.thumbs.showThumbs();
+      this.thumbs.show();
       this.hideViewerUI();
     })
 
     // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
     this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
-      this.thumbs.hideThumbs();
+      this.thumbs.hide();
       this.swiper.slideTo(i);
     }));
 
@@ -512,7 +510,7 @@ export default class Laymic {
 
     // 設定ボタンのクリックイベント
     this.el.buttons.preference.addEventListener("click", () => {
-      this.preference.showPreference();
+      this.preference.show();
       // UIを閉じておく
       this.hideViewerUI();
     })
