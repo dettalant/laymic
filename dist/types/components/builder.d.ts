@@ -1,6 +1,6 @@
-import { ViewerPages, ViewerIcons, ViewerUIButtons, LaymicClassNames, LaymicStateClassNames } from "#/interfaces/index";
+import { ViewerPages, ViewerIcons, ViewerUIButtons, IconData, LaymicClassNames, LaymicStateClassNames } from "#/interfaces/index";
 export default class DOMBuilder {
-    private icons;
+    icons: ViewerIcons;
     readonly classNames: LaymicClassNames;
     readonly stateNames: LaymicStateClassNames;
     constructor(icons?: Partial<ViewerIcons>, classNames?: Partial<LaymicClassNames>, stateNames?: Partial<LaymicStateClassNames>);
@@ -33,7 +33,7 @@ export default class DOMBuilder {
      * @param  className 返す要素に追加するクラス名
      * @return           SVGElement
      */
-    private createSvgUseElement;
+    createSvgUseElement(icon: IconData): SVGElement;
     /**
      * 漫画ビューワーが用いるアイコンを返す
      * use要素を用いたsvg引用呼び出しを使うための前処理
@@ -52,8 +52,6 @@ export default class DOMBuilder {
     createButton(className?: string): HTMLButtonElement;
     createSpan(): HTMLSpanElement;
     createParagraph(): HTMLParagraphElement;
-    createCheckBoxButton(label: string, className?: string): HTMLButtonElement;
-    createSelectButton(label: string, values: string[], className?: string): HTMLButtonElement;
     createEmptySlideEl(): HTMLElement;
     /**
      * ヘルプとして表示する部分を出力する

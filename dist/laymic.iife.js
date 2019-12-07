@@ -5107,6 +5107,10 @@ var laymic = (function (exports) {
 
   Swiper.use(components);
 
+  function unwrapExports (x) {
+  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+  }
+
   function createCommonjsModule(fn, module) {
   	return module = { exports: {} }, fn(module, module.exports), module.exports;
   }
@@ -5337,9 +5341,9 @@ var laymic = (function (exports) {
       const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
       return regex.test(window.navigator.userAgent);
   };
-  const isExistTouchEvent = () => {
-      return "ontouchmove" in window;
-  };
+  // export const isExistTouchEvent = (): boolean => {
+  //   return "ontouchmove" in window;
+  // }
   const isSupportedPassive = () => {
       let passive = false;
       const options = Object.defineProperty({}, "passive", {
@@ -5379,22 +5383,25 @@ var laymic = (function (exports) {
           });
       };
   };
-  const isHTMLElementArray = (array) => {
-      let bool = true;
-      if (Array.isArray(array) && array.length > 0) {
-          array.forEach(v => {
-              const b = v instanceof HTMLElement;
-              if (!b)
-                  bool = false;
-          });
-      }
-      else {
-          bool = false;
-      }
-      return bool;
-  };
+  // export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
+  //   let bool = true;
+  //
+  //   if (Array.isArray(array) && array.length > 0) {
+  //     array.forEach(v => {
+  //       const b = v instanceof HTMLElement;
+  //       if (!b) bool = false;
+  //     })
+  //   } else {
+  //     bool = false;
+  //   }
+  //
+  //   return bool;
+  // }
   const isBarWidth = (s) => {
       return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
+  };
+  const isUIVisibility = (s) => {
+      return s === "auto" || s === "none" || s === "visible";
   };
   const compareString = (s, cmp, success) => {
       return s.toLowerCase() === cmp.toLowerCase() ? success : undefined;
@@ -5445,6 +5452,8 @@ var laymic = (function (exports) {
       }
       return orientation;
   };
+  const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", bool.toString());
+  const setRole = (el, role) => el.setAttribute("role", role);
 
   // svg namespace
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -5504,7 +5513,9 @@ var laymic = (function (exports) {
                   container: "laymic_select",
                   label: "laymic_selectLabel",
                   wrapper: "laymic_selectWrapper",
+                  current: "laymic_selectCurrentItem",
                   item: "laymic_selectItem",
+                  itemWrapper: "laymic_selectItemWrapper"
               },
               thumbs: {
                   container: "laymic_thumbs",
@@ -5764,6 +5775,8 @@ var laymic = (function (exports) {
           progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
           const ctrlTopEl = this.createDiv();
           ctrlTopEl.className = ctrlClassNames.controllerTop;
+          ctrlTopEl.setAttribute("aria-orientation", "horizontal");
+          setRole(ctrlTopEl, "menu");
           const direction = this.createButton();
           direction.classList.add(btnClassNames.direction);
           [
@@ -5799,6 +5812,11 @@ var laymic = (function (exports) {
               this.createSvgUseElement(this.icons.zoomIn),
           ].forEach(icon => zoom.appendChild(icon));
           [
+              preference,
+              thumbs,
+              help,
+          ].forEach(el => el.setAttribute("aria-haspopup", "true"));
+          [
               help,
               direction,
               thumbs,
@@ -5806,7 +5824,10 @@ var laymic = (function (exports) {
               fullscreen,
               preference,
               close
-          ].forEach(btn => ctrlTopEl.appendChild(btn));
+          ].forEach(btn => {
+              setRole(btn, "menuitem");
+              ctrlTopEl.appendChild(btn);
+          });
           const paginationClass = this.classNames.pagination;
           const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
           const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
@@ -5911,53 +5932,6 @@ var laymic = (function (exports) {
       createParagraph() {
           return document.createElement("p");
       }
-      createCheckBoxButton(label, className = "") {
-          const checkboxClassNames = this.classNames.checkbox;
-          const btn = this.createButton(`${checkboxClassNames.container} ${className}`);
-          const labelEl = this.createSpan();
-          labelEl.className = checkboxClassNames.label;
-          labelEl.textContent = label;
-          const wrapperEl = this.createDiv();
-          wrapperEl.className = checkboxClassNames.iconWrapper;
-          [
-              this.createSvgUseElement(this.icons.checkboxOuter),
-              this.createSvgUseElement(this.icons.checkboxInner),
-          ].forEach(el => wrapperEl.appendChild(el));
-          [
-              labelEl,
-              wrapperEl,
-          ].forEach(el => btn.appendChild(el));
-          btn.addEventListener("click", e => {
-              btn.classList.toggle(this.stateNames.active);
-              e.stopPropagation();
-          });
-          return btn;
-      }
-      createSelectButton(label, values, className = "") {
-          const selectClassNames = this.classNames.select;
-          const btn = this.createButton(`${selectClassNames.container} ${className}`);
-          const labelEl = this.createSpan();
-          labelEl.className = selectClassNames.label;
-          labelEl.textContent = label;
-          const wrapperEl = this.createDiv();
-          wrapperEl.className = selectClassNames.wrapper;
-          values.forEach((item, i) => {
-              const el = this.createDiv();
-              el.className = `${selectClassNames.item} ${selectClassNames.item + i}`;
-              el.textContent = item;
-              el.dataset.itemIdx = i.toString();
-              wrapperEl.appendChild(el);
-          });
-          [
-              labelEl,
-              wrapperEl,
-          ].forEach(el => btn.appendChild(el));
-          btn.addEventListener("click", e => {
-              btn.classList.toggle(this.stateNames.active);
-              e.stopPropagation();
-          });
-          return btn;
-      }
       createEmptySlideEl() {
           const emptyEl = this.createDiv();
           emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
@@ -5998,6 +5972,7 @@ var laymic = (function (exports) {
           const helpClassNames = this.classNames.help;
           const innerWrapper = this.createDiv();
           innerWrapper.className = helpClassNames.innerWrapper;
+          setRole(innerWrapper, "list");
           [
               {
                   icons: [this.icons.close],
@@ -6040,6 +6015,7 @@ var laymic = (function (exports) {
           ].forEach(obj => {
               const item = this.createDiv();
               item.className = helpClassNames.innerItem;
+              setRole(item, "listitem");
               if (obj.className)
                   item.classList.add(obj.className);
               const iconWrapper = this.createDiv();
@@ -6066,23 +6042,403 @@ var laymic = (function (exports) {
       }
   }
 
+  var dist = createCommonjsModule(function (module, exports) {
+
+  Object.defineProperty(exports, '__esModule', { value: true });
+
+  const createDiv = (className) => {
+      const div = document.createElement("div");
+      if (className)
+          div.className = className;
+      return div;
+  };
+  const createSpan = (className) => {
+      const span = document.createElement("span");
+      if (className)
+          span.className = className;
+      return span;
+  };
+  const createButton = (className) => {
+      const btn = document.createElement("button");
+      if (className)
+          btn.className = className;
+      btn.type = "button";
+      return btn;
+  };
+  const setAriaSelected = (el, bool) => el.setAttribute("aria-selected", bool.toString());
+  const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", bool.toString());
+  const setAriaChecked = (el, bool) => el.setAttribute("aria-checked", bool.toString());
+  // export const setAriaHidden = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-hidden", bool.toString());
+  const createSVG = (pathDs, viewBox = "0 0 24 24") => {
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("xmlns", ns);
+      svg.setAttribute("viewBox", viewBox);
+      pathDs.forEach(d => {
+          const path = document.createElementNS(ns, "path");
+          path.setAttribute("d", d);
+          svg.appendChild(path);
+      });
+      return svg;
+  };
+
+  class SimpleSelectBuilder {
+      constructor(classNames = {}) {
+          this.classNames = Object.assign(this.defaultSelectClassNames, classNames);
+      }
+      get defaultSelectClassNames() {
+          return {
+              container: "simpleSelect_container",
+              label: "simpleSelect_label",
+              wrapper: "simpleSelect_wrapper",
+              itemWrapper: "simpleSelect_itemWrapper",
+              item: "simpleSelect_item",
+              current: "simpleSelect_currentItem",
+          };
+      }
+      create(label, items, className) {
+          const el = this.genSelectElements(label, items, className);
+          const select = new SimpleSelect(el, items);
+          // set initial selected
+          let selectedIdx = items.findIndex(item => item.selected);
+          if (selectedIdx === -1)
+              selectedIdx = 0;
+          // 初期化のためにアップデート関数を呼んでおく
+          select.updateCurrentItem(selectedIdx, false);
+          return select;
+      }
+      genSelectElements(label, items, className = "") {
+          const names = this.classNames;
+          const containerEl = createButton(names.container + " " + className);
+          containerEl.setAttribute("role", "tree");
+          containerEl.setAttribute("aria-haspopup", "tree");
+          containerEl.title = label;
+          const labelEl = createSpan(names.label);
+          labelEl.textContent = label;
+          const wrapperEl = createDiv(names.wrapper);
+          const currentEl = createDiv(names.current);
+          const itemWrapperEl = createDiv(names.itemWrapper);
+          itemWrapperEl.setAttribute("role", "group");
+          // set aria expanded;
+          [containerEl, itemWrapperEl].forEach(el => setAriaExpanded(el, false));
+          const itemEls = items.map((item, i) => {
+              const className = names.item + " " + names.item + i;
+              const el = createDiv(className);
+              el.textContent = item.label;
+              el.dataset.itemIdx = i.toString();
+              el.setAttribute("role", "treeitem");
+              itemWrapperEl.appendChild(el);
+              return el;
+          });
+          // append childs
+          [
+              currentEl,
+              itemWrapperEl,
+          ].forEach(el => wrapperEl.appendChild(el));
+          [
+              labelEl,
+              wrapperEl
+          ].forEach(el => containerEl.appendChild(el));
+          return {
+              container: containerEl,
+              label: labelEl,
+              current: currentEl,
+              wrapper: wrapperEl,
+              itemWrapper: itemWrapperEl,
+              items: itemEls,
+          };
+      }
+  }
+  class SimpleSelect {
+      /**
+       * SimpleSelectのコンストラクタ
+       *
+       * @param el    生成されたselect要素内のHTMLElementまとめ
+       * @param items 生成されたselect要素が内包する要素データ
+       */
+      constructor(el, items) {
+          this._currentIdx = 0;
+          this._isActive = false;
+          this.el = el;
+          this.items = items;
+          this.applyEventListeners();
+      }
+      get isActive() {
+          return this._isActive;
+      }
+      get currentIdx() {
+          return this._currentIdx;
+      }
+      /**
+       * currentIdx指定を行うsetter
+       * 内部変数の書き換えと同時にupdateCurrentItem関数も呼ぶ
+       * @param  idx 更新後のインデックス数値
+       */
+      set currentIdx(idx) {
+          // 保有items配列を越える数値の場合は早期リターン
+          if (idx > this.items.length - 1)
+              return;
+          this._currentIdx = idx;
+          this.updateCurrentItem(idx);
+      }
+      get currentItem() {
+          return this.items[this._currentIdx];
+      }
+      /**
+       * 入力インデックス数値の値が選択されたものとして
+       * currentItemなどの値を更新する
+       * @param  itemIdx         更新先となるインデックス数値
+       * @param  isDispatchEvent falseならばdispatchEventしない
+       */
+      updateCurrentItem(itemIdx, isDispatchEvent = true) {
+          this.updateCurrentItemLabel(itemIdx);
+          this.updateHighlightItem(itemIdx);
+          if (isDispatchEvent)
+              this.dispatchSelectEvent();
+      }
+      /**
+       * 選択中要素のハイライトを切り替える
+       * @param  itemIdx 更新先となるインデックス数値
+       */
+      updateHighlightItem(itemIdx) {
+          // 配列数を越えているidxの場合は早期リターン
+          if (itemIdx >= this.el.items.length)
+              return;
+          this.el.items.forEach(item => {
+              setAriaSelected(item, false);
+          });
+          const item = this.el.items[itemIdx];
+          setAriaSelected(item, true);
+          this._currentIdx = itemIdx;
+      }
+      /**
+       * 選択中要素ラベル値を書き換える
+       * @param  itemIdx 更新先となるインデックス数値
+       */
+      updateCurrentItemLabel(itemIdx) {
+          const item = this.items[itemIdx];
+          if (item)
+              this.el.current.textContent = item.label;
+      }
+      /**
+       * ドロップダウンを開く
+       */
+      showDropdown() {
+          const { container, itemWrapper } = this.el;
+          [container, itemWrapper].forEach(el => setAriaExpanded(el, true));
+          this._isActive = true;
+      }
+      /**
+       * ドロップダウンを閉じる
+       * hideDropdown後に行う処理を簡便にするため、promiseで包んで返す
+       *
+       * @return 非同期処理終了後のPromiseオブジェクト
+       */
+      hideDropdown() {
+          // onKeyDown時にうまく動かなかったので
+          // requestAnimationFrameを挟んで実行タイミングをずらす
+          return new Promise(res => requestAnimationFrame(() => {
+              const { container, itemWrapper } = this.el;
+              [container, itemWrapper].forEach(el => setAriaExpanded(el, false));
+              this._isActive = false;
+              res();
+          }));
+      }
+      /**
+       * container elementのカスタムイベントを発火させる
+       * "SimpleSelectEvent"がカスタムイベント名
+       */
+      dispatchSelectEvent() {
+          const ev = new CustomEvent("SimpleSelectEvent", {
+              detail: this.items[this._currentIdx],
+          });
+          this.el.container.dispatchEvent(ev);
+      }
+      onKeyDownHandler(e) {
+          // イベントのバブリングを停止させる
+          e.stopPropagation();
+          if (!this.isActive) {
+              // 非アクティブ状態の際は特殊モード
+              this.showDropdown();
+              return;
+          }
+          const isArrowDown = e.key === "ArrowDown" || e.keyCode === 40;
+          const isArrowUp = e.key === "ArrowUp" || e.keyCode === 38;
+          const isEnter = e.key === "Enter" || e.keyCode === 13;
+          const isSpace = e.key === "Space" || e.keyCode === 32;
+          if (isArrowUp) {
+              const idx = (this._currentIdx > 0)
+                  ? --this._currentIdx
+                  : 0;
+              this.updateHighlightItem(idx);
+          }
+          else if (isArrowDown) {
+              const idx = (this._currentIdx < this.items.length - 1)
+                  ? ++this._currentIdx
+                  : this._currentIdx;
+              this.updateHighlightItem(idx);
+          }
+          else if (isEnter || isSpace) {
+              const idx = this._currentIdx;
+              this.updateCurrentItem(idx);
+              this.hideDropdown();
+          }
+      }
+      applyEventListeners() {
+          const { container, items } = this.el;
+          container.addEventListener("blur", () => {
+              this.hideDropdown();
+          });
+          container.addEventListener("click", () => {
+              (!this.isActive)
+                  ? this.showDropdown()
+                  : this.hideDropdown();
+          });
+          container.addEventListener("keydown", e => this.onKeyDownHandler(e));
+          items.forEach(el => {
+              el.addEventListener("mouseenter", () => {
+                  const idx = parseInt(el.dataset.itemIdx || "", 10);
+                  this.updateHighlightItem(idx);
+              });
+              el.addEventListener("click", () => {
+                  const idx = parseInt(el.dataset.itemIdx || "", 10);
+                  this.updateCurrentItem(idx);
+              });
+          });
+      }
+  }
+
+  class SimpleCheckboxBuilder {
+      constructor(classNames = {}, icons = {}) {
+          this.classNames = Object.assign(this.defaultCheckboxClassNames, classNames);
+          this.icons = Object.assign(this.defaultCheckboxIcons, icons);
+      }
+      get defaultCheckboxClassNames() {
+          return {
+              container: "simpleCheckbox_container",
+              label: "simpleCheckbox_label",
+              iconWrapper: "simpleCheckbox_iconWrapper",
+          };
+      }
+      get defaultCheckboxIcons() {
+          // material.io: check_box(modified)
+          const outerPathDs = ["M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"];
+          // material.io: check_box(modified)
+          const innerPathDs = ["M17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"];
+          const outer = createSVG(outerPathDs);
+          const inner = createSVG(innerPathDs);
+          return {
+              outer,
+              inner
+          };
+      }
+      create(label, initialValue = false, className) {
+          const el = this.genCheckboxElements(label, className);
+          const checkbox = new SimpleCheckbox(el);
+          if (initialValue)
+              checkbox.setChecked(initialValue, false);
+          return checkbox;
+      }
+      genCheckboxElements(label, className = "") {
+          const names = this.classNames;
+          const containerEl = createButton(names.container + " " + className);
+          containerEl.setAttribute("role", "switch");
+          setAriaChecked(containerEl, false);
+          containerEl.title = label;
+          const labelEl = createSpan(names.label);
+          labelEl.textContent = label;
+          const iconWrapperEl = createDiv(names.iconWrapper);
+          [
+              this.icons.outer.cloneNode(true),
+              this.icons.inner.cloneNode(true)
+          ].forEach(el => iconWrapperEl.appendChild(el));
+          [labelEl, iconWrapperEl].forEach(el => containerEl.appendChild(el));
+          return {
+              container: containerEl,
+              label: labelEl,
+              iconWrapper: iconWrapperEl
+          };
+      }
+  }
+  class SimpleCheckbox {
+      constructor(el) {
+          this._isActive = false;
+          this.el = el;
+          this.applyEventListeners();
+      }
+      get isActive() {
+          return this._isActive;
+      }
+      set isActive(bool) {
+          this.setChecked(bool);
+      }
+      toggle() {
+          // reverse bool
+          const bool = !this._isActive;
+          this.setChecked(bool);
+      }
+      setChecked(bool, isDispatchEvent = true) {
+          this._isActive = bool;
+          // aria-checkedも同時に切り替える
+          this.updateAriaChecked(bool);
+          if (isDispatchEvent)
+              this.dispatchCheckboxEvent();
+      }
+      updateAriaChecked(bool) {
+          setAriaChecked(this.el.container, bool);
+      }
+      dispatchCheckboxEvent() {
+          const ev = new CustomEvent("SimpleCheckboxEvent", {
+              detail: this._isActive
+          });
+          this.el.container.dispatchEvent(ev);
+      }
+      applyEventListeners() {
+          this.el.container.addEventListener("click", e => {
+              this.toggle();
+              e.stopPropagation();
+          });
+      }
+  }
+
+  exports.SimpleCheckbox = SimpleCheckbox;
+  exports.SimpleCheckboxBuilder = SimpleCheckboxBuilder;
+  exports.SimpleSelect = SimpleSelect;
+  exports.SimpleSelectBuilder = SimpleSelectBuilder;
+  });
+
+  unwrapExports(dist);
+  var dist_1 = dist.SimpleCheckbox;
+  var dist_2 = dist.SimpleCheckboxBuilder;
+  var dist_3 = dist.SimpleSelect;
+  var dist_4 = dist.SimpleSelectBuilder;
+
   class LaymicPreference {
       constructor(builder, rootEl) {
           this.PREFERENCE_KEY = "laymic_preferenceData";
           // preference save data
           this.data = this.defaultPreferenceData;
           this.builder = builder;
+          const selectBuilder = new dist_4(this.builder.classNames.select);
+          const icons = this.builder.icons;
+          const checkboxBuilder = new dist_2(this.builder.classNames.checkbox, {
+              inner: this.builder.createSvgUseElement(icons.checkboxInner),
+              outer: this.builder.createSvgUseElement(icons.checkboxOuter),
+          });
           const containerEl = builder.createDiv();
+          setAriaExpanded(containerEl, false);
           const preferenceClassNames = this.builder.classNames.preference;
           containerEl.className = preferenceClassNames.container;
           const wrapperEl = builder.createDiv();
           wrapperEl.className = preferenceClassNames.wrapper;
+          setRole(wrapperEl, "list");
           const preferenceBtnClass = preferenceClassNames.button;
-          const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
-          const isDisableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを無効化", preferenceBtnClass);
-          const progressBarWidth = builder.createSelectButton("進捗バー表示設定", this.barWidthLabels, preferenceBtnClass);
-          const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", this.uiVisibilityLabels, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
-          const zoomButtonRatio = builder.createSelectButton("ズームボタン倍率設定", this.zoomButtonRatioLabels, `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`);
+          const isAutoFullscreen = checkboxBuilder.create("ビューワー展開時の自動全画面化", false, `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
+          const isDisableTapSlidePage = checkboxBuilder.create("モバイル端末でのタップページ送りを無効化", false, preferenceBtnClass);
+          const progressBarWidth = selectBuilder.create("進捗バー表示設定", this.barWidthItems, preferenceBtnClass);
+          const paginationVisibility = selectBuilder.create("ページ送りボタン表示設定", this.uiVisibilityItems, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
+          const zoomButtonRatio = selectBuilder.create("ズームボタン倍率設定", this.zoomButtonRatioItems, `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`);
           const descriptionEl = builder.createDiv();
           [
               "",
@@ -6094,83 +6450,29 @@ var laymic = (function (exports) {
               descriptionEl.appendChild(p);
           });
           [
-              progressBarWidth,
-              paginationVisibility,
-              zoomButtonRatio,
-              isAutoFullscreen,
-              isDisableTapSlidePage,
+              progressBarWidth.el.container,
+              paginationVisibility.el.container,
+              zoomButtonRatio.el.container,
+              isAutoFullscreen.el.container,
+              isDisableTapSlidePage.el.container,
               descriptionEl
-          ].forEach(el => wrapperEl.appendChild(el));
+          ].forEach(el => {
+              wrapperEl.appendChild(el);
+              setRole(el, "listitem");
+          });
           containerEl.appendChild(wrapperEl);
           this.rootEl = rootEl;
           this.el = containerEl;
           this.wrapperEl = wrapperEl;
-          this.buttons = {
+          this.choices = {
               progressBarWidth,
               paginationVisibility,
               zoomButtonRatio,
               isAutoFullscreen,
-              isDisableTapSlidePage,
+              isDisableTapSlidePage
           };
           // 各種イベントをボタンに適用
           this.applyEventListeners();
-      }
-      get defaultPreferenceData() {
-          return {
-              isAutoFullscreen: false,
-              isDisableTapSlidePage: false,
-              progressBarWidth: "auto",
-              paginationVisibility: "auto",
-              zoomButtonRatio: 1.5,
-          };
-      }
-      get barWidthValues() {
-          return [
-              "auto",
-              "none",
-              "tint",
-              "medium",
-              "bold",
-          ];
-      }
-      get barWidthLabels() {
-          return [
-              "初期値",
-              "非表示",
-              "細い",
-              "普通",
-              "太い"
-          ];
-      }
-      get uiVisibilityValues() {
-          return [
-              "auto",
-              "hidden",
-              "visible",
-          ];
-      }
-      get uiVisibilityLabels() {
-          return [
-              "初期値",
-              "非表示",
-              "表示",
-          ];
-      }
-      get zoomButtonRatioValues() {
-          return [
-              1.5,
-              2.0,
-              2.5,
-              3.0
-          ];
-      }
-      get zoomButtonRatioLabels() {
-          return [
-              "1.5倍",
-              "2.0倍",
-              "2.5倍",
-              "3.0倍"
-          ];
       }
       get isAutoFullscreen() {
           return this.data.isAutoFullscreen;
@@ -6190,8 +6492,8 @@ var laymic = (function (exports) {
       get progressBarWidth() {
           return this.data.progressBarWidth;
       }
-      set progressBarWidth(Width) {
-          this.data.progressBarWidth = Width;
+      set progressBarWidth(width) {
+          this.data.progressBarWidth = width;
           this.savePreferenceData();
           this.dispatchPreferenceUpdateEvent("progressBarWidth");
       }
@@ -6209,6 +6511,92 @@ var laymic = (function (exports) {
       set zoomButtonRatio(ratio) {
           this.data.zoomButtonRatio = ratio;
           this.savePreferenceData();
+      }
+      get defaultPreferenceData() {
+          return {
+              isAutoFullscreen: false,
+              isDisableTapSlidePage: false,
+              progressBarWidth: "auto",
+              paginationVisibility: "auto",
+              zoomButtonRatio: 1.5,
+          };
+      }
+      get barWidthItems() {
+          return [
+              { value: "auto", label: "初期値" },
+              { value: "none", label: "非表示" },
+              { value: "tint", label: "細い" },
+              { value: "medium", label: "普通" },
+              { value: "bold", label: "太い" },
+          ];
+      }
+      get uiVisibilityItems() {
+          return [
+              { value: "auto", label: "初期値" },
+              { value: "hidden", label: "非表示" },
+              { value: "visible", label: "表示" },
+          ];
+      }
+      get zoomButtonRatioItems() {
+          return [
+              { value: 1.5, label: "1.5倍" },
+              { value: 2.0, label: "2.0倍" },
+              { value: 2.5, label: "2.5倍" },
+              { value: 3.0, label: "3.0倍" },
+          ];
+      }
+      /**
+       * preferenceと関係する項目をセットする
+       * 主にページ読み込み直後にLaymicクラスから呼び出される
+       */
+      applyPreferenceValues() {
+          // 更新前のデータをdeep copy
+          const oldData = Object.assign(this.data);
+          // 設定値をlocalStorageの値と同期させる
+          this.data = this.loadPreferenceData();
+          const dispatchs = [];
+          // 新旧で値が異なっていればdispatchsに追加
+          if (oldData.progressBarWidth !== this.data.progressBarWidth)
+              dispatchs.push("progressBarWidth");
+          if (oldData.paginationVisibility !== this.data.paginationVisibility)
+              dispatchs.push("paginationVisibility");
+          if (oldData.isDisableTapSlidePage !== this.data.isDisableTapSlidePage)
+              dispatchs.push("isDisableTapSlidePage");
+          dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
+          // 読み込んだpreference値を各ボタン状態に適用
+          this.overwritePreferenceElValues();
+      }
+      /**
+       * 設定画面を表示する
+       */
+      show() {
+          this.rootEl.classList.add(this.builder.stateNames.showPreference);
+          setAriaExpanded(this.rootEl, true);
+      }
+      /**
+       * 設定画面を非表示とする
+       */
+      hide() {
+          this.rootEl.classList.remove(this.builder.stateNames.showPreference);
+          setAriaExpanded(this.rootEl, false);
+      }
+      /**
+       * BarWidthの値から進捗バー幅数値を取得する
+       * @param  widthStr BarWidth値
+       * @return          対応する数値
+       */
+      getBarWidth(widthStr = "auto") {
+          let width = 8;
+          if (widthStr === "none") {
+              width = 0;
+          }
+          else if (widthStr === "tint") {
+              width = 4;
+          }
+          else if (widthStr === "bold") {
+              width = 12;
+          }
+          return width;
       }
       savePreferenceData() {
           localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
@@ -6237,66 +6625,39 @@ var laymic = (function (exports) {
           return data;
       }
       /**
-       * preferenceと関係する項目をセットする
-       * 主にページ読み込み直後にLaymicクラスから呼び出される
-       */
-      applyPreferenceValues() {
-          // 更新前のデータをdeep copy
-          const oldData = Object.assign(this.data);
-          // 設定値をlocalStorageの値と同期させる
-          this.data = this.loadPreferenceData();
-          const dispatchs = [];
-          // 新旧で値が異なっていればdispatchsに追加
-          if (oldData.progressBarWidth !== this.data.progressBarWidth)
-              dispatchs.push("progressBarWidth");
-          if (oldData.paginationVisibility !== this.data.paginationVisibility)
-              dispatchs.push("paginationVisibility");
-          if (oldData.isDisableTapSlidePage !== this.data.isDisableTapSlidePage)
-              dispatchs.push("isDisableTapSlidePage");
-          dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
-          // 読み込んだpreference値を各ボタン状態に適用
-          this.overwritePreferenceElValues();
-      }
-      /**
        * 現在のpreference状態をボタン状態に適用する
        * 主に初期化時に用いる関数
        */
       overwritePreferenceElValues() {
-          const { isAutoFullscreen, isDisableTapSlidePage, paginationVisibility, progressBarWidth, zoomButtonRatio, } = this.buttons;
-          const { active } = this.builder.stateNames;
-          if (this.isAutoFullscreen) {
-              isAutoFullscreen.classList.add(active);
-          }
-          else {
-              isAutoFullscreen.classList.remove(active);
-          }
-          if (this.isDisableTapSlidePage) {
-              isDisableTapSlidePage.classList.add(active);
-          }
-          else {
-              isDisableTapSlidePage.classList.remove(active);
-          }
-          [
+          const { paginationVisibility, progressBarWidth, zoomButtonRatio, isAutoFullscreen, isDisableTapSlidePage } = this.choices;
+          const checkboxs = [
               {
-                  // pagination visibility
-                  els: this.getSelectItemEls(paginationVisibility),
-                  idx: this.uiVisibilityValues.indexOf(this.paginationVisibility)
+                  choice: isAutoFullscreen,
+                  bool: this.isAutoFullscreen
               },
               {
-                  // progress bar width
-                  els: this.getSelectItemEls(progressBarWidth),
-                  idx: this.barWidthValues.indexOf(this.progressBarWidth)
+                  choice: isDisableTapSlidePage,
+                  bool: this.isDisableTapSlidePage
+              }
+          ];
+          checkboxs.forEach(obj => obj.choice.setChecked(obj.bool, false));
+          const selects = [
+              {
+                  choice: paginationVisibility,
+                  idx: this.uiVisibilityItems.findIndex(item => item.value === this.paginationVisibility)
               },
               {
-                  // zoom button ratio
-                  els: this.getSelectItemEls(zoomButtonRatio),
-                  idx: this.zoomButtonRatioValues.indexOf(this.zoomButtonRatio)
+                  choice: progressBarWidth,
+                  idx: this.barWidthItems.findIndex(item => item.value === this.progressBarWidth)
+              },
+              {
+                  choice: zoomButtonRatio,
+                  idx: this.zoomButtonRatioItems.findIndex(item => item.value === this.zoomButtonRatio)
               }
-          ].forEach(obj => {
-              const { els, idx } = obj;
-              if (isHTMLElementArray(els) && els[idx]) {
-                  els[idx].style.order = "-1";
-              }
+          ];
+          selects.forEach(obj => {
+              if (obj.idx !== -1)
+                  obj.choice.updateCurrentItem(obj.idx, false);
           });
       }
       /**
@@ -6304,168 +6665,64 @@ var laymic = (function (exports) {
        * インスタンス生成時に一度だけ呼び出される
        */
       applyEventListeners() {
-          this.buttons.isAutoFullscreen.addEventListener("click", () => {
-              this.isAutoFullscreen = !this.isAutoFullscreen;
-          });
-          this.buttons.isDisableTapSlidePage.addEventListener("click", () => {
-              this.isDisableTapSlidePage = !this.isDisableTapSlidePage;
-          });
-          const paginationVisibilityHandler = (e, el, itemEls) => {
-              if (!(e.target instanceof HTMLElement))
-                  return;
-              const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-              if (idx === 1) {
-                  // horizontal
-                  this.paginationVisibility = "hidden";
-              }
-              else if (idx === 2) {
-                  // vertical
-                  this.paginationVisibility = "visible";
-              }
-              else {
-                  // auto
-                  this.paginationVisibility = "auto";
-              }
-              itemEls.forEach(el => el.style.order = "");
-              el.style.order = "-1";
-          };
-          const progressBarWidthHandler = (e, el, itemEls) => {
-              if (!(e.target instanceof HTMLElement))
-                  return;
-              const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-              if (idx === 1) {
-                  this.progressBarWidth = "none";
-              }
-              else if (idx === 2) {
-                  this.progressBarWidth = "tint";
-              }
-              else if (idx === 3) {
-                  this.progressBarWidth = "medium";
-              }
-              else if (idx === 4) {
-                  this.progressBarWidth = "bold";
-              }
-              else {
-                  // auto
-                  this.progressBarWidth = "auto";
-              }
-              itemEls.forEach(el => el.style.order = "");
-              el.style.order = "-1";
-          };
-          const zoomButtonRatioHandler = (e, el, itemEls) => {
-              if (!(e.target instanceof HTMLElement))
-                  return;
-              const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-              if (idx === 1) {
-                  // 2.0倍
-                  this.zoomButtonRatio = 2.0;
-              }
-              else if (idx === 2) {
-                  // 2.5倍
-                  this.zoomButtonRatio = 2.5;
-              }
-              else if (idx === 3) {
-                  // 3.0倍
-                  this.zoomButtonRatio = 3.0;
-              }
-              else {
-                  // 1.5
-                  this.zoomButtonRatio = 1.5;
-              }
-              // 全ての子要素を一旦初期値に戻す
-              itemEls.forEach(el => el.style.order = "");
-              // クリックされた要素を一番上に押し上げる
-              el.style.order = "-1";
-          };
-          // 各種selectButton要素のイベントリスナーを登録
-          [
+          const isAutoFullscreenHandler = (bool) => this.isAutoFullscreen = bool;
+          const isDisableTapSlidePageHandler = (bool) => this.isDisableTapSlidePage = bool;
+          const checkboxHandlers = [
               {
-                  el: this.buttons.paginationVisibility,
-                  callback: (e, el, itemEls) => paginationVisibilityHandler(e, el, itemEls)
+                  choice: this.choices.isAutoFullscreen,
+                  handler: isAutoFullscreenHandler
               },
               {
-                  el: this.buttons.progressBarWidth,
-                  callback: (e, el, itemEls) => progressBarWidthHandler(e, el, itemEls)
+                  choice: this.choices.isDisableTapSlidePage,
+                  handler: isDisableTapSlidePageHandler
+              }
+          ];
+          checkboxHandlers.forEach(obj => {
+              obj.choice.el.container.addEventListener("SimpleCheckboxEvent", ((e) => {
+                  obj.handler(e.detail);
+              }));
+          });
+          const paginationVisibilityHandler = (item) => {
+              if (isUIVisibility(item.value))
+                  this.paginationVisibility = item.value;
+          };
+          const progressBarWidthHandler = (item) => {
+              if (isBarWidth(item.value))
+                  this.progressBarWidth = item.value;
+          };
+          const zoomButtonRatioHandler = (item) => {
+              const ratio = item.value;
+              if (Number.isFinite(ratio))
+                  this.zoomButtonRatio = ratio;
+          };
+          const selectHandlers = [
+              {
+                  choice: this.choices.paginationVisibility,
+                  handler: paginationVisibilityHandler
               },
               {
-                  el: this.buttons.zoomButtonRatio,
-                  callback: (e, el, itemEls) => zoomButtonRatioHandler(e, el, itemEls)
+                  choice: this.choices.progressBarWidth,
+                  handler: progressBarWidthHandler
+              },
+              {
+                  choice: this.choices.zoomButtonRatio,
+                  handler: zoomButtonRatioHandler
               }
-          ].forEach(obj => {
-              const { el: parentEl, callback } = obj;
-              const els = this.getSelectItemEls(parentEl);
-              if (isHTMLElementArray(els)) {
-                  els.forEach(el => el.addEventListener("click", e => {
-                      // 親要素がアクティブな時 === selectButtonが選択された時
-                      // この時だけ処理を動かす
-                      const isActive = parentEl.classList.contains(this.builder.stateNames.active);
-                      if (isActive) {
-                          callback(e, el, els);
-                      }
-                  }));
-              }
+          ];
+          selectHandlers.forEach(obj => {
+              obj.choice.el.container.addEventListener("SimpleSelectEvent", ((e) => {
+                  obj.handler(e.detail);
+              }));
           });
           // preference wrapperのクリックイベント
           this.wrapperEl.addEventListener("click", e => {
-              // セレクトボタン要素を全て非アクティブ化
-              this.deactivateSelectButtons();
               // クリックイベントをpreference containerへ伝播させない
               e.stopPropagation();
           });
           // preference containerのクリックイベント
           this.el.addEventListener("click", () => {
-              this.deactivateSelectButtons();
-              this.hidePreference();
+              this.hide();
           });
-      }
-      /**
-       * 設定画面を表示する
-       */
-      showPreference() {
-          this.rootEl.classList.add(this.builder.stateNames.showPreference);
-      }
-      /**
-       * 設定画面を非表示とする
-       */
-      hidePreference() {
-          this.rootEl.classList.remove(this.builder.stateNames.showPreference);
-      }
-      /**
-       * 全てのセレクトボタンを非アクティブ状態にする
-       * 設定画面が閉じられる際に呼び出される
-       */
-      deactivateSelectButtons() {
-          [
-              this.buttons.progressBarWidth,
-              this.buttons.paginationVisibility,
-          ].forEach(el => el.classList.remove(this.builder.stateNames.active));
-      }
-      /**
-       * 入力した要素内部にあるselectItem要素を配列として返す
-       * @param  el selectButtonを想定した引数
-       * @return    クラス名で抽出したElement配列
-       */
-      getSelectItemEls(el) {
-          const selectItemClass = this.builder.classNames.select.item;
-          return Array.from(el.getElementsByClassName(selectItemClass) || []);
-      }
-      /**
-       * BarWidthの値から進捗バー幅数値を取得する
-       * @param  widthStr BarWidth値
-       * @return          対応する数値
-       */
-      getBarWidth(widthStr = "auto") {
-          let width = 8;
-          if (widthStr === "none") {
-              width = 0;
-          }
-          else if (widthStr === "tint") {
-              width = 4;
-          }
-          else if (widthStr === "bold") {
-              width = 12;
-          }
-          return width;
       }
   }
 
@@ -6477,8 +6734,10 @@ var laymic = (function (exports) {
           thumbsEl.className = thumbsClassNames.container;
           // 初期状態では表示しないようにしておく
           thumbsEl.style.display = "none";
+          setAriaExpanded(thumbsEl, false);
           const wrapperEl = builder.createDiv();
           wrapperEl.className = thumbsClassNames.wrapper;
+          setRole(wrapperEl, "list");
           const thumbEls = [];
           const loopLen = pages.length;
           // idxを使いたいので古めかしいforループを使用
@@ -6508,6 +6767,8 @@ var laymic = (function (exports) {
                   el.classList.add(thumbsClassNames.slideThumb);
               }
               el.classList.add(thumbsClassNames.item);
+              if (el instanceof HTMLElement)
+                  setRole(el, "listitem");
               thumbEls.push(el);
               wrapperEl.appendChild(el);
           }
@@ -6538,6 +6799,39 @@ var laymic = (function (exports) {
           this.applyEventListeners();
       }
       /**
+       * thumbsWrapperElのwidthを計算し、
+       * 折り返しが発生しないようなら横幅の値を書き換える
+       */
+      cssThumbsWrapperWidthUpdate(rootEl) {
+          const { offsetWidth: ow } = rootEl;
+          // thumb item offset width
+          const tW = this.state.thumbItemWidth;
+          // thumbs length
+          const tLen = this.wrapperEl.children.length;
+          // thumbs grid gap
+          const tGaps = this.state.thumbItemGap * (tLen - 1);
+          // thumbs wrapper padding
+          const tWPadding = this.state.thumbsWrapperPadding * 2;
+          const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
+          const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
+              ? thumbsWrapperWidth + "px"
+              : "";
+          this.wrapperEl.style.width = widthStyleStr;
+      }
+      show() {
+          if (this.el.style.display === "none") {
+              // ページ読み込み後一度だけ動作する
+              this.el.style.display = "";
+              this.revealImgs();
+          }
+          this.rootEl.classList.add(this.builder.stateNames.showThumbs);
+          setAriaExpanded(this.rootEl, true);
+      }
+      hide() {
+          this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
+          setAriaExpanded(this.rootEl, false);
+      }
+      /**
        * 読み込み待ち状態のimg elementを全て読み込む
        * いわゆるlazyload処理
        */
@@ -6560,37 +6854,6 @@ var laymic = (function (exports) {
           });
       }
       /**
-       * thumbsWrapperElのwidthを計算し、
-       * 折り返しが発生しないようなら横幅の値を書き換える
-       */
-      cssThumbsWrapperWidthUpdate(rootEl) {
-          const { offsetWidth: ow } = rootEl;
-          // thumb item offset width
-          const tW = this.state.thumbItemWidth;
-          // thumbs length
-          const tLen = this.wrapperEl.children.length;
-          // thumbs grid gap
-          const tGaps = this.state.thumbItemGap * (tLen - 1);
-          // thumbs wrapper padding
-          const tWPadding = this.state.thumbsWrapperPadding * 2;
-          const thumbsWrapperWidth = tW * tLen + tGaps + tWPadding;
-          const widthStyleStr = (ow * 0.9 > thumbsWrapperWidth)
-              ? thumbsWrapperWidth + "px"
-              : "";
-          this.wrapperEl.style.width = widthStyleStr;
-      }
-      showThumbs() {
-          if (this.el.style.display === "none") {
-              // ページ読み込み後一度だけ動作する
-              this.el.style.display = "";
-              this.revealImgs();
-          }
-          this.rootEl.classList.add(this.builder.stateNames.showThumbs);
-      }
-      hideThumbs() {
-          this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
-      }
-      /**
        * 各種イベントリスナーの登録
        */
       applyEventListeners() {
@@ -6600,7 +6863,7 @@ var laymic = (function (exports) {
           });
           // サムネイル表示中オーバーレイ要素でのクリックイベント
           this.el.addEventListener("click", () => {
-              this.hideThumbs();
+              this.hide();
           });
       }
   }
@@ -6615,6 +6878,7 @@ var laymic = (function (exports) {
           const helpClassNames = builder.classNames.help;
           const containerEl = builder.createDiv();
           containerEl.className = helpClassNames.container;
+          setAriaExpanded(containerEl, false);
           const wrapperEl = builder.createHelpWrapperEl();
           containerEl.appendChild(wrapperEl);
           this.el = containerEl;
@@ -6623,7 +6887,7 @@ var laymic = (function (exports) {
           this.applyEventListeners();
           this.loadIsDisplayedData();
           if (!this.isDisplayed) {
-              this.showHelp();
+              this.show();
           }
       }
       loadIsDisplayedData() {
@@ -6639,16 +6903,18 @@ var laymic = (function (exports) {
           this._isDisplayed = bool;
           localStorage.setItem(this.ISDISPLAYED_KEY, "true");
       }
-      showHelp() {
+      show() {
           this.rootEl.classList.add(this.builder.stateNames.showHelp);
+          setAriaExpanded(this.rootEl, true);
       }
-      hideHelp() {
+      hide() {
           this.rootEl.classList.remove(this.builder.stateNames.showHelp);
+          setAriaExpanded(this.rootEl, false);
           this.isHelpDisplayed = true;
       }
       applyEventListeners() {
           this.el.addEventListener("click", () => {
-              this.hideHelp();
+              this.hide();
           });
       }
   }
@@ -7279,7 +7545,7 @@ var laymic = (function (exports) {
               thumbItemWidth: 96,
               thumbItemGap: 16,
               thumbsWrapperPadding: 16,
-              isMobile: isExistTouchEvent(),
+              isMobile: isMobile(),
               isInstantOpen: true,
               bodyScrollTop: 0,
               isActive: false,
@@ -7487,9 +7753,6 @@ var laymic = (function (exports) {
                   this.enablePagination();
               }
           }
-          else {
-              console.log("manga viewer update event");
-          }
       }
       /**
        * 各種イベントの登録
@@ -7497,7 +7760,7 @@ var laymic = (function (exports) {
        */
       applyEventListeners() {
           this.el.buttons.help.addEventListener("click", () => {
-              this.help.showHelp();
+              this.help.show();
               this.hideViewerUI();
           });
           // 縦読み/横読み切り替えボタン
@@ -7511,13 +7774,13 @@ var laymic = (function (exports) {
           });
           // サムネイル表示ボタン
           this.el.buttons.thumbs.addEventListener("click", () => {
-              this.thumbs.showThumbs();
+              this.thumbs.show();
               this.hideViewerUI();
           });
           // サムネイルのクリックイベント
           // 各サムネイルとswiper各スライドとを紐づける
           this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
-              this.thumbs.hideThumbs();
+              this.thumbs.hide();
               this.swiper.slideTo(i);
           }));
           // ズームボタンのクリックイベント
@@ -7539,7 +7802,7 @@ var laymic = (function (exports) {
           });
           // 設定ボタンのクリックイベント
           this.el.buttons.preference.addEventListener("click", () => {
-              this.preference.showPreference();
+              this.preference.show();
               // UIを閉じておく
               this.hideViewerUI();
           });

@@ -9,17 +9,17 @@ export default class LaymicThumbnails {
     thumbEls: Element[];
     constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: ViewerStates);
     /**
-     * 読み込み待ち状態のimg elementを全て読み込む
-     * いわゆるlazyload処理
-     */
-    private revealImgs;
-    /**
      * thumbsWrapperElのwidthを計算し、
      * 折り返しが発生しないようなら横幅の値を書き換える
      */
     cssThumbsWrapperWidthUpdate(rootEl: HTMLElement): void;
-    showThumbs(): void;
-    hideThumbs(): void;
+    show(): void;
+    hide(): void;
+    /**
+     * 読み込み待ち状態のimg elementを全て読み込む
+     * いわゆるlazyload処理
+     */
+    private revealImgs;
     /**
      * 各種イベントリスナーの登録
      */
