@@ -74,7 +74,29 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 </script>
 ```
 
-## Laymicの引数
+## api説明
+
+### new Laymic(LaymicPages, LaymicOptions)
+
+laymicインスタンスの生成。
+
+第一引数の`LaymicPages`は漫画本編用に表示するページと、サムネイルとして表示される画像セットをまとめたオブジェクト。
+
+第二引数の`LaymicOptions`は各種設定を詰め込んだオブジェクト。省略可能。
+
+### Laymic.open(isDisableFullscreen)
+
+laymicビューワーを展開する。
+
+第一引数の`isDisableFullscreen`がtrueであるならば、「自動的に全画面で開く」処理を強制無効化する。省略可能。
+
+### Laymic.close()
+
+laymicビューワーを閉じる。
+
+
+
+## Laymicの引数型詳細
 
 **LaymicPages**
 |名前|型|説明|
