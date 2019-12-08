@@ -60,15 +60,15 @@ export default class LaymicPreference {
       `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`
     );
 
-    const descriptionEl = builder.createDiv();
+    const noticeEl = builder.createDiv();
+    noticeEl.className = preferenceClassNames.notice;
     [
-      "",
       "※1: 一部設定値は次回ページ読み込み時に適用されます",
       "※2: 自動全画面処理はビューワー展開ボタンクリック時にしか動きません",
     ].forEach(s => {
       const p = builder.createParagraph();
       p.textContent = s;
-      descriptionEl.appendChild(p);
+      noticeEl.appendChild(p);
     });
 
     [
@@ -77,7 +77,7 @@ export default class LaymicPreference {
       zoomButtonRatio.el.container,
       isAutoFullscreen.el.container,
       isDisableTapSlidePage.el.container,
-      descriptionEl
+      noticeEl
     ].forEach(el => {
       wrapperEl.appendChild(el);
       setRole(el, "listitem");

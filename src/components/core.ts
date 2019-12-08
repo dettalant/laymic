@@ -396,7 +396,7 @@ export default class Laymic {
   /**
    * オーバーレイ表示を閉じる
    */
-  close(isHashChange: boolean = true) {
+  close() {
     this.hideRootEl();
 
     // 閉じていてもキーボード操作を受け付けてしまう不具合対処
@@ -414,7 +414,6 @@ export default class Laymic {
 
     if (this.state.isInstantOpen
       && location.hash
-      && isHashChange
     ) {
       // 履歴を残さずhashを削除する
       const newUrl = excludeHashLocation() + "#";

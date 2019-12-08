@@ -63,6 +63,7 @@ export interface LaymicThumbsClassNames {
 export interface LaymicPreferenceClassNames {
   container: string,
   wrapper: string,
+  notice: string,
   button: string,
   paginationVisibility: string,
   isAutoFullscreen: string,
