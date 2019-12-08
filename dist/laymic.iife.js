@@ -5530,6 +5530,7 @@ var laymic = (function (exports) {
               preference: {
                   container: "laymic_preference",
                   wrapper: "laymic_preferenceWrapper",
+                  notice: "laymic_preferenceNotice",
                   button: "laymic_preferenceButton",
                   paginationVisibility: "laymic_preferencePaginationVisibility",
                   isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
@@ -6439,15 +6440,15 @@ var laymic = (function (exports) {
           const progressBarWidth = selectBuilder.create("進捗バー表示設定", this.barWidthItems, preferenceBtnClass);
           const paginationVisibility = selectBuilder.create("ページ送りボタン表示設定", this.uiVisibilityItems, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
           const zoomButtonRatio = selectBuilder.create("ズームボタン倍率設定", this.zoomButtonRatioItems, `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`);
-          const descriptionEl = builder.createDiv();
+          const noticeEl = builder.createDiv();
+          noticeEl.className = preferenceClassNames.notice;
           [
-              "",
               "※1: 一部設定値は次回ページ読み込み時に適用されます",
               "※2: 自動全画面処理はビューワー展開ボタンクリック時にしか動きません",
           ].forEach(s => {
               const p = builder.createParagraph();
               p.textContent = s;
-              descriptionEl.appendChild(p);
+              noticeEl.appendChild(p);
           });
           [
               progressBarWidth.el.container,
@@ -6455,7 +6456,7 @@ var laymic = (function (exports) {
               zoomButtonRatio.el.container,
               isAutoFullscreen.el.container,
               isDisableTapSlidePage.el.container,
-              descriptionEl
+              noticeEl
           ].forEach(el => {
               wrapperEl.appendChild(el);
               setRole(el, "listitem");
@@ -7697,7 +7698,7 @@ var laymic = (function (exports) {
       /**
        * オーバーレイ表示を閉じる
        */
-      close(isHashChange = true) {
+      close() {
           this.hideRootEl();
           // 閉じていてもキーボード操作を受け付けてしまう不具合対処
           if (this.swiper.keyboard) {
@@ -7710,8 +7711,7 @@ var laymic = (function (exports) {
           // オーバーレイ下要素のスクロール再開
           this.enableBodyScroll();
           if (this.state.isInstantOpen
-              && location.hash
-              && isHashChange) {
+              && location.hash) {
               // 履歴を残さずhashを削除する
               const newUrl = excludeHashLocation() + "#";
               window.location.replace(newUrl);

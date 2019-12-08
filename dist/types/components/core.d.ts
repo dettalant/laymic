@@ -49,7 +49,7 @@ export default class Laymic {
     /**
      * オーバーレイ表示を閉じる
      */
-    close(isHashChange?: boolean): void;
+    close(): void;
     private laymicPreferenceUpdateHandler;
     /**
      * 各種イベントの登録

@@ -513,24 +513,6 @@
   display: none;
 }
 
-/* NOTE: 現在未使用
-.laymic_helpHorizImg,
-.laymic_helpVertImg {
-  max-width: 100%;
-  max-height: 100%;
-  opacity: .9;
-}
-
-.laymic_helpHorizImg,
-.laymic_isVertView .laymic_helpVertImg {
-  display: inline-block;
-}
-
-.laymic_helpVertImg,
-.laymic_isVertView .laymic_helpHorizImg {
-  display: none;
-} */
-
 /* thumbs */
 
 .laymic_thumbsWrapper {
@@ -562,7 +544,12 @@
   overflow: hidden;
 }
 
+/* preference */
+
 .laymic_preferenceWrapper {
+  --font-size: 1.1rem;
+  --padding-size: .6rem;
+  --item-height: calc(var(--font-size) + var(--padding-size) * 2);
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
@@ -570,18 +557,19 @@
   padding: 1rem;
   z-index: 18;
   color: #fafafa;
-  height: 17rem;
+  height: 19rem;
   width: 35rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: space-between;
+  font-size: var(--font-size);
 }
 
-.laymic_preferenceButton {
+.laymic_preferenceWrapper .laymic_preferenceButton {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  max-height: 2rem;
+  max-height: var(--item-height);
   width: 100%;
   justify-content: space-between;
   /* 設定ボタンごとでの余白 */
@@ -609,11 +597,15 @@
   justify-content: flex-end;
 }
 
+.laymic_checkboxIconWrapper .laymic_svgIcon {
+  --icon-size: var(--item-height);
+  /* select右端とcheckboxIcon右端を合わせる */
+  margin-right: -5px;
+}
+
 .laymic_select {
-  --padding-size: .5rem;
-  --font-size: 16px;
   font-size: var(--font-size);
-  max-height: calc(var(--font-size) + var(--padding-size) * 2);
+  max-height: var(--item-height);
 }
 
 .laymic_selectWrapper {
@@ -621,38 +613,53 @@
   flex-flow: column nowrap;
   max-height: inherit;
   position: relative;
-  min-width: 5rem;
+  min-width: 5.5rem;
   color: #333;
 }
 
 .laymic_selectCurrentItem {
   padding: var(--padding-size);
-  background: #e0e0e0;
-}
-
-.laymic_checkboxLabel,
-.laymic_selectLabel {
-  margin-right: 1rem;
+  background: #ddd;
 }
 
 .laymic_selectItem {
   padding: var(--padding-size);
-  background: #fafafa;
-  color: #333;
 }
 
 .laymic_selectItemWrapper {
-  visibility: hidden;
+  /* 通常時は非表示 */
+  display: none;
   background: #fafafa;
+  position: absolute;
+  /* 最小限の高さで上に浮かせる */
   z-index: 1;
+  /* currentItemの下に来るように縦位置を調整 */
+  top: var(--item-height);
+  width: 100%;
 }
 
 .laymic_selectItemWrapper[aria-expanded="true"] {
-  visibility: visible;
+  /* 展開中は表示する */
+  display: block;
 }
 
 .laymic_selectItem[aria-selected="true"] {
-  background: #e0e0e0;
+  /* 選択中ハイライト色設定 */
+  background: royalblue;
+  color: #fafafa;
+}
+
+.laymic_preferenceNotice {
+  /* フォントサイズをデフォルトに戻す */
+  font-size: medium;
+  font-size: initial;
+  /* 上下に余白を付ける */
+  margin: .5rem 0;
+}
+
+.laymic_preferenceNotice p {
+  /* 下向け余白をなくす */
+  margin: 1rem 0 0;
 }
 
 /* .laymic_select.laymic_isActive .laymic_selectWrapper {
@@ -796,10 +803,6 @@
   --icon-size: 3rem;
   height: var(--icon-size);
   width: var(--icon-size);
-}
-
-.laymic_preferenceButton .laymic_svgIcon {
-  --icon-size: 2rem;
 }
 
 .icon_checkBoxInner {
