@@ -619,7 +619,7 @@
 
 .laymic_selectCurrentItem {
   padding: var(--padding-size);
-  background: #ddd;
+  background: #e6e6e6;
 }
 
 .laymic_selectItem {
@@ -830,4 +830,55 @@
 
 .laymic_isVertView .icon_viewerDirection {
   transform: rotate(90deg);
+}
+
+/* page wrapper */
+
+.laymic_page_wrapper {
+  width: var(--page-max-width);
+  height: var(--page-max-height);
+  background: #fafafa;
+  transform: scale(var(--page-scale-ratio));
+  flex: 0 0 auto;
+}
+
+/* 横長要素複数を想定したラッパー */
+
+.laymic_page_landscapes,
+/* 縦長要素複数を想定したラッパー */
+.laymic_page_portraits {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 入れ子要素ごとの区切り余白 */
+  margin: 1rem 0;
+}
+
+.laymic_page_landscapes {
+  flex-flow: column nowrap;
+}
+
+.testRect,
+.testLandscape,
+.testPortrait {
+  color: #fafafa;
+}
+
+.testRect {
+  width: 300px;
+  height: 250px;
+  background: darkgreen;
+}
+
+.testLandscape {
+  width: 250px;
+  height: 50px;
+  background: darkblue;
+}
+
+.testPortrait {
+  width: 150px;
+  height: 250px;
+  background: darkred;
 }

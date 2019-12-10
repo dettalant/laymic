@@ -407,7 +407,7 @@
 
 .laymic_selectCurrentItem {
   padding: var(--padding-size);
-  background: #ddd;
+  background: #e6e6e6;
 }
 
 .laymic_selectItem {

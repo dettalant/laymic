@@ -58,12 +58,14 @@ export default class Laymic {
     private applyEventListeners;
     /**
      * swiper instanceを再初期化する
-     * @param  swiperConf 初期化時に指定するswiperOption
-     * @param  idx        初期化時に指定するindex数値
+     * @param  swiperConf   初期化時に指定するswiperOption
+     * @param  idx          初期化時に指定するindex数値
+     * @param  isViewUpdate viewUpdate()関数を呼び出すか否か
      */
     private reinitSwiperInstance;
     /**
      * 縦読み表示へと切り替える
+     * @param isViewUpdate viewUpdate()関数を呼び出すか否か。falseなら呼び出さない
      */
     private enableVerticalView;
     /**
@@ -117,6 +119,27 @@ export default class Laymic {
      * @param  e  mouse event
      */
     private slideMouseHoverHandler;
+    /**
+     * swiper各種イベントを無効化する
+     */
+    private detachSwiperEvents;
+    /**
+     * swiper各種イベントを有効化する
+     */
+    private attachSwiperEvents;
+    /**
+     * swiper側リサイズイベントに登録するハンドラ
+     * open(), close()のタイミングで切り替えるために分離
+     */
+    private swiperResizeHandler;
+    /**
+     * swiper側reachBeginningイベントに登録するハンドラ
+     */
+    private swiperReachBeginningHandler;
+    /**
+     * swiper側slideChangeイベントに登録するハンドラ
+     */
+    private swiperSlideChangeHandler;
     /**
      * ページ送りボタンの表示/非表示設定を切り替えるハンドラ
      *

@@ -94,8 +94,6 @@ laymicビューワーを展開する。
 
 laymicビューワーを閉じる。
 
-
-
 ## Laymicの引数型詳細
 
 **LaymicPages**
@@ -213,3 +211,19 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
   ここをクリックでlaymic0のビューワー展開
 </button>
 ```
+
+## laymicが追加するcss変数
+
+css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）に追加されます。
+
+|変数名|意味合い|
+|`--page-width`|現在ページ横幅。cssレイアウト用のため誤差が非常に大きい|
+|`--page-height`|現在ページ縦幅。cssレイアウト用のため誤差が非常に大きい|
+|`--page-max-width`|最大ページ横幅。ページがこれ以上の横幅になることはない|
+|`--page-max-height`|最大ページ縦幅。ページがこれ以上の縦幅になることはない|
+|`--page-real-width`|厳密な現在ページ横幅。ほぼほぼ正確な数値|
+|`--page-real-height`|厳密な現在ページ縦幅。ほぼほぼ正確な数値|
+|`--page-scale-ratio`|現在のページ縮小比率。css scaleに用いるための変数|
+|`--progressbar-width`|進捗バーの太さ数値|
+|`--viewer-padding`|ビューワー余白数値|
+|`--js-vh`|正確なvh数値計算結果。少し古いandroid対応などのために用いる|
