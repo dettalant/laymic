@@ -1,4 +1,4 @@
-import { SwiperOptions } from "swiper";
+import { SwiperOptions, CommonEvent as SwiperCommonEvent } from "swiper";
 import { Swiper, Keyboard, Pagination, Lazy } from "swiper/js/swiper.esm";
 import screenfull from "screenfull";
 import {
@@ -146,10 +146,13 @@ export default class Laymic {
       : this.swiperResponsiveHorizViewConf;
     this.swiper = new Swiper(this.el.swiperEl, conf);
 
-    if (options.viewerDirection === "vertical") this.enableVerticalView()
+    if (options.viewerDirection === "vertical") this.enableVerticalView(false)
 
     // 各種イベントの登録
     this.applyEventListeners();
+
+    // 非表示時はswiper側のイベントを発動させない
+    this.swiper.detachEvents();
 
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
@@ -241,19 +244,6 @@ export default class Laymic {
       slidesPerView: 2,
       slidesPerGroup: 2,
       spaceBetween: this.state.horizPageMargin,
-
-      on: {
-        reachBeginning: () => this.changePaginationVisibility(),
-        resize: () => {
-          this.switchSingleSlideState();
-          this.cssVar.jsVhUpdate();
-          this.viewUpdate();
-        },
-        slideChange: () => {
-          this.hideViewerUI();
-          this.changePaginationVisibility();
-        },
-      },
       pagination: {
         el: ".swiper-pagination",
         type: "progressbar",
@@ -287,27 +277,15 @@ export default class Laymic {
       direction: "vertical",
       spaceBetween: this.state.vertPageMargin,
       speed: 200,
-      keyboard: true,
       freeMode: true,
       freeModeMomentumRatio: 0.36,
       freeModeMomentumVelocityRatio: 1,
       freeModeMinimumVelocity: 0.02,
-      on: {
-        reachBeginning: () => this.changePaginationVisibility(),
-        resize: () => {
-          this.switchSingleSlideState();
-          this.cssVar.jsVhUpdate();
-          this.viewUpdate()
-        },
-        slideChange: () => {
-          this.hideViewerUI();
-          this.changePaginationVisibility();
-        },
-      },
       pagination: {
         el: ".swiper-pagination",
         type: "progressbar",
       },
+      keyboard: true,
       preloadImages: false,
       lazy: {
         loadPrevNext: true,
@@ -355,6 +333,8 @@ export default class Laymic {
     // preferenceかinitOptionの値を適用する
     this.preference.applyPreferenceValues();
 
+    this.attachSwiperEvents();
+
     // キーボードイベントが停止していたならば再開させる
     if (this.swiper.keyboard && !this.swiper.keyboard.enabled) {
       this.swiper.keyboard.enable();
@@ -375,6 +355,7 @@ export default class Laymic {
 
     // オーバーレイ下要素のスクロール停止
     this.disableBodyScroll();
+
 
     // swiperのfreeModeには
     // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
@@ -398,6 +379,9 @@ export default class Laymic {
    */
   close() {
     this.hideRootEl();
+
+    // 非表示時はイベントを受付させない
+    this.detachSwiperEvents();
 
     // 閉じていてもキーボード操作を受け付けてしまう不具合対処
     if (this.swiper.keyboard) {
@@ -430,7 +414,7 @@ export default class Laymic {
       const w = this.preference.getBarWidth(this.preference.progressBarWidth);
       this.state.progressBarWidth = w;
       // 設定した値を画面に適用する
-      this.cssVar.progressBarWidthUpdate();
+      this.cssVar.updateProgressBarWidth();
       this.viewUpdate();
     } else if (e.detail === "paginationVisibility") {
       // ページ送り表示設定
@@ -609,10 +593,11 @@ export default class Laymic {
 
   /**
    * swiper instanceを再初期化する
-   * @param  swiperConf 初期化時に指定するswiperOption
-   * @param  idx        初期化時に指定するindex数値
+   * @param  swiperConf   初期化時に指定するswiperOption
+   * @param  idx          初期化時に指定するindex数値
+   * @param  isViewUpdate viewUpdate()関数を呼び出すか否か
    */
-  private reinitSwiperInstance(swiperConf: SwiperOptions, idx: number = 0) {
+  private reinitSwiperInstance(swiperConf: SwiperOptions, idx: number = 0, isViewUpdate: boolean = true) {
     const conf = Object.assign(swiperConf, {
       initialSlide: idx
     });
@@ -621,15 +606,19 @@ export default class Laymic {
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
 
-    this.viewUpdate();
+    // イベントを登録
+    this.attachSwiperEvents();
+
+    if (isViewUpdate) this.viewUpdate();
 
     if (this.swiper.lazy) this.swiper.lazy.load();
   }
 
   /**
    * 縦読み表示へと切り替える
+   * @param isViewUpdate viewUpdate()関数を呼び出すか否か。falseなら呼び出さない
    */
-  private enableVerticalView() {
+  private enableVerticalView(isViewUpdate: boolean = true) {
     const vertView = this.builder.stateNames.vertView;
     this.state.isVertView = true;
     this.el.rootEl.classList.add(vertView);
@@ -651,7 +640,7 @@ export default class Laymic {
       : activeIdx
 
       // 読み進めたページ数を引き継ぎつつ再初期化
-    this.reinitSwiperInstance(this.swiperVertViewConf, idx);
+    this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewUpdate);
   }
 
   /**
@@ -907,6 +896,69 @@ export default class Laymic {
   }
 
   /**
+   * swiper各種イベントを無効化する
+   */
+  private detachSwiperEvents() {
+    const detachEvents: SwiperCommonEvent[] = [
+      "resize",
+      "reachBeginning",
+      "slideChange"
+    ]
+    detachEvents.forEach(evName => this.swiper.off(evName));
+  }
+
+  /**
+   * swiper各種イベントを有効化する
+   */
+  private attachSwiperEvents() {
+    const attachEvents: {
+      name: SwiperCommonEvent,
+      handler: Function
+    }[] = [
+      {
+        name: "resize",
+        handler: this.swiperResizeHandler
+      },
+      {
+        name: "reachBeginning",
+        handler: this.swiperReachBeginningHandler,
+      },
+      {
+        name: "slideChange",
+        handler: this.swiperSlideChangeHandler,
+      }
+    ];
+
+    // イベント受け付けを再開させる
+    attachEvents.forEach(ev => this.swiper.on(ev.name, ev.handler.bind(this)));
+  }
+
+  /**
+   * swiper側リサイズイベントに登録するハンドラ
+   * open(), close()のタイミングで切り替えるために分離
+   */
+  private swiperResizeHandler() {
+    this.switchSingleSlideState();
+    this.cssVar.updateJsVh();
+    this.viewUpdate()
+  }
+
+  /**
+   * swiper側reachBeginningイベントに登録するハンドラ
+   */
+  private swiperReachBeginningHandler() {
+    this.changePaginationVisibility()
+  }
+
+  /**
+   * swiper側slideChangeイベントに登録するハンドラ
+   */
+  private swiperSlideChangeHandler() {
+    this.hideViewerUI();
+    this.changePaginationVisibility();
+  }
+
+  /**
    * ページ送りボタンの表示/非表示設定を切り替えるハンドラ
    *
    * disablePagination()で強制非表示化がなされている場合は
@@ -958,10 +1010,10 @@ export default class Laymic {
     }
 
     this.state.rootRect = this.rootElRect;
-    this.cssVar.pageSizeUpdate();
+    this.cssVar.updatePageSize();
     const isDSHV = this.isDoubleSlideHorizView;
-    this.cssVar.pageRealSizeUpdate(isDSHV);
-    this.cssVar.pageScaleRatioUpdate(isDSHV);
+    this.cssVar.updatePageRealSize(isDSHV);
+    this.cssVar.updatePageScaleRatio(isDSHV);
 
     if (this.thumbs) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
 
