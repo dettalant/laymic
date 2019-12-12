@@ -175,6 +175,6 @@ export const getDeviceOrientation = (): OrientationString => {
   return orientation;
 }
 
-export const setAriaExpanded = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-expanded", bool.toString());
+export const setAriaExpanded = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-expanded", (bool) ? "true" : "false");
 
 export const setRole = (el: HTMLElement, role: string) => el.setAttribute("role", role);

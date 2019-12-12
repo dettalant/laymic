@@ -63,6 +63,8 @@ export default class LaymicCSSVariables {
   updatePageRealSize(isDoubleSlideHorizView: boolean) {
     const {w, h} = this.getPageRealSize(isDoubleSlideHorizView);
 
+    console.log(this.state.viewerIdx, this.el.rootEl.clientWidth, this.el.rootEl.clientHeight, w, h);
+
     this.el.rootEl.style.setProperty("--page-real-width", w + "px");
     this.el.rootEl.style.setProperty("--page-real-height", h + "px");
   }
@@ -134,8 +136,8 @@ export default class LaymicCSSVariables {
     const realD = Math.sqrt(realW ** 2 + realH ** 2);
     const pageD = Math.sqrt(pageW ** 2 + pageH ** 2);
 
-    // 最大1に収まるようclamp
-    return realD / pageD;
+    // 最大1に収まるようclampしておく
+    return Math.min(realD / pageD, 1);
   }
 
   /**

@@ -346,7 +346,9 @@
   padding: 1rem;
   z-index: 18;
   color: #fafafa;
-  height: 19rem;
+  /* max-contentに対応していないブラウザへのフォールバック */
+  height: 19.5rem;
+  height: max-content;
   width: 35rem;
   display: flex;
   flex-flow: column nowrap;
@@ -437,26 +439,27 @@
   color: #fafafa;
 }
 
+.laymic_checkboxLabel,
+.laymic_selectLabel {
+  /* 画面幅が狭い際に効果を発揮する右側余白を追加 */
+	margin-right: .5rem;
+}
+
 .laymic_preferenceNotice {
   /* フォントサイズをデフォルトに戻す */
   font-size: initial;
   /* 上下に余白を付ける */
   margin: .5rem 0;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-end;
+  flex: 1 1 auto;
 }
 
 .laymic_preferenceNotice p {
   /* 下向け余白をなくす */
   margin: 1rem 0 0;
 }
-
-/* .laymic_select.laymic_isActive .laymic_selectWrapper {
-  overflow: visible;
-  z-index: 12;
-}
-
-.laymic_select.laymic_isActive .laymic_selectItem {
-  pointer-events: auto;
-} */
 
 .laymic_pagination {
   --swiper-navigation-color: rgba(255, 255, 255, .3);
@@ -565,7 +568,8 @@
 }
 
 /* disable zoom button for mobile  */
-.laymic_isMobile .laymic_zoom {
+.laymic_isMobile .laymic_zoom,
+.laymic_isMobile .laymic_preferenceZoomButtonRatio {
   display: none;
 }
 
@@ -606,53 +610,4 @@
 */
 .laymic_isVertView .icon_viewerDirection {
   transform: rotate(90deg);
-}
-
-/* page wrapper */
-.laymic_page_wrapper {
-  width: var(--page-max-width);
-  height: var(--page-max-height);
-  background: #fafafa;
-  transform: scale(var(--page-scale-ratio));
-  flex: 0 0 auto;
-}
-
-/* 横長要素複数を想定したラッパー */
-.laymic_page_landscapes,
-/* 縦長要素複数を想定したラッパー */
-.laymic_page_portraits {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* 入れ子要素ごとの区切り余白 */
-  margin: 1rem 0;
-}
-
-.laymic_page_landscapes {
-  flex-flow: column nowrap;
-}
-
-.testRect,
-.testLandscape,
-.testPortrait {
-  color: #fafafa;
-}
-
-.testRect {
-  width: 300px;
-  height: 250px;
-  background: darkgreen;
-}
-
-.testLandscape {
-  width: 250px;
-  height: 50px;
-  background: darkblue;
-}
-
-.testPortrait {
-  width: 150px;
-  height: 250px;
-  background: darkred;
 }

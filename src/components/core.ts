@@ -151,9 +151,6 @@ export default class Laymic {
     // 各種イベントの登録
     this.applyEventListeners();
 
-    // 非表示時はswiper側のイベントを発動させない
-    this.swiper.detachEvents();
-
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
     if (this.state.isInstantOpen && location.hash === "#" + this.state.viewerId) {
@@ -593,11 +590,11 @@ export default class Laymic {
 
   /**
    * swiper instanceを再初期化する
-   * @param  swiperConf   初期化時に指定するswiperOption
-   * @param  idx          初期化時に指定するindex数値
-   * @param  isViewUpdate viewUpdate()関数を呼び出すか否か
+   * @param  swiperConf     初期化時に指定するswiperOption
+   * @param  idx            初期化時に指定するindex数値
+   * @param  isViewerOpened ビューワーが開いているか否か
    */
-  private reinitSwiperInstance(swiperConf: SwiperOptions, idx: number = 0, isViewUpdate: boolean = true) {
+  private reinitSwiperInstance(swiperConf: SwiperOptions, idx: number = 0, isViewerOpened: boolean = true) {
     const conf = Object.assign(swiperConf, {
       initialSlide: idx
     });
@@ -606,19 +603,22 @@ export default class Laymic {
     this.swiper.destroy(true, true);
     this.swiper = new Swiper(this.el.swiperEl, conf);
 
-    // イベントを登録
-    this.attachSwiperEvents();
-
-    if (isViewUpdate) this.viewUpdate();
-
-    if (this.swiper.lazy) this.swiper.lazy.load();
+    // ビューワーが開かれている際にのみ動かす処理
+    if (isViewerOpened) {
+      // イベントを登録
+      this.attachSwiperEvents();
+      // 表示調整
+      this.viewUpdate();
+      // lazyload指定
+      if (this.swiper.lazy) this.swiper.lazy.load();
+    }
   }
 
   /**
    * 縦読み表示へと切り替える
-   * @param isViewUpdate viewUpdate()関数を呼び出すか否か。falseなら呼び出さない
+   * @param isViewerOpened ビューワーが開かれているか否かの状態を指定。falseならば一部処理を呼び出さない
    */
-  private enableVerticalView(isViewUpdate: boolean = true) {
+  private enableVerticalView(isViewerOpened: boolean = true) {
     const vertView = this.builder.stateNames.vertView;
     this.state.isVertView = true;
     this.el.rootEl.classList.add(vertView);
@@ -640,7 +640,7 @@ export default class Laymic {
       : activeIdx
 
       // 読み進めたページ数を引き継ぎつつ再初期化
-    this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewUpdate);
+    this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened);
   }
 
   /**
@@ -716,9 +716,6 @@ export default class Laymic {
         // 一つずらしている形
         this.swiper.slideTo(idx);
       }
-
-      // this.swiper.updateSlides();
-      // this.swiper.updateProgress();
     }
   }
 
@@ -745,9 +742,6 @@ export default class Laymic {
         const idx = this.swiper.activeIndex - 1;
         this.swiper.slideTo(idx);
       }
-
-      // this.swiper.updateSlides();
-      // this.swiper.updateProgress();
     }
   }
 
@@ -788,9 +782,6 @@ export default class Laymic {
         const idx = this.swiper.activeIndex + 2;
         this.swiper.slideTo(idx);
       }
-
-      // this.swiper.updateSlides();
-      // this.swiper.updateProgress();
     }
   }
 
@@ -1043,13 +1034,15 @@ export default class Laymic {
       }
       this.swiper.slideTo(this.swiper.activeIndex);
 
+      // フルスクリーン時にjsVhの再計算をしないと
+      // rootElのheight値がズレる
+      this.cssVar.updateJsVh();
+
       this.viewUpdate();
     }
 
     if (screenfull.isEnabled) {
       screenfull.toggle(this.el.rootEl)
-        // 0.1秒ウェイトを取る
-        .then(() => sleep(150))
         // フルスクリーン切り替え後処理
         .then(() => postToggleFullscreen());
     }
