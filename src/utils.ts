@@ -15,15 +15,15 @@ export const calcGCD = (x: number, y: number) => {
   return x;
 }
 
-let _viewerCntNum = 0;
 /**
  * インスタンスで固有のviewerIdを出力するための関数
  * 呼び出されるたびにインクリメントするだけ
  * @return  固有のviewerId数値
  */
-export const viewerCnt = () => {
-  return _viewerCntNum++;
-}
+export const viewerCnt = (() => {
+  let _viewerCntNum = 0;
+  return () => _viewerCntNum++;
+})()
 
 /**
  * 一定時間ウェイトを取る
