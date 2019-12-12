@@ -63,8 +63,6 @@ export default class LaymicCSSVariables {
   updatePageRealSize(isDoubleSlideHorizView: boolean) {
     const {w, h} = this.getPageRealSize(isDoubleSlideHorizView);
 
-    console.log(this.state.viewerIdx, this.el.rootEl.clientWidth, this.el.rootEl.clientHeight, w, h);
-
     this.el.rootEl.style.setProperty("--page-real-width", w + "px");
     this.el.rootEl.style.setProperty("--page-real-height", h + "px");
   }

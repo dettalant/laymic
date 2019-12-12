@@ -1001,10 +1001,15 @@ export default class Laymic {
     }
 
     this.state.rootRect = this.rootElRect;
+    // フルスクリーン時にjsVhの再計算をしないと
+    // rootElのheight値がズレる
+    this.cssVar.updateJsVh();
+    
     this.cssVar.updatePageSize();
     const isDSHV = this.isDoubleSlideHorizView;
     this.cssVar.updatePageRealSize(isDSHV);
     this.cssVar.updatePageScaleRatio(isDSHV);
+
 
     if (this.thumbs) this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
 
@@ -1033,10 +1038,6 @@ export default class Laymic {
         this.el.rootEl.classList.remove(fsClass);
       }
       this.swiper.slideTo(this.swiper.activeIndex);
-
-      // フルスクリーン時にjsVhの再計算をしないと
-      // rootElのheight値がズレる
-      this.cssVar.updateJsVh();
 
       this.viewUpdate();
     }
