@@ -2,7 +2,7 @@
  *   laymic.js
  *
  * @author dettalant
- * @version v1.1.0
+ * @version v2.0.0
  * @license MIT License
  */
 'use strict';
@@ -5310,15 +5310,15 @@ const calcGCD = (x, y) => {
     }
     return x;
 };
-let _viewerCntNum = 0;
 /**
  * インスタンスで固有のviewerIdを出力するための関数
  * 呼び出されるたびにインクリメントするだけ
  * @return  固有のviewerId数値
  */
-const viewerCnt = () => {
-    return _viewerCntNum++;
-};
+const viewerCnt = (() => {
+    let _viewerCntNum = 0;
+    return () => _viewerCntNum++;
+})();
 /**
  * 一定時間ウェイトを取る
  * @param  ms ウェイト秒数。ミリ秒で指定
@@ -5453,7 +5453,7 @@ const getDeviceOrientation = () => {
     }
     return orientation;
 };
-const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", bool.toString());
+const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", (bool) ? "true" : "false");
 const setRole = (el, role) => el.setAttribute("role", role);
 
 // svg namespace
@@ -6067,10 +6067,13 @@ const createButton = (className) => {
     btn.type = "button";
     return btn;
 };
-const setAriaSelected = (el, bool) => el.setAttribute("aria-selected", bool.toString());
-const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", bool.toString());
-const setAriaChecked = (el, bool) => el.setAttribute("aria-checked", bool.toString());
-// export const setAriaHidden = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-hidden", bool.toString());
+const boolToString = (bool) => {
+    return (bool) ? "true" : "false";
+};
+const setAriaSelected = (el, bool) => el.setAttribute("aria-selected", boolToString(bool));
+const setAriaExpanded = (el, bool) => el.setAttribute("aria-expanded", boolToString(bool));
+const setAriaChecked = (el, bool) => el.setAttribute("aria-checked", boolToString(bool));
+// export const setAriaHidden = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-hidden", boolToString(bool));
 const createSVG = (pathDs, viewBox = "0 0 24 24") => {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -7376,8 +7379,8 @@ class LaymicCSSVariables {
         // 対角線上の長さを取ってから比較する
         const realD = Math.sqrt(realW ** 2 + realH ** 2);
         const pageD = Math.sqrt(pageW ** 2 + pageH ** 2);
-        // 最大1に収まるようclamp
-        return realD / pageD;
+        // 最大1に収まるようclampしておく
+        return Math.min(realD / pageD, 1);
     }
     /**
      * ページの実寸表示数値を出力する
@@ -7518,8 +7521,6 @@ class Laymic {
             this.enableVerticalView(false);
         // 各種イベントの登録
         this.applyEventListeners();
-        // 非表示時はswiper側のイベントを発動させない
-        this.swiper.detachEvents();
         // location.hashにmangaViewerIdと同値が指定されている場合は
         // 即座に開く
         if (this.state.isInstantOpen && location.hash === "#" + this.state.viewerId) {
@@ -7904,29 +7905,33 @@ class Laymic {
     }
     /**
      * swiper instanceを再初期化する
-     * @param  swiperConf   初期化時に指定するswiperOption
-     * @param  idx          初期化時に指定するindex数値
-     * @param  isViewUpdate viewUpdate()関数を呼び出すか否か
+     * @param  swiperConf     初期化時に指定するswiperOption
+     * @param  idx            初期化時に指定するindex数値
+     * @param  isViewerOpened ビューワーが開いているか否か
      */
-    reinitSwiperInstance(swiperConf, idx = 0, isViewUpdate = true) {
+    reinitSwiperInstance(swiperConf, idx = 0, isViewerOpened = true) {
         const conf = Object.assign(swiperConf, {
             initialSlide: idx
         });
         // swiperインスタンスを一旦破棄してからre-init
         this.swiper.destroy(true, true);
         this.swiper = new Swiper(this.el.swiperEl, conf);
-        // イベントを登録
-        this.attachSwiperEvents();
-        if (isViewUpdate)
+        // ビューワーが開かれている際にのみ動かす処理
+        if (isViewerOpened) {
+            // イベントを登録
+            this.attachSwiperEvents();
+            // 表示調整
             this.viewUpdate();
-        if (this.swiper.lazy)
-            this.swiper.lazy.load();
+            // lazyload指定
+            if (this.swiper.lazy)
+                this.swiper.lazy.load();
+        }
     }
     /**
      * 縦読み表示へと切り替える
-     * @param isViewUpdate viewUpdate()関数を呼び出すか否か。falseなら呼び出さない
+     * @param isViewerOpened ビューワーが開かれているか否かの状態を指定。falseならば一部処理を呼び出さない
      */
-    enableVerticalView(isViewUpdate = true) {
+    enableVerticalView(isViewerOpened = true) {
         const vertView = this.builder.stateNames.vertView;
         this.state.isVertView = true;
         this.el.rootEl.classList.add(vertView);
@@ -7943,7 +7948,7 @@ class Laymic {
             ? activeIdx - 1
             : activeIdx;
         // 読み進めたページ数を引き継ぎつつ再初期化
-        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewUpdate);
+        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened);
     }
     /**
      * 横読み表示へと切り替える
@@ -8012,8 +8017,6 @@ class Laymic {
                 // 一つずらしている形
                 this.swiper.slideTo(idx);
             }
-            // this.swiper.updateSlides();
-            // this.swiper.updateProgress();
         }
     }
     /**
@@ -8037,8 +8040,6 @@ class Laymic {
                 const idx = this.swiper.activeIndex - 1;
                 this.swiper.slideTo(idx);
             }
-            // this.swiper.updateSlides();
-            // this.swiper.updateProgress();
         }
     }
     /**
@@ -8075,8 +8076,6 @@ class Laymic {
                 const idx = this.swiper.activeIndex + 2;
                 this.swiper.slideTo(idx);
             }
-            // this.swiper.updateSlides();
-            // this.swiper.updateProgress();
         }
     }
     /**
@@ -8277,6 +8276,9 @@ class Laymic {
             return;
         }
         this.state.rootRect = this.rootElRect;
+        // フルスクリーン時にjsVhの再計算をしないと
+        // rootElのheight値がズレる
+        this.cssVar.updateJsVh();
         this.cssVar.updatePageSize();
         const isDSHV = this.isDoubleSlideHorizView;
         this.cssVar.updatePageRealSize(isDSHV);
@@ -8313,8 +8315,6 @@ class Laymic {
         };
         if (screenfull.isEnabled) {
             screenfull.toggle(this.el.rootEl)
-                // 0.1秒ウェイトを取る
-                .then(() => sleep(150))
                 // フルスクリーン切り替え後処理
                 .then(() => postToggleFullscreen());
         }

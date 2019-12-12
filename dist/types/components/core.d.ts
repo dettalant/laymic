@@ -58,14 +58,14 @@ export default class Laymic {
     private applyEventListeners;
     /**
      * swiper instanceを再初期化する
-     * @param  swiperConf   初期化時に指定するswiperOption
-     * @param  idx          初期化時に指定するindex数値
-     * @param  isViewUpdate viewUpdate()関数を呼び出すか否か
+     * @param  swiperConf     初期化時に指定するswiperOption
+     * @param  idx            初期化時に指定するindex数値
+     * @param  isViewerOpened ビューワーが開いているか否か
      */
     private reinitSwiperInstance;
     /**
      * 縦読み表示へと切り替える
-     * @param isViewUpdate viewUpdate()関数を呼び出すか否か。falseなら呼び出さない
+     * @param isViewerOpened ビューワーが開かれているか否かの状態を指定。falseならば一部処理を呼び出さない
      */
     private enableVerticalView;
     /**

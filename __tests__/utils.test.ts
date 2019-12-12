@@ -15,9 +15,7 @@ describe("utils function test", () => {
   })
 
   it("viewerCnt test", () => {
-    expect(viewerCnt()).toBe(0);
-    expect(viewerCnt()).toBe(1);
-    expect(viewerCnt()).toBe(2);
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].forEach(n => expect(viewerCnt()).toBe(n));
   })
 
   // it("isHTMLElementArray test", () => {
