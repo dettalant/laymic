@@ -1,7 +1,7 @@
-import { LaymicClassNames, LaymicStateClassNames } from "#/interfaces/classname";
-import { BarWidth, ViewerIcons, ViewerUIButtons } from "#/interfaces/ui";
-import { PageRect, PageSize } from "#/interfaces/page";
-import { OrientationString } from "#/interfaces/utils";
+import { LaymicClassNames, LaymicStateClassNames } from "./classname";
+import { BarWidth, ViewerIcons, ViewerUIButtons } from "./ui";
+import { PageRect, PageSize } from "./page";
+import { OrientationString } from "./utils";
 
 export type ViewerPages = (string | Element)[];
 

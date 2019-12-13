@@ -1,4 +1,4 @@
-import { BarWidth, UIVisibility } from "#/interfaces/ui"
+import { BarWidth, UIVisibility } from "./ui"
 import { SimpleSelect, SimpleCheckbox } from "@dettalant/simple_choices";
 
 

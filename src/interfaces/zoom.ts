@@ -1,4 +1,4 @@
-import { PageRect } from "#/interfaces/page";
+import { PageRect } from "./page";
 export interface LaymicZoomStates {
   // 現在のズーム倍率
   zoomRatio: number,

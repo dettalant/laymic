@@ -1,4 +1,4 @@
-import { ViewerUIButtons } from "#/interfaces/ui";
+import { ViewerUIButtons } from "./ui";
 import { SelectClassNames, CheckboxClassNames } from "@dettalant/simple_choices";
 
 export interface LaymicStateClassNames {

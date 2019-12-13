@@ -3,7 +3,7 @@ import LaymicStates from "./states";
 import {
   ViewerElements,
   PageSize
-} from "#/interfaces/index";
+} from "../interfaces/index";
 export default class LaymicCSSVariables {
   el: ViewerElements;
   state: LaymicStates;
