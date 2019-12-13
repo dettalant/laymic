@@ -1,6 +1,6 @@
-import Laymic from "#/components/core";
-import { ViewerPages, LaymicPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces/index";
-import { isBarWidth, compareString } from "#/utils";
+import Laymic from "./core";
+import { ViewerPages, LaymicPages, LaymicOptions, LaymicApplicatorOptions } from "../interfaces/index";
+import { isBarWidth, compareString } from "../utils";
 
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass

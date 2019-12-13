@@ -1,6 +1,6 @@
-import DOMBuilder from "#/components/builder";
-import { PageRect, LaymicZoomStates } from "#/interfaces/index";
-import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "#/utils";
+import DOMBuilder from "./builder";
+import { PageRect, LaymicZoomStates } from "../interfaces/index";
+import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "../utils";
 
 export default class LaymicZoom {
   rootEl: HTMLElement;

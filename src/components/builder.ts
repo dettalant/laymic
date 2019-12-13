@@ -5,8 +5,8 @@ import {
   IconData,
   LaymicClassNames,
   LaymicStateClassNames
-} from "#/interfaces/index";
-import { setRole } from "#/utils";
+} from "../interfaces/index";
+import { setRole } from "../utils";
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";

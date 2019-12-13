@@ -1,15 +1,16 @@
-import { ViewerPages, ViewerStates } from "#/interfaces/index";
-import DOMBuilder from "#/components/builder";
-import { setAriaExpanded, setRole } from "#/utils"
+import { ViewerPages } from "../interfaces/index";
+import { setAriaExpanded, setRole } from "../utils"
+import DOMBuilder from "./builder";
+import LaymicStates from "./states";
 
 export default class LaymicThumbnails {
-  state: ViewerStates;
+  state: LaymicStates;
   builder: DOMBuilder;
   rootEl: HTMLElement;
   el: HTMLElement;
   wrapperEl: HTMLElement;
   thumbEls: Element[];
-  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: ViewerStates) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: LaymicStates) {
     this.builder = builder;
     const thumbsClassNames = this.builder.classNames.thumbs;
     const thumbsEl = builder.createDiv();

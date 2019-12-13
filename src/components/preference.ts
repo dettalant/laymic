@@ -1,13 +1,13 @@
 import { SimpleSelectBuilder, SelectItem, SimpleCheckboxBuilder, SimpleCheckbox, SimpleSelect } from "@dettalant/simple_choices";
-import DOMBuilder from "#/components/builder";
+import DOMBuilder from "./builder";
 import {
   PreferenceData,
   PreferenceChoices,
   BarWidth,
   PreferenceUpdateEventString,
   UIVisibility
-} from "#/interfaces/index";
-import { isBarWidth, isUIVisibility, setAriaExpanded, setRole } from "#/utils";
+} from "../interfaces/index";
+import { isBarWidth, isUIVisibility, setAriaExpanded, setRole } from "../utils";
 
 export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";

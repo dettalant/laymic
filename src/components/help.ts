@@ -1,5 +1,5 @@
-import DOMBuilder from "#/components/builder";
-import { setAriaExpanded } from "#/utils";
+import DOMBuilder from "./builder";
+import { setAriaExpanded } from "../utils";
 
 export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
