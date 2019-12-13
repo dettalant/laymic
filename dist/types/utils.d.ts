@@ -1,4 +1,4 @@
-import { BarWidth, UIVisibility, LaymicPages, OrientationString } from "#/interfaces/index";
+import { BarWidth, UIVisibility, LaymicPages, OrientationString } from "./interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用

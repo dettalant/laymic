@@ -1,5 +1,5 @@
-import DOMBuilder from "#/components/builder";
-import { LaymicZoomStates } from "#/interfaces/index";
+import DOMBuilder from "./builder";
+import { LaymicZoomStates } from "../interfaces/index";
 export default class LaymicZoom {
     rootEl: HTMLElement;
     wrapper: HTMLElement;

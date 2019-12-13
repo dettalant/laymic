@@ -1,4 +1,4 @@
-import DOMBuilder from "#/components/builder";
+import DOMBuilder from "./builder";
 export default class LaymicHelp {
     private readonly ISDISPLAYED_KEY;
     _isDisplayed: boolean;

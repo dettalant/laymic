@@ -1,13 +1,14 @@
-import { ViewerPages, ViewerStates } from "#/interfaces/index";
-import DOMBuilder from "#/components/builder";
+import { ViewerPages } from "../interfaces/index";
+import DOMBuilder from "./builder";
+import LaymicStates from "./states";
 export default class LaymicThumbnails {
-    state: ViewerStates;
+    state: LaymicStates;
     builder: DOMBuilder;
     rootEl: HTMLElement;
     el: HTMLElement;
     wrapperEl: HTMLElement;
     thumbEls: Element[];
-    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: ViewerStates);
+    constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: LaymicStates);
     /**
      * thumbsWrapperElのwidthを計算し、
      * 折り返しが発生しないようなら横幅の値を書き換える

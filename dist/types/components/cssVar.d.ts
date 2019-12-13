@@ -1,16 +1,16 @@
-import { ViewerStates, ViewerElements } from "#/interfaces/index";
+import LaymicStates from "./states";
+import { ViewerElements } from "../interfaces/index";
 export default class LaymicCSSVariables {
     el: ViewerElements;
-    state: ViewerStates;
-    constructor(el: ViewerElements, state: ViewerStates);
+    state: LaymicStates;
+    constructor(el: ViewerElements, state: LaymicStates);
     /**
      * laymicインスタンスの初期化時に行うcss変数登録まとめ関数
      */
     initCSSVars(): void;
     /**
      * css変数として表示可能ページサイズを登録する
-     * 厳密なサイズではなく、cssレイアウトに用いるための誤差の多い計算
-     * 正確な値はupdatePageRealSize()の方で行う
+     * 厳密な表示サイズを計算する仕様に変更
      */
     updatePageSize(): void;
     /**
@@ -26,32 +26,25 @@ export default class LaymicCSSVariables {
      */
     updateViewerPadding(): void;
     /**
-     * 各スライドの実質サイズをcss変数に登録する
-     */
-    updatePageRealSize(isDoubleSlideHorizView: boolean): void;
-    /**
      * 各スライド実寸サイズ / 最大表示サイズの比率をcss変数に登録する
      * この数値を使えば正確なscaleが行えるようになるはず
      *
      * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      */
-    updatePageScaleRatio(isDoubleSlideHorizView: boolean): void;
+    updatePageScaleRatio(): void;
     updateJsVh(): void;
     /**
      * cssレイアウトに用いる各ページサイズを返す
      * 正確な値ではないことに注意
      */
-    private getPageSize;
     /**
      * pageMaxSizeとpageRealSizeの差異から縮小率を返す
-     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      * @return                        scaleに用いる縮小表示率
      */
     private getPageScaleRatio;
     /**
      * ページの実寸表示数値を出力する
      * getPageSize()と比較して、厳密な計算を行っていることが特徴
-     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      * @return                        実寸のページサイズ
      */
     private getPageRealSize;

@@ -784,7 +784,7 @@ function add(...args) {
 }
 
 /**
- * Swiper 5.2.0
+ * Swiper 5.2.1
  * Most modern mobile touch slider and framework with hardware accelerated transitions
  * http://swiperjs.com
  *
@@ -792,7 +792,7 @@ function add(...args) {
  *
  * Released under the MIT License
  *
- * Released on: October 26, 2019
+ * Released on: November 16, 2019
  */
 
 const Methods = {
@@ -1012,11 +1012,11 @@ class SwiperClass {
     const self = this;
     if (typeof handler !== 'function') return self;
     function onceHandler(...args) {
-      handler.apply(self, args);
       self.off(events, onceHandler);
       if (onceHandler.f7proxy) {
         delete onceHandler.f7proxy;
       }
+      handler.apply(self, args);
     }
     onceHandler.f7proxy = handler;
     return self.on(events, onceHandler, priority);
@@ -2331,6 +2331,9 @@ function loopCreate () {
 
 function loopFix () {
   const swiper = this;
+
+  swiper.emit('beforeLoopFix');
+
   const {
     activeIndex, slides, loopedSlides, allowSlidePrev, allowSlideNext, snapGrid, rtlTranslate: rtl,
   } = swiper;
@@ -2340,7 +2343,6 @@ function loopFix () {
 
   const snapTranslate = -snapGrid[activeIndex];
   const diff = snapTranslate - swiper.getTranslate();
-
 
   // Fix For Negative Oversliding
   if (activeIndex < loopedSlides) {
@@ -2361,6 +2363,8 @@ function loopFix () {
   }
   swiper.allowSlidePrev = allowSlidePrev;
   swiper.allowSlideNext = allowSlideNext;
+
+  swiper.emit('loopFix');
 }
 
 function loopDestroy () {
@@ -3370,7 +3374,11 @@ function attachEvents() {
   }
 
   // Resize handler
-  swiper.on((Device.ios || Device.android ? 'resize orientationchange observerUpdate' : 'resize observerUpdate'), onResize, true);
+  if (params.updateOnWindowResize) {
+    swiper.on((Device.ios || Device.android ? 'resize orientationchange observerUpdate' : 'resize observerUpdate'), onResize, true);
+  } else {
+    swiper.on('observerUpdate', onResize, true);
+  }
 }
 
 function detachEvents() {
@@ -3650,6 +3658,7 @@ var defaults = {
   initialSlide: 0,
   speed: 300,
   cssMode: false,
+  updateOnWindowResize: true,
   //
   preventInteractionOnTransition: false,
 
@@ -7286,13 +7295,12 @@ class LaymicCSSVariables {
     }
     /**
      * css変数として表示可能ページサイズを登録する
-     * 厳密なサイズではなく、cssレイアウトに用いるための誤差の多い計算
-     * 正確な値はupdatePageRealSize()の方で行う
+     * 厳密な表示サイズを計算する仕様に変更
      */
     updatePageSize() {
-        const { w: pageWidth, h: pageHeight } = this.getPageSize();
-        this.el.rootEl.style.setProperty("--page-width", pageWidth + "px");
-        this.el.rootEl.style.setProperty("--page-height", pageHeight + "px");
+        const { w: width, h: height } = this.getPageRealSize();
+        this.el.rootEl.style.setProperty("--page-width", width + "px");
+        this.el.rootEl.style.setProperty("--page-height", height + "px");
     }
     /**
      * laymicに登録されたページ最大サイズをcss変数に登録する
@@ -7315,21 +7323,13 @@ class LaymicCSSVariables {
         this.el.rootEl.style.setProperty("--viewer-padding", this.state.viewerPadding + "px");
     }
     /**
-     * 各スライドの実質サイズをcss変数に登録する
-     */
-    updatePageRealSize(isDoubleSlideHorizView) {
-        const { w, h } = this.getPageRealSize(isDoubleSlideHorizView);
-        this.el.rootEl.style.setProperty("--page-real-width", w + "px");
-        this.el.rootEl.style.setProperty("--page-real-height", h + "px");
-    }
-    /**
      * 各スライド実寸サイズ / 最大表示サイズの比率をcss変数に登録する
      * この数値を使えば正確なscaleが行えるようになるはず
      *
      * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      */
-    updatePageScaleRatio(isDoubleSlideHorizView) {
-        const ratio = this.getPageScaleRatio(isDoubleSlideHorizView);
+    updatePageScaleRatio() {
+        const ratio = this.getPageScaleRatio();
         this.el.rootEl.style.setProperty("--page-scale-ratio", ratio.toString());
     }
     updateJsVh() {
@@ -7339,41 +7339,44 @@ class LaymicCSSVariables {
      * cssレイアウトに用いる各ページサイズを返す
      * 正確な値ではないことに注意
      */
-    getPageSize() {
-        const { w: aw, h: ah } = this.state.pageAspect;
-        const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
-        const { progressBarWidth: pbw, viewerPadding: vp, isVertView } = this.state;
-        const paddingNum = vp * 2;
-        // 最大サイズ
-        const [mw, mh] = (!isVertView)
-            ? [ow - paddingNum, oh - (pbw + paddingNum)]
-            : [ow - (pbw + paddingNum), oh - paddingNum];
-        let { w: pageWidth, h: pageHeight } = this.state.pageSize;
-        // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
-        // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
-        if (!this.state.isVertView && ow < pageWidth * 2
-            || mw > pageWidth && oh < pageHeight) {
-            // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
-            pageWidth = Math.round(mh * aw / ah);
-            pageHeight = Math.round(pageWidth * ah / aw);
-        }
-        else if (oh < pageHeight) {
-            // 縦読み時で縦幅が狭い場合のサイズ計算
-            pageHeight = Math.round(mw * ah / aw);
-            pageWidth = Math.round(pageHeight * aw / ah);
-        }
-        return {
-            w: pageWidth,
-            h: pageHeight
-        };
-    }
+    // private getPageSize(): PageSize {
+    //   const {w: aw, h: ah} = this.state.pageAspect;
+    //   const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
+    //   const {progressBarWidth: pbw, viewerPadding: vp, isVertView} = this.state;
+    //
+    //   const paddingNum = vp * 2;
+    //   // 最大サイズ
+    //   const [mw, mh] = (!isVertView)
+    //     ? [ow - paddingNum, oh - (pbw + paddingNum)]
+    //     : [ow - (pbw + paddingNum), oh - paddingNum];
+    //
+    //   let {w: pageWidth, h: pageHeight} = this.state.pageSize;
+    //
+    //   // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
+    //   // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
+    //   if (!this.state.isVertView && mw < pageWidth * 2
+    //     || mw > pageWidth && mh < pageHeight)
+    //   {
+    //     // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
+    //     pageWidth = Math.round(mh * aw / ah);
+    //     pageHeight = Math.round(pageWidth * ah / aw);
+    //   } else if (mh < pageHeight) {
+    //     // 縦読み時で縦幅が狭い場合のサイズ計算
+    //     pageHeight = Math.round(mw * ah / aw);
+    //     pageWidth = Math.round(pageHeight * aw / ah);
+    //   }
+    //
+    //   return {
+    //     w: pageWidth,
+    //     h: pageHeight
+    //   }
+    // }
     /**
      * pageMaxSizeとpageRealSizeの差異から縮小率を返す
-     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      * @return                        scaleに用いる縮小表示率
      */
-    getPageScaleRatio(isDoubleSlideHorizView = false) {
-        const { w: realW, h: realH } = this.getPageRealSize(isDoubleSlideHorizView);
+    getPageScaleRatio() {
+        const { w: realW, h: realH } = this.getPageRealSize();
         const { w: pageW, h: pageH } = this.state.pageSize;
         // アスペクト比固定の縮小表示を想定しているため
         // 対角線上の長さを取ってから比較する
@@ -7385,13 +7388,12 @@ class LaymicCSSVariables {
     /**
      * ページの実寸表示数値を出力する
      * getPageSize()と比較して、厳密な計算を行っていることが特徴
-     * @param  isDoubleSlideHorizView 2p見開き表示ならtrue
      * @return                        実寸のページサイズ
      */
-    getPageRealSize(isDoubleSlideHorizView = false) {
+    getPageRealSize() {
         const { w: aw, h: ah } = this.state.pageAspect;
         const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
-        const { progressBarWidth: pbw, viewerPadding: vp, isVertView } = this.state;
+        const { progressBarWidth: pbw, viewerPadding: vp, isVertView, isDoubleSlideHorizView } = this.state;
         const paddingNum = vp * 2;
         // 正確な表示幅サイズ
         const [mw, mh] = (!isVertView)
@@ -7409,14 +7411,10 @@ class LaymicCSSVariables {
             width = Math.min(mw / 2, mh * aw / ah);
             height = width * ah / aw;
         }
-        else if (mw < width) {
-            // 横幅が狭い際の縦読み & 横読み1p
-            height = mw * ah / aw;
-            width = height * aw / ah;
-        }
         else {
-            // 横幅が広い際の縦読み & 横読み1p
-            width = mh * aw / ah;
+            // 縦読み & 横読み1p
+            // 横幅値か縦幅基準計算値の小さい方を採用
+            width = Math.min(mw, mh * aw / ah);
             height = width * ah / aw;
         }
         return {
@@ -7426,11 +7424,85 @@ class LaymicCSSVariables {
     }
 }
 
+class LaymicStates {
+    constructor() {
+        this.viewerIdx = viewerCnt();
+        this.viewerId = "laymic";
+        this.viewerPadding = 10;
+        // デフォルト値としてウィンドウ幅を指定
+        this.rootRect = {
+            l: 0,
+            t: 0,
+            w: window.innerWidth,
+            h: window.innerHeight,
+        };
+        this.pageSize = {
+            w: 720,
+            h: 1024
+        };
+        this.pageAspect = {
+            w: 45,
+            h: 64
+        };
+        this.isLTR = false;
+        this.isVertView = false;
+        // 空白をつけた左始めがデフォルト設定
+        this.isFirstSlideEmpty = true;
+        this.isAppendEmptySlide = true;
+        this.vertPageMargin = 10;
+        this.horizPageMargin = 0;
+        // mediumと同じ数値
+        this.progressBarWidth = 8;
+        this.thumbItemHeight = 128;
+        this.thumbItemWidth = 96;
+        this.thumbItemGap = 16;
+        this.thumbsWrapperPadding = 16;
+        this.isInstantOpen = true;
+        this.bodyScrollTop = 0;
+        this.isActive = false;
+    }
+    get thresholdWidth() {
+        return this.pageSize.w;
+    }
+    ;
+    get isMobile() {
+        return isMobile();
+    }
+    /**
+     * デバイスの向き方向を返す
+     * @return 横向き/縦向き/不明のどれか
+     */
+    get deviceOrientation() {
+        return getDeviceOrientation();
+    }
+    /**
+     * 横読み2p表示するか否かの判定を行う
+     * @return  2p表示している状態ならばtrue
+     */
+    get isDoubleSlideHorizView() {
+        return this.isMobile2pView || !this.isVertView && this.isDoubleSlideWidth;
+    }
+    /**
+     * 横読み2p表示する解像度であるか否かの判定を行う
+     * @return 2p表示解像度であるならtrue
+     */
+    get isDoubleSlideWidth() {
+        return this.thresholdWidth <= window.innerWidth;
+    }
+    /**
+     * モバイル端末での強制2p見開き表示モードか否かを判定する
+     * @return 2p見開き表示条件ならばtrue
+     */
+    get isMobile2pView() {
+        return this.isMobile && this.deviceOrientation === "landscape";
+    }
+}
+
 Swiper.use([keyboard, pagination, lazy]);
 class Laymic {
     constructor(laymicPages, options = {}) {
         // mangaViewer内部で用いるステートまとめ
-        this.state = this.defaultMangaViewerStates;
+        this.state = new LaymicStates();
         // 初期化引数を保管
         this.initOptions = options;
         const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
@@ -7513,7 +7585,7 @@ class Laymic {
         this.cssVar.initCSSVars();
         // 一旦DOMから外していたroot要素を再度放り込む
         document.body.appendChild(this.el.rootEl);
-        const conf = (this.isMobile2pView)
+        const conf = (this.state.isMobile2pView)
             ? this.swiper2pHorizViewConf
             : this.swiperResponsiveHorizViewConf;
         this.swiper = new Swiper(this.el.swiperEl, conf);
@@ -7544,53 +7616,58 @@ class Laymic {
      * 初期状態のmangaViewerステートオブジェクトを返す
      * @return this.stateの初期値
      */
-    get defaultMangaViewerStates() {
-        const { innerHeight: ih, innerWidth: iw, } = window;
-        const pageSize = {
-            w: 720,
-            h: 1024
-        };
-        const viewerIdx = viewerCnt();
-        return {
-            viewerPadding: 10,
-            // デフォルト値としてウィンドウ幅を指定
-            rootRect: {
-                l: 0,
-                t: 0,
-                w: iw,
-                h: ih,
-            },
-            viewerId: "laymic",
-            // インスタンスごとに固有のid数字
-            viewerIdx,
-            pageSize,
-            thresholdWidth: pageSize.w,
-            pageAspect: {
-                w: 45,
-                h: 64
-            },
-            isLTR: false,
-            isVertView: false,
-            // 空白をつけた左始めがデフォルト設定
-            isFirstSlideEmpty: true,
-            // 全ページ数が奇数でいて見開き2p表示の場合
-            // 最終ページとして空白ページを追加する
-            isAppendEmptySlide: true,
-            vertPageMargin: 10,
-            horizPageMargin: 0,
-            // mediumと同じ数値
-            progressBarWidth: 8,
-            thumbItemHeight: 128,
-            thumbItemWidth: 96,
-            thumbItemGap: 16,
-            thumbsWrapperPadding: 16,
-            isMobile: isMobile(),
-            isInstantOpen: true,
-            bodyScrollTop: 0,
-            isActive: false,
-            deviceOrientation: getDeviceOrientation(),
-        };
-    }
+    // private get defaultMangaViewerStates(): ViewerStates {
+    //   const {
+    //     innerHeight: ih,
+    //     innerWidth: iw,
+    //   } = window;
+    //   const pageSize = {
+    //     w: 720,
+    //     h: 1024
+    //   };
+    //
+    //   const viewerIdx = viewerCnt();
+    //
+    //   return {
+    //     viewerPadding: 10,
+    //     // デフォルト値としてウィンドウ幅を指定
+    //     rootRect: {
+    //       l: 0,
+    //       t: 0,
+    //       w: iw,
+    //       h: ih,
+    //     },
+    //     viewerId: "laymic",
+    //     // インスタンスごとに固有のid数字
+    //     viewerIdx,
+    //     pageSize,
+    //     thresholdWidth: pageSize.w,
+    //     pageAspect: {
+    //       w: 45,
+    //       h: 64
+    //     },
+    //     isLTR: false,
+    //     isVertView: false,
+    //     // 空白をつけた左始めがデフォルト設定
+    //     isFirstSlideEmpty: true,
+    //     // 全ページ数が奇数でいて見開き2p表示の場合
+    //     // 最終ページとして空白ページを追加する
+    //     isAppendEmptySlide: true,
+    //     vertPageMargin: 10,
+    //     horizPageMargin: 0,
+    //     // mediumと同じ数値
+    //     progressBarWidth: 8,
+    //     thumbItemHeight: 128,
+    //     thumbItemWidth: 96,
+    //     thumbItemGap: 16,
+    //     thumbsWrapperPadding: 16,
+    //     isMobile: isMobile(),
+    //     isInstantOpen: true,
+    //     bodyScrollTop: 0,
+    //     isActive: false,
+    //     deviceOrientation: getDeviceOrientation(),
+    //   }
+    // }
     get swiper2pHorizViewConf() {
         return {
             direction: "horizontal",
@@ -7645,20 +7722,6 @@ class Laymic {
         };
     }
     /**
-     * 横読み2p表示するか否かの判定を行う
-     * @return  2p表示する解像度ならばtrue
-     */
-    get isDoubleSlideHorizView() {
-        return this.isMobile2pView || this.state.thresholdWidth <= window.innerWidth;
-    }
-    /**
-     * モバイル端末での強制2p見開き表示モードか否かを判定する
-     * @return 2p見開き表示条件ならばtrue
-     */
-    get isMobile2pView() {
-        return this.state.isMobile && this.state.deviceOrientation === "landscape";
-    }
-    /**
      * オーバーレイ表示を展開させる
      * @param  isDisableFullscreen trueならば全画面化処理を無効化する
      */
@@ -7686,7 +7749,7 @@ class Laymic {
         if (isFullscreen) {
             // 全画面化ハンドラ内部で呼び出されているので
             // this.viewUpdate()は不要
-            this.fullscreenHandler();
+            this.toggleFullscreen();
         }
         else {
             // 全画面化しない場合は表示更新のみ行う
@@ -7723,7 +7786,7 @@ class Laymic {
         }
         // フルスクリーン状態にあるならそれを解除
         if (document.fullscreenElement) {
-            this.fullscreenHandler();
+            this.toggleFullscreen();
         }
         // オーバーレイ下要素のスクロール再開
         this.enableBodyScroll();
@@ -7815,7 +7878,7 @@ class Laymic {
         });
         // 全画面化ボタンのクリックイベント
         this.el.buttons.fullscreen.addEventListener("click", () => {
-            this.fullscreenHandler();
+            this.toggleFullscreen();
         });
         // 設定ボタンのクリックイベント
         this.el.buttons.preference.addEventListener("click", () => {
@@ -7873,7 +7936,9 @@ class Laymic {
                 }
                 else if (isPrev) {
                     // 戻る
-                    this.swiper.slidePrev();
+                    const activeIdx = this.swiper.activeIndex;
+                    const idx = (activeIdx !== 0) ? activeIdx - 1 : 0;
+                    this.swiper.slideTo(idx);
                 }
             }));
             if (this.state.isMobile) {
@@ -7895,6 +7960,7 @@ class Laymic {
                 });
             }
         });
+        this.el.rootEl.addEventListener("fullscreenchange", () => this.fullscreenChange());
         // ユーザビリティのため「クリックしても何も起きない」
         // 場所ではイベント伝播を停止させる
         Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
@@ -7909,7 +7975,7 @@ class Laymic {
      * @param  idx            初期化時に指定するindex数値
      * @param  isViewerOpened ビューワーが開いているか否か
      */
-    reinitSwiperInstance(swiperConf, idx = 0, isViewerOpened = true) {
+    async reinitSwiperInstance(swiperConf, idx = 0, isViewerOpened = true) {
         const conf = Object.assign(swiperConf, {
             initialSlide: idx
         });
@@ -7936,19 +8002,21 @@ class Laymic {
         this.state.isVertView = true;
         this.el.rootEl.classList.add(vertView);
         const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
-        // if (isFirstSlideEmpty) {
-        //   this.removeFirstEmptySlide();
-        // }
+        // 横読み2p解像度、またはモバイル横表示か否かのbool
+        const isDS = this.state.isDoubleSlideWidth || this.state.isMobile2pView;
         const activeIdx = this.swiper.activeIndex;
+        this.switchSingleSlideState(false);
         // 横読み2p表示を行う解像度であり、
         // 一番目に空要素を入れる設定が有効な場合はindex数値を1減らす
-        const idx = (isFirstSlideEmpty
-            && activeIdx !== 0
-            && this.isDoubleSlideHorizView)
+        const idx = (isDS && isFirstSlideEmpty)
             ? activeIdx - 1
             : activeIdx;
         // 読み進めたページ数を引き継ぎつつ再初期化
-        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened);
+        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened).then(() => {
+            // そのままだと半端なスクロール状態になるので
+            // 再度スクロールをかけておく
+            this.swiper.slideTo(idx, 0);
+        });
     }
     /**
      * 横読み表示へと切り替える
@@ -7957,126 +8025,132 @@ class Laymic {
         const vertView = this.builder.stateNames.vertView;
         this.state.isVertView = false;
         this.el.rootEl.classList.remove(vertView);
-        const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
-        // 横読み2p表示を行う解像度であり、
-        // 一番目に空要素を入れる設定が有効な場合はindex数値を1減らす
+        const { isFirstSlideEmpty, isDoubleSlideHorizView: isDSHV, isMobile2pView } = this.state;
+        // emptySlideを追加する前にactiveIndexを取得しておく
         const activeIdx = this.swiper.activeIndex;
-        const idx = (isFirstSlideEmpty && this.isDoubleSlideHorizView)
+        this.switchSingleSlideState(false);
+        // 横読み2p表示を行う状態であり、
+        // 一番目に空要素を入れる設定が有効な場合はindex数値を1増やす
+        const idx = (isDSHV && isFirstSlideEmpty)
             ? activeIdx + 1
             : activeIdx;
         // 読み進めたページ数を引き継ぎつつ再初期化
-        this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx);
+        // スマホ横持ち対策を暫定的に行っておく
+        const conf = (isMobile2pView)
+            ? this.swiper2pHorizViewConf
+            : this.swiperResponsiveHorizViewConf;
+        this.reinitSwiperInstance(conf, idx).then(() => {
+            this.swiper.slideTo(idx, 0);
+        });
     }
     /**
      * 画面幅に応じて、横読み時の
      * 「1p表示 <-> 2p表示」を切り替える
+     * @param isUpdateSwiper swiper.update()を行うか否か
      */
-    switchSingleSlideState() {
+    switchSingleSlideState(isUpdateSwiper = true) {
         // swiperが初期化されていないなら早期リターン
         if (!this.swiper)
             return;
         const rootEl = this.el.rootEl;
-        const state = this.builder.stateNames.singleSlide;
-        const isFirstSlideEmpty = this.state.isFirstSlideEmpty;
-        const isAppendEmptySlide = this.state.isAppendEmptySlide;
-        if (this.isDoubleSlideHorizView) {
+        const stateName = this.builder.stateNames.singleSlide;
+        if (this.state.isDoubleSlideHorizView) {
             // 横読み時2p表示
-            if (isFirstSlideEmpty)
-                this.prependFirstEmptySlide();
-            if (isAppendEmptySlide)
-                this.appendLastEmptySlide();
-            rootEl.classList.remove(state);
+            this.addEmptySlide();
+            rootEl.classList.remove(stateName);
         }
         else {
             // 横読み時1p表示
-            if (isFirstSlideEmpty)
-                this.removeFirstEmptySlide();
-            if (isAppendEmptySlide)
-                this.removeLastEmptySlide();
-            rootEl.classList.add(state);
+            this.removeEmptySlide();
+            rootEl.classList.add(stateName);
         }
-        this.swiper.update();
+        if (isUpdateSwiper)
+            this.swiper.update();
     }
     /**
-     * 1p目空スライドを削除する
+     * statesの値に応じて空白スライドを追加する
+     * isFirstSlideEmpty有効時: 0番空白スライドを追加
+     * isAppendEmptySlide有効時: 最終空白スライドを追加
      */
-    removeFirstEmptySlide() {
-        if (this.swiper.slides.length === 0)
-            return;
-        const firstSlide = this.swiper.slides[0];
-        const emptySlide = this.builder.classNames.emptySlide;
-        const hasEmptySlide = firstSlide.classList.contains(emptySlide);
-        if (hasEmptySlide) {
-            // スライドを消す前のindexを取得
-            const idx = this.swiper.activeIndex;
-            this.swiper.removeSlide(0);
-            // 縦読み時のみの処理
-            if (this.state.isVertView) {
-                // 直感的には妙な処理だけどこれで問題なく動く
-                // removeSlide()を行う前のindex数値を入力して
-                // 一つずらしている形
-                this.swiper.slideTo(idx);
-            }
-        }
-    }
-    /**
-     * 空スライドを1p目に追加する
-     * 重複して追加しないように、空スライドが存在しない場合のみ追加する
-     */
-    prependFirstEmptySlide() {
-        const firstSlide = this.swiper.slides[0];
-        if (!firstSlide)
+    addEmptySlide() {
+        const { isFirstSlideEmpty, isAppendEmptySlide } = this.state;
+        if (this.swiper.slides.length === 0 || !isFirstSlideEmpty && !isAppendEmptySlide)
             return;
         const emptySlide = this.builder.classNames.emptySlide;
-        const hasEmptySlide = firstSlide.classList.contains(emptySlide);
-        if (!hasEmptySlide) {
-            const emptyEl = this.builder.createEmptySlideEl();
-            this.swiper.prependSlide(emptyEl);
-            // 縦読み時のみの処理
-            if (this.state.isVertView) {
-                // emptySlideはdisplay:noneを指定しているため
-                // 縦読みモードでは計算にいれずともよい
-                // そのため追加した要素分1つ後ろにずらしている
-                const idx = this.swiper.activeIndex - 1;
-                this.swiper.slideTo(idx);
+        let isPrependSlide = false;
+        let isAppendSlide = false;
+        if (isFirstSlideEmpty) {
+            const firstSlide = this.swiper.slides[0];
+            const hasFirstEmptySlide = firstSlide.classList.contains(emptySlide);
+            if (!hasFirstEmptySlide) {
+                isPrependSlide = true;
             }
         }
-    }
-    /**
-     * 最終p空白スライドを削除する
-     */
-    removeLastEmptySlide() {
-        if (this.swiper.slides.length === 0)
-            return;
         const lastIdx = this.swiper.slides.length - 1;
-        const lastSlide = this.swiper.slides[lastIdx];
-        const emptySlide = this.builder.classNames.emptySlide;
-        const hasEmptySlide = lastSlide.classList.contains(emptySlide);
-        if (hasEmptySlide) {
-            this.swiper.removeSlide(lastIdx);
-        }
-        // this.swiper.updateSlides();
-        // this.swiper.updateProgress();
-    }
-    /**
-     * 最終pに空白スライドを追加する
-     */
-    appendLastEmptySlide() {
-        if (this.swiper.slides.length === 0)
-            return;
-        const lastIdx = this.swiper.slides.length - 1;
-        const lastSlide = this.swiper.slides[lastIdx];
-        const emptySlide = this.builder.classNames.emptySlide;
-        const hasEmptySlide = lastSlide.classList.contains(emptySlide);
-        if (!hasEmptySlide) {
-            const emptyEl = this.builder.createEmptySlideEl();
-            this.swiper.appendSlide(emptyEl);
-            const isMove = this.swiper.activeIndex !== 0;
-            if (!this.state.isVertView && isMove) {
-                const idx = this.swiper.activeIndex + 2;
-                this.swiper.slideTo(idx);
+        if (isAppendEmptySlide) {
+            const lastSlide = this.swiper.slides[lastIdx];
+            const hasLastEmptySlide = lastSlide.classList.contains(emptySlide);
+            if (!hasLastEmptySlide) {
+                isAppendSlide = true;
             }
         }
+        let adjustNum = 0;
+        const currentIdx = this.swiper.activeIndex;
+        const isMove = isPrependSlide || isAppendSlide;
+        if (isPrependSlide) {
+            this.swiper.prependSlide(this.builder.createEmptySlideEl());
+            // NOTE: swiperのbreakpoint切り替えが先に行われて
+            //       activeIndexが正確に取得出来ない不具合あり
+            if (currentIdx !== 0)
+                adjustNum += 2;
+        }
+        if (isAppendSlide) {
+            // 見開き2p表示を考慮した上で、
+            // 最終ページが開かれているなら値を足す
+            if (lastIdx - currentIdx < 2)
+                adjustNum += 2;
+            this.swiper.appendSlide(this.builder.createEmptySlideEl());
+        }
+        if (isMove) {
+            const idx = currentIdx + adjustNum;
+            this.swiper.slideTo(idx);
+        }
+    }
+    /**
+     * statesの値に応じて空白スライドを消去する
+     * isFirstSlideEmpty有効時: 0番空白スライドを消去
+     * isAppendEmptySlide有効時: 最終空白スライドを消去
+     */
+    removeEmptySlide() {
+        const { isFirstSlideEmpty, isAppendEmptySlide } = this.state;
+        if (this.swiper.slides.length === 0 || !isFirstSlideEmpty && !isAppendEmptySlide)
+            return;
+        const removeIdxs = [];
+        const emptySlide = this.builder.classNames.emptySlide;
+        const currentIdx = this.swiper.activeIndex;
+        let isMove = false;
+        if (isFirstSlideEmpty) {
+            const firstSlide = this.swiper.slides[0];
+            const hasFirstEmptySlide = firstSlide.classList.contains(emptySlide);
+            if (hasFirstEmptySlide) {
+                removeIdxs.push(0);
+                isMove = true;
+            }
+        }
+        if (isAppendEmptySlide) {
+            const lastIdx = this.swiper.slides.length - 1;
+            const lastSlide = this.swiper.slides[lastIdx];
+            const hasLastEmptySlide = lastSlide.classList.contains(emptySlide);
+            if (hasLastEmptySlide) {
+                removeIdxs.push(lastIdx);
+            }
+        }
+        if (removeIdxs.length > 0) {
+            this.swiper.removeSlide(removeIdxs);
+        }
+        // 0番スライドを削除した際のみ動作
+        if (isMove)
+            this.swiper.slideTo(currentIdx - 1);
     }
     /**
      * 入力したMouseEventが
@@ -8211,8 +8285,8 @@ class Laymic {
      * open(), close()のタイミングで切り替えるために分離
      */
     swiperResizeHandler() {
-        this.switchSingleSlideState();
-        this.cssVar.updateJsVh();
+        if (!this.state.isVertView)
+            this.switchSingleSlideState();
         this.viewUpdate();
     }
     /**
@@ -8276,13 +8350,13 @@ class Laymic {
             return;
         }
         this.state.rootRect = this.rootElRect;
-        // フルスクリーン時にjsVhの再計算をしないと
-        // rootElのheight値がズレる
-        this.cssVar.updateJsVh();
-        this.cssVar.updatePageSize();
-        const isDSHV = this.isDoubleSlideHorizView;
-        this.cssVar.updatePageRealSize(isDSHV);
-        this.cssVar.updatePageScaleRatio(isDSHV);
+        if (this.cssVar) {
+            // フルスクリーン時にjsVhの再計算をしないと
+            // rootElのheight値がズレる
+            this.cssVar.updateJsVh();
+            this.cssVar.updatePageSize();
+            this.cssVar.updatePageScaleRatio();
+        }
         if (this.thumbs)
             this.thumbs.cssThumbsWrapperWidthUpdate(this.el.rootEl);
         if (this.zoom)
@@ -8296,20 +8370,9 @@ class Laymic {
      * 非全画面状態ならば全画面化させて、
      * 全画面状態であるならそれを解除する
      */
-    fullscreenHandler() {
+    toggleFullscreen() {
         // フルスクリーン切り替え後に呼び出される関数
         const postToggleFullscreen = () => {
-            if (!screenfull.isEnabled)
-                return;
-            const fsClass = this.builder.stateNames.fullscreen;
-            if (screenfull.isFullscreen) {
-                // 全画面有効時
-                this.el.rootEl.classList.add(fsClass);
-            }
-            else {
-                // 通常時
-                this.el.rootEl.classList.remove(fsClass);
-            }
             this.swiper.slideTo(this.swiper.activeIndex);
             this.viewUpdate();
         };
@@ -8388,14 +8451,12 @@ class Laymic {
             w: width / gcd,
             h: height / gcd,
         };
-        this.state.thresholdWidth = width;
     }
     /**
      * orientationcange eventに登録する処理
      */
     orientationChange() {
-        const orientation = getDeviceOrientation();
-        this.state.deviceOrientation = orientation;
+        const orientation = this.state.deviceOrientation;
         // PC、または縦読みモードの際は早期リターン
         if (!this.state.isMobile || this.state.isVertView)
             return;
@@ -8409,6 +8470,22 @@ class Laymic {
             this.reinitSwiperInstance(this.swiperResponsiveHorizViewConf, idx);
         }
         this.switchSingleSlideState();
+    }
+    /**
+     * fullscreenchangeイベントに登録する処理
+     * もしscreenfullのapiを通さず全画面状態が解除されても、
+     * 最低限の見た目だけは整えるために分離
+     */
+    fullscreenChange() {
+        const fsClass = this.builder.stateNames.fullscreen;
+        if (document.fullscreenElement) {
+            // 全画面有効時
+            this.el.rootEl.classList.add(fsClass);
+        }
+        else {
+            // 通常時
+            this.el.rootEl.classList.remove(fsClass);
+        }
     }
 }
 

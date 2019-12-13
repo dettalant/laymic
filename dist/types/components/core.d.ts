@@ -1,11 +1,11 @@
 import { Swiper } from "swiper/js/swiper.esm";
-import DOMBuilder from "#/components/builder";
-import LaymicPreference from "#/components/preference";
-import LaymicThumbnails from "#/components/thumbs";
-import LaymicHelp from "#/components/help";
-import LaymicZoom from "#/components/zoom";
-import LaymicCSSVariables from "#/components/cssVar";
-import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions, ViewerStates } from "#/interfaces/index";
+import DOMBuilder from "./builder";
+import LaymicPreference from "./preference";
+import LaymicThumbnails from "./thumbs";
+import LaymicHelp from "./help";
+import LaymicZoom from "./zoom";
+import LaymicCSSVariables from "./cssVar";
+import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions, ViewerStates } from "../interfaces/index";
 export default class Laymic {
     el: ViewerElements;
     state: ViewerStates;
@@ -27,20 +27,9 @@ export default class Laymic {
      * 初期状態のmangaViewerステートオブジェクトを返す
      * @return this.stateの初期値
      */
-    private readonly defaultMangaViewerStates;
     private readonly swiper2pHorizViewConf;
     private readonly swiperResponsiveHorizViewConf;
     private readonly swiperVertViewConf;
-    /**
-     * 横読み2p表示するか否かの判定を行う
-     * @return  2p表示する解像度ならばtrue
-     */
-    private readonly isDoubleSlideHorizView;
-    /**
-     * モバイル端末での強制2p見開き表示モードか否かを判定する
-     * @return 2p見開き表示条件ならばtrue
-     */
-    private readonly isMobile2pView;
     /**
      * オーバーレイ表示を展開させる
      * @param  isDisableFullscreen trueならば全画面化処理を無効化する
@@ -75,25 +64,21 @@ export default class Laymic {
     /**
      * 画面幅に応じて、横読み時の
      * 「1p表示 <-> 2p表示」を切り替える
+     * @param isUpdateSwiper swiper.update()を行うか否か
      */
     private switchSingleSlideState;
     /**
-     * 1p目空スライドを削除する
+     * statesの値に応じて空白スライドを追加する
+     * isFirstSlideEmpty有効時: 0番空白スライドを追加
+     * isAppendEmptySlide有効時: 最終空白スライドを追加
      */
-    private removeFirstEmptySlide;
+    private addEmptySlide;
     /**
-     * 空スライドを1p目に追加する
-     * 重複して追加しないように、空スライドが存在しない場合のみ追加する
+     * statesの値に応じて空白スライドを消去する
+     * isFirstSlideEmpty有効時: 0番空白スライドを消去
+     * isAppendEmptySlide有効時: 最終空白スライドを消去
      */
-    private prependFirstEmptySlide;
-    /**
-     * 最終p空白スライドを削除する
-     */
-    private removeLastEmptySlide;
-    /**
-     * 最終pに空白スライドを追加する
-     */
-    private appendLastEmptySlide;
+    private removeEmptySlide;
     /**
      * 入力したMouseEventが
      * mangaViewer画面のクリックポイントに重なっているかを返す
@@ -166,7 +151,7 @@ export default class Laymic {
      * 非全画面状態ならば全画面化させて、
      * 全画面状態であるならそれを解除する
      */
-    private fullscreenHandler;
+    private toggleFullscreen;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */
@@ -203,4 +188,10 @@ export default class Laymic {
      * orientationcange eventに登録する処理
      */
     private orientationChange;
+    /**
+     * fullscreenchangeイベントに登録する処理
+     * もしscreenfullのapiを通さず全画面状態が解除されても、
+     * 最低限の見た目だけは整えるために分離
+     */
+    private fullscreenChange;
 }

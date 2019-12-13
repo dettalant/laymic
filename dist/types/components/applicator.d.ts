@@ -1,5 +1,5 @@
-import Laymic from "#/components/core";
-import { LaymicOptions, LaymicApplicatorOptions } from "#/interfaces/index";
+import Laymic from "./core";
+import { LaymicOptions, LaymicApplicatorOptions } from "../interfaces/index";
 export default class LaymicApplicator {
     laymicMap: Map<string, Laymic>;
     constructor(selector?: string | LaymicApplicatorOptions, laymicOptions?: LaymicOptions);
