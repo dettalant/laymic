@@ -74,6 +74,8 @@ export interface ViewerStates {
   isLTR: boolean,
   isVertView: boolean,
   isFirstSlideEmpty: boolean,
+  // スマホ横持ち時強制2p表示を無効化するか否か
+  isDisableForceHorizView: boolean,
   // 全ページ数が奇数でいて見開き2p表示の場合
   // 最終ページとして空白ページを追加する
   isAppendEmptySlide: boolean,

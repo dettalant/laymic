@@ -6,6 +6,8 @@ export interface PreferenceData {
   isAutoFullscreen: boolean,
   // タップでのページ送りを停止させるかの設定値
   isDisableTapSlidePage: boolean,
+  // スマホを横持ちした際の強制的2p表示を無効化する設定値
+  isDisableForceHorizView: boolean,
   // 進捗バーの太さ設定値
   progressBarWidth: BarWidth,
   // ページ送りボタンの表示設定値
@@ -14,7 +16,7 @@ export interface PreferenceData {
   zoomButtonRatio: number,
 }
 
-type PreferenceCheckboxs = Record<"isAutoFullscreen" | "isDisableTapSlidePage", SimpleCheckbox>;
+type PreferenceCheckboxs = Record<"isAutoFullscreen" | "isDisableTapSlidePage" | "isDisableForceHorizView", SimpleCheckbox>;
 type PreferenceSelects = Record<keyof Omit<PreferenceData, keyof PreferenceCheckboxs>, SimpleSelect>;
 
 export type PreferenceChoices = PreferenceCheckboxs & PreferenceSelects;

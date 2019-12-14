@@ -36,6 +36,7 @@ export default class LaymicStates implements ViewerStates {
   isInstantOpen = true;
   bodyScrollTop = 0;
   isActive = false;
+  isDisableForceHorizView = false;
   get thresholdWidth(): number {
     return this.pageSize.w
   };
@@ -73,6 +74,6 @@ export default class LaymicStates implements ViewerStates {
    * @return 2p見開き表示条件ならばtrue
    */
   get isMobile2pView(): boolean {
-    return this.isMobile && this.deviceOrientation === "landscape";
+    return this.isMobile && !this.isDisableForceHorizView && this.deviceOrientation === "landscape";
   }
 }

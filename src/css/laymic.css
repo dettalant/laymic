@@ -339,8 +339,8 @@
   --font-size: 1.1rem;
   --padding-size: .6rem;
   --item-height: calc(var(--font-size) + var(--padding-size) * 2);
-  max-width: 90%;
-  max-height: 85%;
+  max-width: 80%;
+  max-height: 80%;
   overflow: auto;
   background: #333;
   padding: 1rem;
@@ -359,7 +359,7 @@
 /* 副作用を減らすため優先度を上げたい定義のみ対象として指定 */
 .laymic_preferenceWrapper .laymic_preferenceButton {
   /* 設定ボタンごとでの余白 */
-  margin-bottom: .5rem;
+  margin: .5rem 0;
 }
 
 .laymic_preferenceButton {
@@ -465,13 +465,15 @@
   margin: 1rem 0 0;
 }
 
-/* PC画面では非表示 */
-.laymic_preferenceIsDisableTapSlidePage {
+/* PC画面では非表示する要素 */
+.laymic_preferenceIsDisableTapSlidePage,
+.laymic_preferenceIsDisableForceHorizView {
   display: none;
 }
 
-/* スマホ画面では表示する */
-.laymic_isMobile .laymic_preferenceIsDisableTapSlidePage {
+/* スマホ画面では表示する要素 */
+.laymic_isMobile .laymic_preferenceIsDisableTapSlidePage,
+.laymic_isMobile .laymic_preferenceIsDisableForceHorizView {
   display: flex;
 }
 
@@ -601,8 +603,8 @@
   width: var(--icon-size);
 }
 
-.icon_checkBoxInner {
-  /* checkBoxOuter要素と重ねる */
+.icon_checkboxInner {
+  /* checkboxOuter要素と重ねる */
   position: absolute;
   right: 0;
   top: 0
@@ -610,7 +612,7 @@
 
 .laymic_root .icon_horizView,
 .laymic_root .icon_exitFullscreen,
-.laymic_root .icon_checkBoxInner,
+.laymic_root .icon_checkboxInner,
 .laymic_isVertView .icon_vertView,
 .laymic_isFullscreen .icon_fullscreen {
   display: none;
@@ -618,7 +620,7 @@
 
 .laymic_isVertView .icon_horizView,
 .laymic_isFullscreen .icon_exitFullscreen,
-.laymic_preferenceButton[aria-checked="true"] .icon_checkBoxInner {
+.laymic_preferenceButton[aria-checked="true"] .icon_checkboxInner {
   display: block;
 }
 
