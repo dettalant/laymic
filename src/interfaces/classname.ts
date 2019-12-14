@@ -1,4 +1,5 @@
 import { ViewerUIButtons } from "./ui";
+import { PreferenceData } from "./preference";
 import { SelectClassNames, CheckboxClassNames } from "@dettalant/simple_choices";
 
 export interface LaymicStateClassNames {
@@ -60,14 +61,13 @@ export interface LaymicThumbsClassNames {
   lazyloaded: string,
 }
 
-export interface LaymicPreferenceClassNames {
+type LaymicPreferenceItemClassNames = Omit<Record<keyof PreferenceData, string>, "progressBarWidth">
+
+export interface LaymicPreferenceClassNames extends LaymicPreferenceItemClassNames {
   container: string,
   wrapper: string,
   notice: string,
   button: string,
-  paginationVisibility: string,
-  isAutoFullscreen: string,
-  zoomButtonRatio: string
 }
 
 export interface LaymicHelpClassNames {

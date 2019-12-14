@@ -1,7 +1,6 @@
 import { BarWidth, UIVisibility } from "./ui"
 import { SimpleSelect, SimpleCheckbox } from "@dettalant/simple_choices";
 
-
 export interface PreferenceData {
   // 自動的に全画面化するかの設定値
   isAutoFullscreen: boolean,
@@ -14,8 +13,6 @@ export interface PreferenceData {
   // PC表示での固定ズーム倍率設定値
   zoomButtonRatio: number,
 }
-
-// export type PreferenceButtons = Record<keyof PreferenceData, HTMLButtonElement>;
 
 type PreferenceCheckboxs = Record<"isAutoFullscreen" | "isDisableTapSlidePage", SimpleCheckbox>;
 type PreferenceSelects = Record<keyof Omit<PreferenceData, keyof PreferenceCheckboxs>, SimpleSelect>;

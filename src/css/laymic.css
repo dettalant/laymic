@@ -340,7 +340,7 @@
   --padding-size: .6rem;
   --item-height: calc(var(--font-size) + var(--padding-size) * 2);
   max-width: 90%;
-  max-height: 90%;
+  max-height: 85%;
   overflow: auto;
   background: #333;
   padding: 1rem;
@@ -356,15 +356,19 @@
   font-size: var(--font-size);
 }
 
+/* 副作用を減らすため優先度を上げたい定義のみ対象として指定 */
 .laymic_preferenceWrapper .laymic_preferenceButton {
+  /* 設定ボタンごとでの余白 */
+  margin-bottom: .5rem;
+}
+
+.laymic_preferenceButton {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
   max-height: var(--item-height);
   width: 100%;
   justify-content: space-between;
-  /* 設定ボタンごとでの余白 */
-  margin-bottom: .5rem;
 }
 
 .laymic_preferenceButton,
@@ -448,18 +452,29 @@
 .laymic_preferenceNotice {
   /* フォントサイズをデフォルトに戻す */
   font-size: initial;
-  /* 上下に余白を付ける */
-  margin: .5rem 0;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-end;
   flex: 1 1 auto;
+  /* 上下に余白を付ける */
+  padding: .5rem 0;
 }
 
 .laymic_preferenceNotice p {
   /* 下向け余白をなくす */
   margin: 1rem 0 0;
 }
+
+/* PC画面では非表示 */
+.laymic_preferenceIsDisableTapSlidePage {
+  display: none;
+}
+
+/* スマホ画面では表示する */
+.laymic_isMobile .laymic_preferenceIsDisableTapSlidePage {
+  display: flex;
+}
+
 
 .laymic_pagination {
   --swiper-navigation-color: rgba(255, 255, 255, .3);
@@ -587,7 +602,10 @@
 }
 
 .icon_checkBoxInner {
+  /* checkBoxOuter要素と重ねる */
   position: absolute;
+  right: 0;
+  top: 0
 }
 
 .laymic_root .icon_horizView,

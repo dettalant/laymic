@@ -90,7 +90,8 @@ export default class DOMBuilder {
         button: "laymic_preferenceButton",
         paginationVisibility: "laymic_preferencePaginationVisibility",
         isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
-        zoomButtonRatio: "laymic_preferenceZoomButtonRatio"
+        zoomButtonRatio: "laymic_preferenceZoomButtonRatio",
+        isDisableTapSlidePage: "laymic_preferenceIsDisableTapSlidePage"
       },
       help: {
         container: "laymic_help",

@@ -176,18 +176,20 @@ export default class LaymicZoom {
    * インスタンス生成時に一度だけ呼ばれることを想定
    */
   private applyEventListeners() {
-    if (isMobile()) {
+    const applyEventsForMobile = () => {
       this.controller.addEventListener("touchstart", e => this.touchStartHandler(e));
 
-      this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption)
+      this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
 
       this.controller.addEventListener("touchend", (e) => {
         e.stopPropagation();
         if (this.state.isSwiped || this.isZoomed) return;
         // ズーム倍率が1の場合はズームモードを終了させる
         this.disable();
-      })
-    } else {
+      });
+    }
+
+    const applyEventsForPC = () => {
       this.controller.addEventListener("click", () => {
         // ドラッグ操作がなされている場合は処理をスキップ
         if (this.state.isSwiped) return;
@@ -218,6 +220,13 @@ export default class LaymicZoom {
         this.setTranslate(e.clientX, e.clientY);
         this.updatePastPos(e.clientX, e.clientY);
       }));
+    }
+
+    // モバイルとPCで適用イベント変更
+    if (isMobile()) {
+      applyEventsForMobile()
+    } else {
+      applyEventsForPC();
     }
   }
 

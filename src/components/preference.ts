@@ -19,7 +19,7 @@ export default class LaymicPreference {
   choices: PreferenceChoices;
   builder: DOMBuilder;
   // preference save data
-  data: PreferenceData = this.defaultPreferenceData;
+  data: PreferenceData = LaymicPreference.defaultPreferenceData;
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     this.builder = builder;
 
@@ -34,34 +34,45 @@ export default class LaymicPreference {
     const containerEl = builder.createDiv();
     setAriaExpanded(containerEl, false);
 
-    const preferenceClassNames = this.builder.classNames.preference;
-    containerEl.className = preferenceClassNames.container;
+    const names = this.builder.classNames.preference;
+
+    containerEl.className = names.container;
 
     const wrapperEl = builder.createDiv();
-    wrapperEl.className = preferenceClassNames.wrapper;
+    wrapperEl.className = names.wrapper;
     setRole(wrapperEl, "list");
 
-    const preferenceBtnClass = preferenceClassNames.button;
-    const isAutoFullscreen = checkboxBuilder.create("ビューワー展開時の自動全画面化", false, `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
+    const isAutoFullscreen = checkboxBuilder.create(
+      "ビューワー展開時の自動全画面化",
+      false, this.genPreferenceButtonClass(names.isAutoFullscreen)
+    );
 
-    const isDisableTapSlidePage = checkboxBuilder.create("モバイル端末でのタップページ送りを無効化", false, preferenceBtnClass);
+    const isDisableTapSlidePage = checkboxBuilder.create(
+      "モバイル端末でのタップページ送りを無効化",
+      false,
+      this.genPreferenceButtonClass(names.isDisableTapSlidePage)
+    );
 
-    const progressBarWidth = selectBuilder.create("進捗バー表示設定", this.barWidthItems, preferenceBtnClass);
+    const progressBarWidth = selectBuilder.create(
+      "進捗バー表示設定",
+      this.barWidthItems,
+      this.genPreferenceButtonClass()
+    );
 
     const paginationVisibility = selectBuilder.create(
       "ページ送りボタン表示設定",
       this.uiVisibilityItems,
-      `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`
+      this.genPreferenceButtonClass(names.paginationVisibility)
     );
 
     const zoomButtonRatio = selectBuilder.create(
       "ズームボタン倍率設定",
       this.zoomButtonRatioItems,
-      `${preferenceBtnClass} ${preferenceClassNames.zoomButtonRatio}`
+      this.genPreferenceButtonClass(names.zoomButtonRatio)
     );
 
     const noticeEl = builder.createDiv();
-    noticeEl.className = preferenceClassNames.notice;
+    noticeEl.className = names.notice;
     [
       "※1: 一部設定値は次回ページ読み込み時に適用されます",
       "※2: 自動全画面処理はビューワー展開ボタンクリック時にしか動きません",
@@ -73,8 +84,8 @@ export default class LaymicPreference {
 
     [
       progressBarWidth.el.container,
-      paginationVisibility.el.container,
       zoomButtonRatio.el.container,
+      paginationVisibility.el.container,
       isAutoFullscreen.el.container,
       isDisableTapSlidePage.el.container,
       noticeEl
@@ -100,6 +111,20 @@ export default class LaymicPreference {
     this.applyEventListeners();
   }
 
+  /**
+   * defaultデータは静的メソッドとして、
+   * 外部からも容易に呼び出せるようにしておく
+   */
+  static get defaultPreferenceData(): PreferenceData {
+    return {
+      isAutoFullscreen: false,
+      isDisableTapSlidePage: false,
+      progressBarWidth: "auto",
+      paginationVisibility: "auto",
+      zoomButtonRatio: 1.5,
+    }
+  }
+
   get isAutoFullscreen(): boolean {
     return this.data.isAutoFullscreen;
   }
@@ -118,7 +143,6 @@ export default class LaymicPreference {
     this.savePreferenceData();
     this.dispatchPreferenceUpdateEvent("isDisableTapSlidePage");
   }
-
 
   get progressBarWidth(): BarWidth {
     return this.data.progressBarWidth
@@ -149,14 +173,10 @@ export default class LaymicPreference {
     this.savePreferenceData();
   }
 
-  private get defaultPreferenceData(): PreferenceData {
-    return {
-      isAutoFullscreen: false,
-      isDisableTapSlidePage: false,
-      progressBarWidth: "auto",
-      paginationVisibility: "auto",
-      zoomButtonRatio: 1.5,
-    }
+  private genPreferenceButtonClass(className: string = ""): string {
+    let btnClassName = this.builder.classNames.preference.button;
+    if (className) btnClassName += " " + className;
+    return btnClassName;
   }
 
   private get barWidthItems(): SelectItem[] {
@@ -260,7 +280,7 @@ export default class LaymicPreference {
   private loadPreferenceData(): PreferenceData {
     const dataStr = localStorage.getItem(this.PREFERENCE_KEY);
 
-    let data = this.defaultPreferenceData;
+    let data = LaymicPreference.defaultPreferenceData;
 
     if (dataStr) {
       try {
