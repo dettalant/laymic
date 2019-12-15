@@ -339,6 +339,7 @@
   --font-size: 1.1rem;
   --padding-size: .6rem;
   --item-height: calc(var(--font-size) + var(--padding-size) * 2);
+  --select-wrapper-min-width: 5.5rem;
   max-width: 80%;
   max-height: 80%;
   overflow: auto;
@@ -359,14 +360,13 @@
 /* 副作用を減らすため優先度を上げたい定義のみ対象として指定 */
 .laymic_preferenceWrapper .laymic_preferenceButton {
   /* 設定ボタンごとでの余白 */
-  margin: .5rem 0;
+  margin-top: .5rem;
 }
 
 .laymic_preferenceButton {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  max-height: var(--item-height);
   width: 100%;
   justify-content: space-between;
 }
@@ -387,27 +387,22 @@
 .laymic_checkboxIconWrapper {
   display: flex;
   position: relative;
-  flex: 0 0 5rem;
+  /* selectWrapperの最小横幅と合わせる */
+  flex: 0 0 var(--select-wrapper-min-width);
   justify-content: flex-end;
 }
 
 .laymic_checkboxIconWrapper .laymic_svgIcon {
   --icon-size: var(--item-height);
-  /* select右端とcheckboxIcon右端を合わせる */
-  margin-right: -5px;
-}
-
-.laymic_select {
-  font-size: var(--font-size);
-  max-height: var(--item-height);
+  /* selectWrapper右端とcheckboxIcon右端を合わせるため微調整 */
+  margin-right: -2px;
 }
 
 .laymic_selectWrapper {
   display: flex;
   flex-flow: column nowrap;
-  max-height: inherit;
   position: relative;
-  min-width: 5.5rem;
+  min-width: var(--select-wrapper-min-width);
   color: #333;
 }
 
@@ -428,7 +423,7 @@
   /* 最小限の高さで上に浮かせる */
   z-index: 1;
   /* currentItemの下に来るように縦位置を調整 */
-  top: var(--item-height);
+  top: 100%;
   width: 100%;
 }
 
@@ -447,6 +442,7 @@
 .laymic_selectLabel {
   /* 画面幅が狭い際に効果を発揮する右側余白を追加 */
 	margin-right: .5rem;
+  flex: 1 1 auto;
 }
 
 .laymic_preferenceNotice {
@@ -466,17 +462,18 @@
 }
 
 /* PC画面では非表示する要素 */
-.laymic_preferenceIsDisableTapSlidePage,
-.laymic_preferenceIsDisableForceHorizView {
+.laymic_preferenceIsDisabledTapSlidePage,
+.laymic_preferenceIsDisabledForceHorizView,
+.laymic_preferenceIsTapResetZoom {
   display: none;
 }
 
 /* スマホ画面では表示する要素 */
-.laymic_isMobile .laymic_preferenceIsDisableTapSlidePage,
-.laymic_isMobile .laymic_preferenceIsDisableForceHorizView {
+.laymic_isMobile .laymic_preferenceIsDisabledTapSlidePage,
+.laymic_isMobile .laymic_preferenceIsDisabledForceHorizView,
+.laymic_isMobile .laymic_preferenceIsTapResetZoom {
   display: flex;
 }
-
 
 .laymic_pagination {
   --swiper-navigation-color: rgba(255, 255, 255, .3);

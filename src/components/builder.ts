@@ -91,8 +91,9 @@ export default class DOMBuilder {
         paginationVisibility: "laymic_preferencePaginationVisibility",
         isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
         zoomButtonRatio: "laymic_preferenceZoomButtonRatio",
-        isDisableTapSlidePage: "laymic_preferenceIsDisableTapSlidePage",
-        isDisableForceHorizView: "laymic_preferenceIsDisableForceHorizView"
+        isDisabledTapSlidePage: "laymic_preferenceIsDisabledTapSlidePage",
+        isDisabledForceHorizView: "laymic_preferenceIsDisabledForceHorizView",
+        isTapResetZoom: "laymic_preferenceIsTapResetZoom",
       },
       help: {
         container: "laymic_help",

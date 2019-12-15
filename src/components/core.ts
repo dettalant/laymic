@@ -74,9 +74,9 @@ export default class Laymic {
     }
 
     this.preference = new LaymicPreference(builder, rootEl);
-    // isDisableForceHorizViewだけ先んじて適用
+    // isDisabledForceHorizViewだけ先んじて適用
     const preferenceData = this.preference.loadPreferenceData();
-    this.state.isDisableForceHorizView = preferenceData.isDisableForceHorizView;
+    this.state.isDisabledForceHorizView = preferenceData.isDisabledForceHorizView;
 
     // 省略表記だとバグが起きそうなので
     // undefinedでないかだけ確認する
@@ -100,7 +100,7 @@ export default class Laymic {
 
     this.thumbs = new LaymicThumbnails(builder, rootEl, pages, thumbPages, this.state);
     this.help = new LaymicHelp(builder, rootEl);
-    this.zoom = new LaymicZoom(builder, rootEl);
+    this.zoom = new LaymicZoom(builder, rootEl, this.preference);
 
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
@@ -239,10 +239,10 @@ export default class Laymic {
 
   /**
    * オーバーレイ表示を展開させる
-   * @param  isDisableFullscreen trueならば全画面化処理を無効化する
+   * @param  isDisabledFullscreen trueならば全画面化処理を無効化する
    */
-  open(isDisableFullscreen: boolean = false) {
-    const isFullscreen = !isDisableFullscreen && this.preference.isAutoFullscreen;
+  open(isDisabledFullscreen: boolean = false) {
+    const isFullscreen = !isDisabledFullscreen && this.preference.isAutoFullscreen;
 
     // ページ読み込み後一度目の展開時にのみtrue
     const isInitialOpen = this.el.rootEl.style.display === "none";
@@ -357,17 +357,17 @@ export default class Laymic {
       } else {
         this.el.rootEl.classList.remove(vpClass);
       }
-    } else if (e.detail === "isDisableTapSlidePage") {
+    } else if (e.detail === "isDisabledTapSlidePage") {
       // タップでのページ送りを停止する設定
-      if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+      if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
         // モバイル環境で設定値がtrueの際にのみ動作
         this.disablePagination();
       } else {
         this.enablePagination();
       }
-    } else if (e.detail === "isDisableForceHorizView") {
+    } else if (e.detail === "isDisabledForceHorizView") {
       // LaymicStateの値を書き換え
-      this.state.isDisableForceHorizView = this.preference.isDisableForceHorizView;
+      this.state.isDisabledForceHorizView = this.preference.isDisabledForceHorizView;
       this.orientationChange();
     }
   }
@@ -449,7 +449,7 @@ export default class Laymic {
     ].forEach(el => {
       // クリック時のイベント
       el.addEventListener("click", e => {
-        if (this.state.isMobile && this.preference.isDisableTapSlidePage) {
+        if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
           // モバイルブラウザでのタップページ送り無効化設定時は
           // viewerUIのトグルだけ行う
           this.toggleViewerUI();

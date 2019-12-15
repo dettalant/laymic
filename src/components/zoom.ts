@@ -1,5 +1,6 @@
 import DOMBuilder from "./builder";
 import { PageRect, LaymicZoomStates } from "../interfaces/index";
+import LaymicPreference from "./preference";
 import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "../utils";
 
 export default class LaymicZoom {
@@ -7,8 +8,9 @@ export default class LaymicZoom {
   wrapper: HTMLElement;
   controller: HTMLElement;
   builder: DOMBuilder;
+  preference: LaymicPreference
   state: LaymicZoomStates = this.defaultLaymicZoomStates;
-  constructor(builder: DOMBuilder, rootEl: HTMLElement) {
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, preference: LaymicPreference) {
     const zoomEl = builder.createDiv();
     zoomEl.className = builder.classNames.zoom.controller;
 
@@ -16,6 +18,7 @@ export default class LaymicZoom {
     this.rootEl = rootEl;
     this.wrapper = builder.createZoomWrapper()
     this.builder = builder;
+    this.preference = preference;
 
     this.applyEventListeners();
   }
@@ -187,6 +190,15 @@ export default class LaymicZoom {
         // ズーム倍率が1の場合はズームモードを終了させる
         this.disable();
       });
+
+      // タップすると標準倍率に戻す処理
+      // touchendで行うといまいちな操作感なので
+      // clickイベントを使用
+      this.controller.addEventListener("click", () => {
+        // 関連設定値がfalseの場合は早期リターン
+        if (!this.preference.isTapResetZoom) return;
+        this.disable();
+      })
     }
 
     const applyEventsForPC = () => {
