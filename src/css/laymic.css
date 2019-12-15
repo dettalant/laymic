@@ -442,7 +442,8 @@
 .laymic_selectLabel {
   /* 画面幅が狭い際に効果を発揮する右側余白を追加 */
 	margin-right: .5rem;
-  flex: 1 1 auto;
+  /* テキストを左寄せにする */
+  text-align: left;
 }
 
 .laymic_preferenceNotice {
