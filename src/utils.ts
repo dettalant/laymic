@@ -86,7 +86,10 @@ export const isMultiTouch = (e: TouchEvent): boolean =>  {
  * @param  callback 頻度を下げて呼び出されるコールバック関数
  * @return          イベントデータを受け取る関数
  */
-export const rafThrottle = function<T extends Element, E extends Event>(callback: (ev: E) => void) {
+export const rafThrottle = function<
+  T extends Element,
+  E extends Event
+>(callback: (ev: E) => void) {
   let requestId = 0;
   return function(this: T, ev: E) {
     if (requestId) return;
@@ -94,6 +97,47 @@ export const rafThrottle = function<T extends Element, E extends Event>(callback
       requestId = 0;
       callback.call(this, ev);
     });
+  }
+}
+
+export const createDoubleTapHandler = function<
+  T extends HTMLElement,
+  E extends TouchEvent
+> (
+  callback: (e: E) => void,
+  ms: number = 350,
+  // distance: number = 40
+) {
+  let tapCnt = 0;
+  // let pastX = 0;
+  // let pastY = 0;
+
+  // const isContainDistance = (e: TouchEvent): boolean => {
+  //   const {clientX: cx, clientY: cy} = e.targetTouches[0];
+  //   const diffX = Math.abs(cx - pastX);
+  //   const diffY = Math.abs(cy - pastY);
+  //
+  //   return diffX < distance && diffY < distance;
+  // }
+
+  // const setPastPos = (e: TouchEvent) => {
+  //   const {clientX: cx, clientY: cy} = e.targetTouches[0];
+  //   pastX = cx;
+  //   pastY = cy;
+  // }
+
+  return function(this: T, e: E) {
+    if (isMultiTouch(e)) return;
+    if (!tapCnt) {
+      tapCnt++;
+      sleep(ms).then(() => {
+        tapCnt = 0;
+      });
+    } else {
+      // ダブルタップ処理
+      callback.call(this, e);
+      tapCnt = 0;
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import DOMBuilder from "./builder";
 import { PageRect, LaymicZoomStates } from "../interfaces/index";
 import LaymicPreference from "./preference";
-import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch } from "../utils";
+import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleTapHandler} from "../utils";
 
 export default class LaymicZoom {
   rootEl: HTMLElement;
@@ -122,20 +122,15 @@ export default class LaymicZoom {
     return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
   }
 
-  /**
-   * 現在のzoomRatioの値からscale設定値を生成する
-   * @return css transformに用いる設定値
-   */
-  private get scaleProperty(): string {
-    return `scale(${this.state.zoomRatio})`;
-  }
+  private setTransformProperty() {
+    const {l: tx, t: ty} = this.state.zoomRect;
+    const ratio = this.state.zoomRatio;
 
-  /**
-   * 現在のzoomRectの値からtranslate設定値を生成する
-   * @return css transformに用いる設定値
-   */
-  private get translateProperty(): string {
-    return `translate(${this.state.zoomRect.l}px, ${this.state.zoomRect.t}px)`;
+    const transformStr = (this.isZoomed)
+      ? `translate(${tx}px, ${ty}px) scale(${ratio})`
+      : "";
+
+    this.wrapper.style.transform = transformStr;
   }
 
   /**
@@ -159,6 +154,10 @@ export default class LaymicZoom {
    * @param  e タッチイベント
    */
   private touchMoveHandler(e: TouchEvent) {
+    // rafThrottleでの非同期呼び出しを行うので
+    // 呼び出し時にisZoomedがfalseとなっていれば早期リターン
+    if (!this.isZoomed) return;
+
     e.stopPropagation();
     e.preventDefault();
     if (isMultiTouch(e)) {
@@ -184,21 +183,19 @@ export default class LaymicZoom {
 
       this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
 
-      this.controller.addEventListener("touchend", (e) => {
+      this.controller.addEventListener("touchend", e => {
+        e.preventDefault();
+
         e.stopPropagation();
-        if (this.state.isSwiped || this.isZoomed) return;
+        if (this.state.isSwiped || this.isZoomed) return ;
         // ズーム倍率が1の場合はズームモードを終了させる
         this.disable();
-      });
+      })
 
       // タップすると標準倍率に戻す処理
-      // touchendで行うといまいちな操作感なので
-      // clickイベントを使用
-      this.controller.addEventListener("click", () => {
-        // 関連設定値がfalseの場合は早期リターン
-        if (!this.preference.isTapResetZoom) return;
-        this.disable();
-      })
+      this.controller.addEventListener("touchend", createDoubleTapHandler(() => {
+        this.disable()
+      }))
     }
 
     const applyEventsForPC = () => {
@@ -303,7 +300,8 @@ export default class LaymicZoom {
     zoomRect.l = translateX;
     zoomRect.t = translateY;
 
-    this.wrapper.style.transform = `${this.translateProperty} ${this.scaleProperty}`;
+    // 設定した値をcss transformとして反映
+    this.setTransformProperty();
   }
 
   /**
@@ -381,6 +379,7 @@ export default class LaymicZoom {
 
   /**
    * 拡大縮小処理を行う
+   * 引数を省略した場合は中央寄せでズームする
    * @param  zoomRatio ズーム倍率
    * @param  zoomX     正規化されたズーム時中央横座標
    * @param  zoomY     正規化されたズーム時中央縦座標
@@ -390,11 +389,12 @@ export default class LaymicZoom {
     const translateX = -((cw * zoomRatio - cw) * zoomX);
     const translateY = -((ch * zoomRatio - ch) * zoomY);
 
+    // 内部値の書き換え
     this.state.zoomRatio = zoomRatio;
     this.updateZoomRect(translateX, translateY);
 
-    // 引数を省略した場合は中央寄せでズームする
-    this.wrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomRatio})`;
+    // 内部値に応じたcss transformの設定
+    this.setTransformProperty();
   }
 
   /**
@@ -411,7 +411,6 @@ export default class LaymicZoom {
   disable() {
     const zoomed = this.builder.stateNames.zoomed;
     this.wrapper.classList.remove(zoomed);
-
     this.state.zoomRatio = 1.0;
     this.wrapper.style.transform = "";
   }
