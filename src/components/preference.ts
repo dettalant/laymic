@@ -59,10 +59,10 @@ export default class LaymicPreference {
       this.genPreferenceButtonClass(names.isDisabledForceHorizView)
     )
 
-    const isTapResetZoom = checkboxBuilder.create(
-      "ズーム中にタップで標準倍率に戻す",
+    const isDisabledDoubleTapResetZoom = checkboxBuilder.create(
+      "ズーム中ダブルタップでのズーム解除無効化",
       false,
-      this.genPreferenceButtonClass(names.isTapResetZoom)
+      this.genPreferenceButtonClass(names.isDisabledDoubleTapResetZoom)
     );
 
     const progressBarWidth = selectBuilder.create(
@@ -102,7 +102,7 @@ export default class LaymicPreference {
       isAutoFullscreen,
       isDisabledTapSlidePage,
       isDisabledForceHorizView,
-      isTapResetZoom
+      isDisabledDoubleTapResetZoom
     ].map(choice => choice.el.container);
     // 説明文要素を追加
     prefItemEls.push(noticeEl);
@@ -124,7 +124,7 @@ export default class LaymicPreference {
       isAutoFullscreen,
       isDisabledTapSlidePage,
       isDisabledForceHorizView,
-      isTapResetZoom,
+      isDisabledDoubleTapResetZoom,
     };
 
     // 各種イベントをボタンに適用
@@ -140,7 +140,7 @@ export default class LaymicPreference {
       isAutoFullscreen: false,
       isDisabledTapSlidePage: false,
       isDisabledForceHorizView: false,
-      isTapResetZoom: false,
+      isDisabledDoubleTapResetZoom: false,
       progressBarWidth: "auto",
       paginationVisibility: "auto",
       zoomButtonRatio: 1.5,
@@ -176,12 +176,12 @@ export default class LaymicPreference {
     this.dispatchPreferenceUpdateEvent("isDisabledForceHorizView");
   }
 
-  get isTapResetZoom(): boolean {
-    return this.data.isTapResetZoom;
+  get isDisabledDoubleTapResetZoom(): boolean {
+    return this.data.isDisabledDoubleTapResetZoom;
   }
 
-  set isTapResetZoom(bool: boolean) {
-    this.data.isTapResetZoom = bool;
+  set isDisabledDoubleTapResetZoom(bool: boolean) {
+    this.data.isDisabledDoubleTapResetZoom = bool;
     this.savePreferenceData();
   }
 
@@ -348,7 +348,7 @@ export default class LaymicPreference {
       isAutoFullscreen,
       isDisabledTapSlidePage,
       isDisabledForceHorizView,
-      isTapResetZoom,
+      isDisabledDoubleTapResetZoom,
     } = this.choices;
 
     const checkboxs: {
@@ -368,8 +368,8 @@ export default class LaymicPreference {
         bool: this.isDisabledForceHorizView
       },
       {
-        choice: isTapResetZoom,
-        bool: this.isTapResetZoom
+        choice: isDisabledDoubleTapResetZoom,
+        bool: this.isDisabledDoubleTapResetZoom
       }
     ];
 
@@ -410,7 +410,7 @@ export default class LaymicPreference {
       isAutoFullscreen,
       isDisabledTapSlidePage,
       isDisabledForceHorizView,
-      isTapResetZoom,
+      isDisabledDoubleTapResetZoom,
     } = this.choices;
 
     const isAutoFullscreenHandler = (bool: boolean) => this.isAutoFullscreen = bool;
@@ -419,7 +419,7 @@ export default class LaymicPreference {
 
     const isDisabledForceHorizViewHandler = (bool: boolean) => this.isDisabledForceHorizView = bool;
 
-    const isTapResetZoomHandler = (bool: boolean) => this.isTapResetZoom = bool;
+    const isDisabledDoubleTapResetZoomHandler = (bool: boolean) => this.isDisabledDoubleTapResetZoom = bool;
 
     const checkboxHandlers: {
       choice: SimpleCheckbox
@@ -438,8 +438,8 @@ export default class LaymicPreference {
         handler: isDisabledForceHorizViewHandler
       },
       {
-        choice: isTapResetZoom,
-        handler: isTapResetZoomHandler
+        choice: isDisabledDoubleTapResetZoom,
+        handler: isDisabledDoubleTapResetZoomHandler
       }
     ];
 

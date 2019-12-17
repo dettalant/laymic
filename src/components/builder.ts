@@ -93,7 +93,7 @@ export default class DOMBuilder {
         zoomButtonRatio: "laymic_preferenceZoomButtonRatio",
         isDisabledTapSlidePage: "laymic_preferenceIsDisabledTapSlidePage",
         isDisabledForceHorizView: "laymic_preferenceIsDisabledForceHorizView",
-        isTapResetZoom: "laymic_preferenceIsTapResetZoom",
+        isDisabledDoubleTapResetZoom: "laymic_preferenceIsDisabledDoubleTapResetZoom",
       },
       help: {
         container: "laymic_help",

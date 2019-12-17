@@ -322,13 +322,17 @@ export default class LaymicZoom {
       this.controller.addEventListener("touchend", e => {
         e.stopPropagation();
         if (this.state.isSwiped || this.isZoomed) return ;
-        // ズーム倍率が1の場合はズームモードを終了させる
+        // ズーム倍率が一定以下の場合はズームモードを終了させる
         this.disable();
       })
 
       // タップすると標準倍率に戻す処理
       this.controller.addEventListener("touchend", createDoubleTapHandler(() => {
-        this.disable()
+        // 関連する設定がfalseの際には
+        // ダブルタップでズーム無効化
+        if (!this.preference.isDisabledDoubleTapResetZoom) {
+          this.disable()
+        }
       }))
     }
 

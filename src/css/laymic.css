@@ -465,14 +465,14 @@
 /* PC画面では非表示する要素 */
 .laymic_preferenceIsDisabledTapSlidePage,
 .laymic_preferenceIsDisabledForceHorizView,
-.laymic_preferenceIsTapResetZoom {
+.laymic_preferenceIsDisabledDoubleTapResetZoom {
   display: none;
 }
 
 /* スマホ画面では表示する要素 */
 .laymic_isMobile .laymic_preferenceIsDisabledTapSlidePage,
 .laymic_isMobile .laymic_preferenceIsDisabledForceHorizView,
-.laymic_isMobile .laymic_preferenceIsTapResetZoom {
+.laymic_isMobile .laymic_preferenceIsDisabledDoubleTapResetZoom {
   display: flex;
 }
 

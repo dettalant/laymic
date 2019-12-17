@@ -105,39 +105,39 @@ export const createDoubleTapHandler = function<
   E extends TouchEvent
 > (
   callback: (e: E) => void,
-  ms: number = 350,
-  // distance: number = 40
+  ms: number = 500,
+  distance: number = 40
 ) {
   let tapCnt = 0;
-  // let pastX = 0;
-  // let pastY = 0;
+  let pastX = 0;
+  let pastY = 0;
 
-  // const isContainDistance = (e: TouchEvent): boolean => {
-  //   const {clientX: cx, clientY: cy} = e.targetTouches[0];
-  //   const diffX = Math.abs(cx - pastX);
-  //   const diffY = Math.abs(cy - pastY);
-  //
-  //   return diffX < distance && diffY < distance;
-  // }
+  const isContainedDistance = (e: TouchEvent): boolean => {
+    const {clientX: cx, clientY: cy} = e.changedTouches[0];
+    const diffX = Math.abs(cx - pastX);
+    const diffY = Math.abs(cy - pastY);
 
-  // const setPastPos = (e: TouchEvent) => {
-  //   const {clientX: cx, clientY: cy} = e.targetTouches[0];
-  //   pastX = cx;
-  //   pastY = cy;
-  // }
+    return diffX < distance && diffY < distance;
+  }
+
+  const setPastPos = (e: TouchEvent) => {
+    const {clientX: cx, clientY: cy} = e.changedTouches[0];
+    pastX = cx;
+    pastY = cy;
+  }
 
   return function(this: T, e: E) {
-    if (isMultiTouch(e)) return;
     if (!tapCnt) {
       tapCnt++;
       sleep(ms).then(() => {
         tapCnt = 0;
       });
-    } else {
+    } else if (isContainedDistance(e)) {
       // ダブルタップ処理
       callback.call(this, e);
       tapCnt = 0;
     }
+    setPastPos(e)
   }
 }
 

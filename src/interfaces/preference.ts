@@ -8,8 +8,8 @@ interface PreferenceCheckboxsData {
   isDisabledTapSlidePage: boolean,
   // スマホを横持ちした際の強制的2p表示を無効化する設定値
   isDisabledForceHorizView: boolean,
-  // スマホにおいてズーム中にタップするとズームリセットを行うようにする設定値
-  isTapResetZoom: boolean,
+  // スマホにおいてズーム中タップでのズーム解除を無効化する設定値
+  isDisabledDoubleTapResetZoom: boolean,
 }
 
 interface PreferenceSelectsData {
