@@ -122,11 +122,17 @@ export default class LaymicZoom {
     return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
   }
 
+  /**
+   * css transformの値を設定する
+   * ズームが行われていない際、また非フルスクリーン時は
+   * cssへのtransform追加を行わない
+   */
   private setTransformProperty() {
     const {l: tx, t: ty} = this.state.zoomRect;
     const ratio = this.state.zoomRatio;
+    const isDisabledFullscreen = !document.documentElement
 
-    const transformStr = (this.isZoomed)
+    const transformStr = (this.isZoomed && isDisabledFullscreen)
       ? `translate(${tx}px, ${ty}px) scale(${ratio})`
       : "";
 
@@ -156,6 +162,7 @@ export default class LaymicZoom {
   private touchMoveHandler(e: TouchEvent) {
     // rafThrottleでの非同期呼び出しを行うので
     // 呼び出し時にisZoomedがfalseとなっていれば早期リターン
+    // また、デバイス側ズームがなされている状態でも早期リターン
     if (!this.isZoomed) return;
 
     e.stopPropagation();
@@ -394,6 +401,7 @@ export default class LaymicZoom {
     this.updateZoomRect(translateX, translateY);
 
     // 内部値に応じたcss transformの設定
+    // 非フルスクリーン時は内部値だけ変更しcssは据え置き
     this.setTransformProperty();
   }
 

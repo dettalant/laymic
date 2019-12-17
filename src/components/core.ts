@@ -8,7 +8,6 @@ import {
   rafThrottle,
   excludeHashLocation,
   isMultiTouch,
-  passiveFalseOption,
   orientationChangeHandler,
   orientationChangeFuncs,
 } from "../utils";
@@ -499,11 +498,15 @@ export default class Laymic {
           // マルチタッチでない場合と全画面状態でない場合は早期リターン
           if (!isMultiTouch(e)) return;
 
-          e.preventDefault();
+          // フルスクリーン時は自前でのズームを行い、
+          // そうでない際は内部のscale値だけ加算させる
           this.zoom.pinchZoom(e);
-        }), passiveFalseOption);
+        }));
 
         el.addEventListener("touchend", () => {
+          // 自前ズームかデバイス側ズームがなされている場合
+          // zoomControllerを表出させる
+
           if (this.zoom.isZoomed) {
             this.zoom.enableController();
             this.hideViewerUI();
