@@ -48,10 +48,20 @@ export default class LaymicZoom {
 
   /**
    * 現在ズームがなされているかを返す
-   * @return zoomRatioが1以上ならばtrue
+   *
+   * 真面目な処理だと操作感があまり良くなかったので
+   * ズーム状態のしきい値を動かすインチキを行っている。
+   *
+   * @return ズーム状態であるならtrue
    */
   get isZoomed(): boolean {
-    return this.state.zoomRatio > 1;
+    // フルスクリーン状態ではちょっとインチキ、
+    // 非フルスクリーン状態ではだいぶインチキ
+    const ratio = (this.isFullscreen)
+      ? 1.01
+      : 1.1;
+
+    return this.state.zoomRatio > ratio;
   }
 
   /**
@@ -63,12 +73,132 @@ export default class LaymicZoom {
   }
 
   /**
+   * フルスクリーン状態であるかを返す
+   * @return フルスクリーン状態であるならtrue
+   */
+  private get isFullscreen(): boolean {
+    return !!document.fullscreenElement
+  }
+
+  /**
+   * ピンチズーム処理を行う
+   * @param  e タッチイベント
+   */
+  pinchZoom(e: TouchEvent) {
+    const distance = this.getDistanceBetweenTouches(e);
+
+    const {innerWidth: iw, innerHeight: ih} = window;
+    // 画面サイズの対角線上距離を最大距離とする
+    const maxD = Math.sqrt(iw ** 2 + ih ** 2);
+
+    const pinchD = distance - this.state.pastDistance;
+    const {minRatio, maxRatio} = this.state;
+
+    // 計算値そのままでは動作が硬いので
+    // 感度を6倍にしてスマホブラウザ操作感と近づける
+    const ratio = this.state.zoomRatio + (pinchD / maxD) * 6;
+
+    // maxRatio~minRatio間に収まるよう調整
+    const zoomRatio = Math.max(Math.min(ratio, maxRatio), minRatio);
+
+    // タッチ座標と画面中央座標を取得し、
+    // その平均値をズームの中心座標とする
+    const [bx, by] = this.getNormalizedPosBetweenTouches(e);
+    const [cx, cy] = this.getNormalizedCurrentCenter();
+    const zoomX = (bx + cx) / 2;
+    const zoomY = (by + cy) / 2;
+
+    this.enableZoom(zoomRatio, zoomX, zoomY);
+    this.state.pastDistance = distance;
+  }
+
+  /**
+   * zoomRectの値を更新する
+   * translateXとtranslateYの値を入力していれば自前で計算し、
+   * そうでないなら`getControllerRect()`を呼び出す
+   *
+   * @param  translateX 新たなleft座標
+   * @param  translateY 新たなtop座標
+   */
+  updateZoomRect(translateX?: number, translateY?: number) {
+    let zoomRect: PageRect;
+    if (translateX !== void 0 && translateY !== void 0) {
+      const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
+      const ratio = this.state.zoomRatio;
+      zoomRect = {
+        l: translateX,
+        t: translateY,
+        w: rootCW * ratio,
+        h: rootCH * ratio
+      }
+    } else {
+      zoomRect = this.getControllerRect();
+    }
+    this.state.zoomRect = zoomRect;
+  }
+
+  updatePastDistance(e: TouchEvent) {
+    const distance = this.getDistanceBetweenTouches(e);
+    this.state.pastDistance = distance;
+  }
+
+  /**
+   * ズームモードに入る
+   * @param  zoomRatio ズーム倍率
+   * @param  zoomX     正規化されたズーム時中央横座標
+   * @param  zoomY     正規化されたズーム時中央縦座標
+   */
+  enable(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
+    this.enableController();
+    this.enableZoom(zoomRatio, zoomX, zoomY);
+  }
+
+  /**
+   * 拡大縮小処理を行う
+   * 引数を省略した場合は中央寄せでズームする
+   * @param  zoomRatio ズーム倍率
+   * @param  zoomX     正規化されたズーム時中央横座標
+   * @param  zoomY     正規化されたズーム時中央縦座標
+   */
+  enableZoom(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
+    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const translateX = -((cw * zoomRatio - cw) * zoomX);
+    const translateY = -((ch * zoomRatio - ch) * zoomY);
+
+    // 内部値の書き換え
+    this.state.zoomRatio = zoomRatio;
+    this.updateZoomRect(translateX, translateY);
+
+    // 内部値に応じたcss transformの設定
+    // 非フルスクリーン時は内部値だけ変更しcssは据え置き
+    this.setTransformProperty();
+  }
+
+  /**
+   * ズーム時操作要素を前面に出す
+   */
+  enableController() {
+    const zoomed = this.builder.stateNames.zoomed;
+    this.wrapper.classList.add(zoomed);
+  }
+
+  /**
+   * ズームモードから抜ける
+   */
+  disable() {
+    const zoomed = this.builder.stateNames.zoomed;
+    this.wrapper.classList.remove(zoomed);
+    this.state.zoomRatio = 1.0;
+    this.wrapper.style.transform = "";
+  }
+
+  /**
    * タッチされた二点間の距離を返す
    * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
    *
    * @return 二点間の距離
    */
-  getDistanceBetweenTouches(e: TouchEvent): number {
+  private getDistanceBetweenTouches(e: TouchEvent): number {
     // タッチ数が2点に満たない場合は1を返す
     if (e.targetTouches.length < 2) return 0;
 
@@ -85,7 +215,7 @@ export default class LaymicZoom {
    * @param  e TouchEvent
    * @return   [betweenX, betweenY]
    */
-  getNormalizedPosBetweenTouches(e: TouchEvent): [number, number] {
+  private getNormalizedPosBetweenTouches(e: TouchEvent): [number, number] {
     if (e.targetTouches.length < 2) return [0.5, 0.5];
     const {l: rl, t: rt, w: rw, h: rh} = this.state.zoomRect;
     const {clientX: x0, clientY: y0} = e.targetTouches[0];
@@ -106,9 +236,8 @@ export default class LaymicZoom {
    * 画面中央座標を正規化して返す
    * @return [centeringX, centeringY]
    */
-  getNormalizedCurrentCenter(): [number, number] {
+  private getNormalizedCurrentCenter(): [number, number] {
     const {innerWidth: cw, innerHeight: ch} = window;
-    // const {clientWidth: cw, clientHeight: ch} = this.rootEl;
     const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
     const maxX = rw - cw;
     const maxY = rh - ch;
@@ -130,9 +259,10 @@ export default class LaymicZoom {
   private setTransformProperty() {
     const {l: tx, t: ty} = this.state.zoomRect;
     const ratio = this.state.zoomRatio;
-    const isDisabledFullscreen = !document.documentElement
 
-    const transformStr = (this.isZoomed && isDisabledFullscreen)
+    const isFullscreen = !!document.fullscreenElement;
+
+    const transformStr = (this.isZoomed && isFullscreen)
       ? `translate(${tx}px, ${ty}px) scale(${ratio})`
       : "";
 
@@ -166,7 +296,6 @@ export default class LaymicZoom {
     if (!this.isZoomed) return;
 
     e.stopPropagation();
-    e.preventDefault();
     if (isMultiTouch(e)) {
       // multi touch
       this.pinchZoom(e);
@@ -191,8 +320,6 @@ export default class LaymicZoom {
       this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
 
       this.controller.addEventListener("touchend", e => {
-        e.preventDefault();
-
         e.stopPropagation();
         if (this.state.isSwiped || this.isZoomed) return ;
         // ズーム倍率が1の場合はズームモードを終了させる
@@ -309,117 +436,5 @@ export default class LaymicZoom {
 
     // 設定した値をcss transformとして反映
     this.setTransformProperty();
-  }
-
-  /**
-   * ピンチズーム処理を行う
-   * @param  e タッチイベント
-   */
-  pinchZoom(e: TouchEvent) {
-    const distance = this.getDistanceBetweenTouches(e);
-
-    const {innerWidth: iw, innerHeight: ih} = window;
-    // 画面サイズの対角線上距離を最大距離とする
-    const maxD = Math.sqrt(iw ** 2 + ih ** 2);
-
-    const pinchD = distance - this.state.pastDistance;
-    const {minRatio, maxRatio} = this.state;
-
-    // 計算値そのままでは動作が硬いので
-    // 感度を6倍にしてスマホブラウザ操作感と近づける
-    const ratio = this.state.zoomRatio + (pinchD / maxD) * 6;
-
-    // maxRatio~minRatio間に収まるよう調整
-    const zoomRatio = Math.max(Math.min(ratio, maxRatio), minRatio);
-
-    // タッチ座標と画面中央座標を取得し、
-    // その平均値をズームの中心座標とする
-    const [bx, by] = this.getNormalizedPosBetweenTouches(e);
-    const [cx, cy] = this.getNormalizedCurrentCenter();
-    const zoomX = (bx + cx) / 2;
-    const zoomY = (by + cy) / 2;
-
-    this.enableZoom(zoomRatio, zoomX, zoomY);
-    this.state.pastDistance = distance;
-  }
-
-  /**
-   * zoomRectの値を更新する
-   * translateXとtranslateYの値を入力していれば自前で計算し、
-   * そうでないなら`getControllerRect()`を呼び出す
-   *
-   * @param  translateX 新たなleft座標
-   * @param  translateY 新たなtop座標
-   */
-  updateZoomRect(translateX?: number, translateY?: number) {
-    let zoomRect: PageRect;
-    if (translateX !== void 0 && translateY !== void 0) {
-      const { clientHeight: rootCH, clientWidth: rootCW } = this.rootEl;
-      const ratio = this.state.zoomRatio;
-      zoomRect = {
-        l: translateX,
-        t: translateY,
-        w: rootCW * ratio,
-        h: rootCH * ratio
-      }
-    } else {
-      zoomRect = this.getControllerRect();
-    }
-    this.state.zoomRect = zoomRect;
-  }
-
-  updatePastDistance(e: TouchEvent) {
-    const distance = this.getDistanceBetweenTouches(e);
-    this.state.pastDistance = distance;
-  }
-
-  /**
-   * ズームモードに入る
-   * @param  zoomRatio ズーム倍率
-   * @param  zoomX     正規化されたズーム時中央横座標
-   * @param  zoomY     正規化されたズーム時中央縦座標
-   */
-  enable(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
-    this.enableController();
-    this.enableZoom(zoomRatio, zoomX, zoomY);
-  }
-
-  /**
-   * 拡大縮小処理を行う
-   * 引数を省略した場合は中央寄せでズームする
-   * @param  zoomRatio ズーム倍率
-   * @param  zoomX     正規化されたズーム時中央横座標
-   * @param  zoomY     正規化されたズーム時中央縦座標
-   */
-  enableZoom(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
-    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
-    const translateX = -((cw * zoomRatio - cw) * zoomX);
-    const translateY = -((ch * zoomRatio - ch) * zoomY);
-
-    // 内部値の書き換え
-    this.state.zoomRatio = zoomRatio;
-    this.updateZoomRect(translateX, translateY);
-
-    // 内部値に応じたcss transformの設定
-    // 非フルスクリーン時は内部値だけ変更しcssは据え置き
-    this.setTransformProperty();
-  }
-
-  /**
-   * ズーム時操作要素を前面に出す
-   */
-  enableController() {
-    const zoomed = this.builder.stateNames.zoomed;
-    this.wrapper.classList.add(zoomed);
-  }
-
-  /**
-   * ズームモードから抜ける
-   */
-  disable() {
-    const zoomed = this.builder.stateNames.zoomed;
-    this.wrapper.classList.remove(zoomed);
-    this.state.zoomRatio = 1.0;
-    this.wrapper.style.transform = "";
   }
 }
