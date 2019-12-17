@@ -260,9 +260,12 @@ export default class LaymicZoom {
     const {l: tx, t: ty} = this.state.zoomRect;
     const ratio = this.state.zoomRatio;
 
-    const isFullscreen = !!document.fullscreenElement;
+    // モバイル環境ではないか、
+    // モバイル環境でフルスクリーンの際にのみ
+    // transformの値をセットする
+    const isSetTransform = this.isFullscreen || !isMobile();
 
-    const transformStr = (this.isZoomed && isFullscreen)
+    const transformStr = (this.isZoomed && isSetTransform)
       ? `translate(${tx}px, ${ty}px) scale(${ratio})`
       : "";
 

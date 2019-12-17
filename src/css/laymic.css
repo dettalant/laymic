@@ -554,7 +554,8 @@
 
 /* for unsupported fullscreen api  */
 .laymic_isUnsupportedFullscreen .laymic_fullscreen,
-.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen {
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen,
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsDisabledDoubleTapResetZoom {
   display: none;
 }
 
