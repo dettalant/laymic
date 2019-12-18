@@ -100,44 +100,67 @@ export const rafThrottle = function<
   }
 }
 
-export const createDoubleTapHandler = function<
+// export const createDoubleTapHandler = function<
+//   T extends HTMLElement,
+//   E extends TouchEvent
+// > (
+//   callback: (e: E) => void,
+//   ms: number = 500,
+//   distance: number = 40
+// ) {
+//   let tapCnt = 0;
+//   let pastX = 0;
+//   let pastY = 0;
+//
+//   const isContainedDistance = (e: TouchEvent): boolean => {
+//     const {clientX: cx, clientY: cy} = e.changedTouches[0];
+//     const diffX = Math.abs(cx - pastX);
+//     const diffY = Math.abs(cy - pastY);
+//
+//     return diffX < distance && diffY < distance;
+//   }
+//
+//   const setPastPos = (e: TouchEvent) => {
+//     const {clientX: cx, clientY: cy} = e.changedTouches[0];
+//     pastX = cx;
+//     pastY = cy;
+//   }
+//
+//   return function(this: T, e: E) {
+//     if (!tapCnt) {
+//       tapCnt++;
+//       sleep(ms).then(() => {
+//         tapCnt = 0;
+//       });
+//     } else if (isContainedDistance(e)) {
+//       // ダブルタップ処理
+//       callback.call(this, e);
+//       tapCnt = 0;
+//     }
+//     setPastPos(e)
+//   }
+// }
+
+// ipadではdblclick eventが使えないと聞いたので
+// click eventで同じ操作を代用するためのもの
+export const createDoubleClickHandler = function<
   T extends HTMLElement,
-  E extends TouchEvent
+  E extends MouseEvent
 > (
   callback: (e: E) => void,
   ms: number = 500,
-  distance: number = 40
 ) {
-  let tapCnt = 0;
-  let pastX = 0;
-  let pastY = 0;
-
-  const isContainedDistance = (e: TouchEvent): boolean => {
-    const {clientX: cx, clientY: cy} = e.changedTouches[0];
-    const diffX = Math.abs(cx - pastX);
-    const diffY = Math.abs(cy - pastY);
-
-    return diffX < distance && diffY < distance;
-  }
-
-  const setPastPos = (e: TouchEvent) => {
-    const {clientX: cx, clientY: cy} = e.changedTouches[0];
-    pastX = cx;
-    pastY = cy;
-  }
-
+  let clickCnt = 0;
   return function(this: T, e: E) {
-    if (!tapCnt) {
-      tapCnt++;
+    if (!clickCnt) {
+      clickCnt++;
       sleep(ms).then(() => {
-        tapCnt = 0;
-      });
-    } else if (isContainedDistance(e)) {
-      // ダブルタップ処理
+        clickCnt = 0;
+      })
+    } else {
       callback.call(this, e);
-      tapCnt = 0;
+      clickCnt = 0;
     }
-    setPastPos(e)
   }
 }
 

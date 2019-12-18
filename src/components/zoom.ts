@@ -1,7 +1,7 @@
 import DOMBuilder from "./builder";
 import { PageRect, LaymicZoomStates } from "../interfaces/index";
 import LaymicPreference from "./preference";
-import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleTapHandler} from "../utils";
+import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleClickHandler} from "../utils";
 
 export default class LaymicZoom {
   rootEl: HTMLElement;
@@ -58,7 +58,7 @@ export default class LaymicZoom {
     // フルスクリーン状態ではちょっとインチキ、
     // 非フルスクリーン状態ではだいぶインチキ
     const ratio = (this.isFullscreen)
-      ? 1.01
+      ? 1.025
       : 1.1;
 
     return this.state.zoomRatio > ratio;
@@ -327,10 +327,10 @@ export default class LaymicZoom {
         if (this.state.isSwiped || this.isZoomed) return ;
         // ズーム倍率が一定以下の場合はズームモードを終了させる
         this.disable();
-      })
+      });
 
       // タップすると標準倍率に戻す処理
-      this.controller.addEventListener("touchend", createDoubleTapHandler(() => {
+      this.controller.addEventListener("click", createDoubleClickHandler(() => {
         // 関連する設定がfalseの際には
         // ダブルタップでズーム無効化
         if (!this.preference.isDisabledDoubleTapResetZoom) {
