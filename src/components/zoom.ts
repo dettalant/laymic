@@ -1,7 +1,7 @@
 import DOMBuilder from "./builder";
 import { PageRect, LaymicZoomStates } from "../interfaces/index";
 import LaymicPreference from "./preference";
-import { rafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleClickHandler} from "../utils";
+import { rafThrottle, cancelableRafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleClickHandler} from "../utils";
 
 export default class LaymicZoom {
   rootEl: HTMLElement;
@@ -320,13 +320,22 @@ export default class LaymicZoom {
     const applyEventsForMobile = () => {
       this.controller.addEventListener("touchstart", e => this.touchStartHandler(e));
 
-      this.controller.addEventListener("touchmove", rafThrottle(e => this.touchMoveHandler(e)), passiveFalseOption);
+      const touchMove = cancelableRafThrottle<HTMLElement, TouchEvent>(e => this.touchMoveHandler(e))
+      this.controller.addEventListener("touchmove", touchMove.listener, passiveFalseOption);
+
+      const disableZoom = () => {
+        // touchMoveHandlerが非同期処理されないよう
+        // キャンセルをかけておく
+        touchMove.canceler();
+        // zoom処理を強制終了
+        this.disable();
+      }
 
       this.controller.addEventListener("touchend", e => {
         e.stopPropagation();
         if (this.state.isSwiped || this.isZoomed) return ;
         // ズーム倍率が一定以下の場合はズームモードを終了させる
-        this.disable();
+        disableZoom();
       });
 
       // タップすると標準倍率に戻す処理
@@ -334,7 +343,7 @@ export default class LaymicZoom {
         // 関連する設定がfalseの際には
         // ダブルタップでズーム無効化
         if (!this.preference.isDisabledDoubleTapResetZoom) {
-          this.disable()
+          disableZoom();
         }
       }))
     }

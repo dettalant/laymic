@@ -100,6 +100,30 @@ export const rafThrottle = function<
   }
 }
 
+export const cancelableRafThrottle = function<
+  T extends Element,
+  E extends Event,
+>(callback: (ev: E) => void) {
+  let requestId = 0;
+  const listener = function(this: T, ev: E) {
+    if (requestId) return;
+    requestId = requestAnimationFrame(() => {
+      requestId = 0;
+      callback.call(this, ev);
+    });
+  }
+
+  const canceler = () => {
+    cancelAnimationFrame(requestId);
+    requestId = 0;
+  }
+
+  return {
+    listener,
+    canceler
+  }
+}
+
 // export const createDoubleTapHandler = function<
 //   T extends HTMLElement,
 //   E extends TouchEvent
