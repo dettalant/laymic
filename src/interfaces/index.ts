@@ -6,3 +6,4 @@ export * from "./preference";
 export * from "./ui";
 export * from "./zoom";
 export * from "./utils";
+export * from "./slider";

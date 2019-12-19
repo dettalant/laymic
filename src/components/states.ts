@@ -56,6 +56,7 @@ export default class LaymicStates implements ViewerStates {
 
   /**
    * 横読み2p表示するか否かの判定を行う
+   * 縦読みモード時にはfalseを返す
    * @return  2p表示している状態ならばtrue
    */
   get isDoubleSlideHorizView(): boolean {
