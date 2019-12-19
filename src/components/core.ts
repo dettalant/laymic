@@ -2,7 +2,6 @@ import { SwiperOptions, CommonEvent as SwiperCommonEvent } from "swiper";
 import { Swiper, Keyboard, Pagination, Lazy } from "swiper/js/swiper.esm";
 import screenfull from "screenfull";
 import {
-  calcGCD,
   sleep,
   isLaymicPages,
   rafThrottle,
@@ -23,7 +22,6 @@ import {
   ViewerElements,
   LaymicPages,
   LaymicOptions,
-  ViewerStates,
   PageRect,
   PreferenceUpdateEventString
 } from "../interfaces/index";
@@ -34,7 +32,7 @@ export default class Laymic {
   // HTMLElementまとめ
   el: ViewerElements;
   // mangaViewer内部で用いるステートまとめ
-  state: ViewerStates = new LaymicStates();
+  state: LaymicStates = new LaymicStates();
   initOptions: LaymicOptions;
   preference: LaymicPreference;
   thumbs: LaymicThumbnails;
@@ -69,7 +67,7 @@ export default class Laymic {
     if (options.pageWidth && options.pageHeight) {
       // ページサイズ数値が指定されていた場合の処理
       const [pw, ph] = [options.pageWidth, options.pageHeight]
-      this.setPageSize(pw, ph);
+      this.state.setPageSize(pw, ph);
     }
 
     this.preference = new LaymicPreference(builder, rootEl);
@@ -456,9 +454,6 @@ export default class Laymic {
           this.slideClickHandler(e);
         }
       })
-
-      // ダブルクリック時のイベント
-      // el.addEventListener("dblclick", zoomHandler)
 
       // マウス操作時のイベント
       el.addEventListener("mousemove", rafThrottle(e => {
@@ -1066,25 +1061,6 @@ export default class Laymic {
     const { prevPage, nextPage } = this.el.buttons;
     prevPage.style.display = "";
     nextPage.style.display = "";
-  }
-
-  /**
-   * pageSizeと関連する部分を一挙に設定する
-   * @param  width  新たなページ横幅
-   * @param  height 新たなページ縦幅
-   */
-  private setPageSize(width: number, height: number) {
-    this.state.pageSize = {
-      w: width,
-      h: height,
-    }
-
-    const gcd = calcGCD(width, height);
-
-    this.state.pageAspect = {
-      w: width / gcd,
-      h: height / gcd,
-    }
   }
 
   /**

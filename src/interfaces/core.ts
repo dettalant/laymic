@@ -1,7 +1,6 @@
 import { LaymicClassNames, LaymicStateClassNames } from "./classname";
 import { BarWidth, ViewerIcons, ViewerUIButtons } from "./ui";
 import { PageRect, PageSize } from "./page";
-import { OrientationString } from "./utils";
 
 export type ViewerPages = (string | Element)[];
 
@@ -92,9 +91,4 @@ export interface ViewerStates {
   bodyScrollTop: number,
   // laymicがアクティブ状態ならばtrue
   isActive: boolean,
-  // ここからgetter要素
-  deviceOrientation: OrientationString,
-  isDoubleSlideHorizView: boolean,
-  isMobile2pView: boolean,
-  isDoubleSlideWidth: boolean,
 }

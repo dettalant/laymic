@@ -1,5 +1,6 @@
 import { ViewerStates, OrientationString } from "../interfaces/index";
-import { viewerCnt, isMobile, getDeviceOrientation } from "../utils";
+import { viewerCnt, isMobile, getDeviceOrientation, calcGCD } from "../utils";
+
 export default class LaymicStates implements ViewerStates {
   readonly viewerIdx = viewerCnt();
   viewerId = "laymic";
@@ -75,5 +76,24 @@ export default class LaymicStates implements ViewerStates {
    */
   get isMobile2pView(): boolean {
     return this.isMobile && !this.isDisabledForceHorizView && this.deviceOrientation === "landscape";
+  }
+
+  /**
+   * pageSizeと関連する部分を一挙に設定する
+   * @param  width  新たなページ横幅
+   * @param  height 新たなページ縦幅
+   */
+  setPageSize(width: number, height: number) {
+    this.pageSize = {
+      w: width,
+      h: height,
+    }
+
+    const gcd = calcGCD(width, height);
+
+    this.pageAspect = {
+      w: width / gcd,
+      h: height / gcd,
+    }
   }
 }
