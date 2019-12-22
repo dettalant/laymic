@@ -144,7 +144,8 @@
 
 .laymic_slider,
 .laymic_helpWrapper,
-.laymic_thumbsWrapper {
+.laymic_thumbsWrapper,
+.laymic_preferenceWrapper {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -340,11 +341,6 @@
 }
 
 /* preference */
-.laymic_preference {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .laymic_preferenceWrapper {
   /* 認識性向上のため文字サイズを上げておく */
@@ -365,16 +361,15 @@
   z-index: 18;
   /* どの状況でもある程度の横幅は確保 */
   width: 35rem;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-between;
   font-size: var(--font-size);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: .5rem;
 }
 
-/* 副作用を減らすため優先度を上げたい定義のみ対象として指定 */
-.laymic_preferenceWrapper .laymic_preferenceButton {
-  /* 設定ボタンごとでの余白 */
-  margin-top: .5rem;
+.laymic_isMobile .laymic_preferenceWrapper {
+  /* スマホではアイテム間余白を1remずつに変更 */
+  grid-gap: 1rem;
 }
 
 .laymic_preferenceButton {
@@ -470,7 +465,7 @@
 
 .laymic_preferenceNotice {
   /* フォントサイズをデフォルトに戻す */
-  font-size: initial;
+  font-size: 1rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-end;
