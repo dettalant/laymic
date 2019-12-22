@@ -225,6 +225,7 @@ var laymic = (function (exports) {
 	 * @return    Promiseに包まれたsetTimeout戻り値
 	 */
 	const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+	const rafSleep = () => new Promise(res => requestAnimationFrame(res));
 	// /**
 	//  * 画像をimg要素として読み取る
 	//  * @param   path 画像path文字列
@@ -7785,7 +7786,10 @@ var laymic = (function (exports) {
 	            : activeIdx;
 	        this.switchSingleSlideState(false);
 	        // 読み進めたページ数を引き継ぎつつ再初期化
-	        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened).then(() => {
+	        this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened)
+	            // ごく僅かな期間のスリープを行う
+	            .then(() => rafSleep())
+	            .then(() => {
 	            // そのままだと半端なスクロール状態になるので
 	            // 再度スクロールをかけておく
 	            this.slideTo(idx, 0);
@@ -7812,7 +7816,9 @@ var laymic = (function (exports) {
 	        const conf = (isDSHV)
 	            ? this.swiper2pHorizViewConf
 	            : this.swiper1pHorizViewConf;
-	        this.reinitSwiperInstance(conf, idx).then(() => {
+	        this.reinitSwiperInstance(conf, idx)
+	            .then(() => rafSleep())
+	            .then(() => {
 	            this.swiper.slideTo(idx, 0);
 	        });
 	    }

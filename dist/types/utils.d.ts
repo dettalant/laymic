@@ -19,6 +19,7 @@ export declare const viewerCnt: () => number;
  * @return    Promiseに包まれたsetTimeout戻り値
  */
 export declare const sleep: (ms: number) => Promise<Function>;
+export declare const rafSleep: () => Promise<unknown>;
 export declare const isMobile: () => boolean;
 export declare const isSupportedPassive: () => boolean;
 export declare const passiveFalseOption: AddEventListenerOptions | false;
