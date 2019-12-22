@@ -9,6 +9,8 @@ import {
 } from "../interfaces/index";
 import DOMBuilder from "./builder";
 
+import { rafSleep } from "../utils";
+
 export default class LaymicSlider {
   el: ViewerElements;
   swiper: Swiper;
@@ -111,11 +113,14 @@ export default class LaymicSlider {
     this.switchSingleSlideState(false);
 
     // 読み進めたページ数を引き継ぎつつ再初期化
-    this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened).then(() => {
-      // そのままだと半端なスクロール状態になるので
-      // 再度スクロールをかけておく
-      this.slideTo(idx, 0);
-    });
+    this.reinitSwiperInstance(this.swiperVertViewConf, idx, isViewerOpened)
+      // ごく僅かな期間のスリープを行う
+      .then(() => rafSleep())
+      .then(() => {
+        // そのままだと半端なスクロール状態になるので
+        // 再度スクロールをかけておく
+        this.slideTo(idx, 0);
+      });
   }
 
   /**
@@ -147,9 +152,11 @@ export default class LaymicSlider {
     const conf = (isDSHV)
       ? this.swiper2pHorizViewConf
       : this.swiper1pHorizViewConf;
-    this.reinitSwiperInstance(conf, idx).then(() => {
-      this.swiper.slideTo(idx, 0);
-    });
+    this.reinitSwiperInstance(conf, idx)
+      .then(() => rafSleep())
+      .then(() => {
+        this.swiper.slideTo(idx, 0);
+      });
   }
 
   /**

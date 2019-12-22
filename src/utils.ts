@@ -32,6 +32,8 @@ export const viewerCnt = (() => {
  */
 export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(res, ms))
 
+export const rafSleep = () => new Promise(res => requestAnimationFrame(res));
+
 // /**
 //  * 画像をimg要素として読み取る
 //  * @param   path 画像path文字列
