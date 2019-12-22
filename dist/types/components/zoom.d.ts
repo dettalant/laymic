@@ -1,12 +1,14 @@
 import DOMBuilder from "./builder";
 import { LaymicZoomStates } from "../interfaces/index";
+import LaymicPreference from "./preference";
 export default class LaymicZoom {
     rootEl: HTMLElement;
     wrapper: HTMLElement;
     controller: HTMLElement;
     builder: DOMBuilder;
+    preference: LaymicPreference;
     state: LaymicZoomStates;
-    constructor(builder: DOMBuilder, rootEl: HTMLElement);
+    constructor(builder: DOMBuilder, rootEl: HTMLElement, preference: LaymicPreference);
     /**
      * LaymicZoomStatesのデフォルト値を返す
      * @return LaymicZoomStatesデフォルト値
@@ -14,7 +16,11 @@ export default class LaymicZoom {
     readonly defaultLaymicZoomStates: LaymicZoomStates;
     /**
      * 現在ズームがなされているかを返す
-     * @return zoomRatioが1以上ならばtrue
+     *
+     * 真面目な処理だと操作感があまり良くなかったので
+     * ズーム状態のしきい値を動かすインチキを行っている。
+     *
+     * @return ズーム状態であるならtrue
      */
     readonly isZoomed: boolean;
     /**
@@ -23,12 +29,55 @@ export default class LaymicZoom {
      */
     readonly zoomRatio: number;
     /**
+     * フルスクリーン状態であるかを返す
+     * @return フルスクリーン状態であるならtrue
+     */
+    private readonly isFullscreen;
+    /**
+     * ピンチズーム処理を行う
+     * @param  e タッチイベント
+     */
+    pinchZoom(e: TouchEvent): void;
+    /**
+     * zoomRectの値を更新する
+     * translateXとtranslateYの値を入力していれば自前で計算し、
+     * そうでないなら`getControllerRect()`を呼び出す
+     *
+     * @param  translateX 新たなleft座標
+     * @param  translateY 新たなtop座標
+     */
+    updateZoomRect(translateX?: number, translateY?: number): void;
+    updatePastDistance(e: TouchEvent): void;
+    /**
+     * ズームモードに入る
+     * @param  zoomRatio ズーム倍率
+     * @param  zoomX     正規化されたズーム時中央横座標
+     * @param  zoomY     正規化されたズーム時中央縦座標
+     */
+    enable(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
+    /**
+     * 拡大縮小処理を行う
+     * 引数を省略した場合は中央寄せでズームする
+     * @param  zoomRatio ズーム倍率
+     * @param  zoomX     正規化されたズーム時中央横座標
+     * @param  zoomY     正規化されたズーム時中央縦座標
+     */
+    enableZoom(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
+    /**
+     * ズーム時操作要素を前面に出す
+     */
+    enableController(): void;
+    /**
+     * ズームモードから抜ける
+     */
+    disable(): void;
+    /**
      * タッチされた二点間の距離を返す
      * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
      *
      * @return 二点間の距離
      */
-    getDistanceBetweenTouches(e: TouchEvent): number;
+    private getDistanceBetweenTouches;
     /**
      * タッチされた二点の座標の中心点から、
      * 正規化された拡大時中心点を返す
@@ -36,22 +85,18 @@ export default class LaymicZoom {
      * @param  e TouchEvent
      * @return   [betweenX, betweenY]
      */
-    getNormalizedPosBetweenTouches(e: TouchEvent): [number, number];
+    private getNormalizedPosBetweenTouches;
     /**
      * 画面中央座標を正規化して返す
      * @return [centeringX, centeringY]
      */
-    getNormalizedCurrentCenter(): [number, number];
+    private getNormalizedCurrentCenter;
     /**
-     * 現在のzoomRatioの値からscale設定値を生成する
-     * @return css transformに用いる設定値
+     * css transformの値を設定する
+     * ズームが行われていない際、また非フルスクリーン時は
+     * cssへのtransform追加を行わない
      */
-    private readonly scaleProperty;
-    /**
-     * 現在のzoomRectの値からtranslate設定値を生成する
-     * @return css transformに用いる設定値
-     */
-    private readonly translateProperty;
+    private setTransformProperty;
     /**
      * touchstartに対して登録する処理まとめ
      * @param  e タッチイベント
@@ -84,41 +129,4 @@ export default class LaymicZoom {
      * @param  currentY y座標
      */
     private setTranslate;
-    /**
-     * ピンチズーム処理を行う
-     * @param  e タッチイベント
-     */
-    pinchZoom(e: TouchEvent): void;
-    /**
-     * zoomRectの値を更新する
-     * translateXとtranslateYの値を入力していれば自前で計算し、
-     * そうでないなら`getControllerRect()`を呼び出す
-     *
-     * @param  translateX 新たなleft座標
-     * @param  translateY 新たなtop座標
-     */
-    updateZoomRect(translateX?: number, translateY?: number): void;
-    updatePastDistance(e: TouchEvent): void;
-    /**
-     * ズームモードに入る
-     * @param  zoomRatio ズーム倍率
-     * @param  zoomX     正規化されたズーム時中央横座標
-     * @param  zoomY     正規化されたズーム時中央縦座標
-     */
-    enable(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
-    /**
-     * 拡大縮小処理を行う
-     * @param  zoomRatio ズーム倍率
-     * @param  zoomX     正規化されたズーム時中央横座標
-     * @param  zoomY     正規化されたズーム時中央縦座標
-     */
-    enableZoom(zoomRatio?: number, zoomX?: number, zoomY?: number): void;
-    /**
-     * ズーム時操作要素を前面に出す
-     */
-    enableController(): void;
-    /**
-     * ズームモードから抜ける
-     */
-    disable(): void;
 }

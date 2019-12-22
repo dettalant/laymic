@@ -31,6 +31,7 @@ export default class LaymicStates implements ViewerStates {
     isInstantOpen: boolean;
     bodyScrollTop: number;
     isActive: boolean;
+    isDisabledForceHorizView: boolean;
     readonly thresholdWidth: number;
     readonly isMobile: boolean;
     /**
@@ -40,6 +41,7 @@ export default class LaymicStates implements ViewerStates {
     readonly deviceOrientation: OrientationString;
     /**
      * 横読み2p表示するか否かの判定を行う
+     * 縦読みモード時にはfalseを返す
      * @return  2p表示している状態ならばtrue
      */
     readonly isDoubleSlideHorizView: boolean;
@@ -53,4 +55,10 @@ export default class LaymicStates implements ViewerStates {
      * @return 2p見開き表示条件ならばtrue
      */
     readonly isMobile2pView: boolean;
+    /**
+     * pageSizeと関連する部分を一挙に設定する
+     * @param  width  新たなページ横幅
+     * @param  height 新たなページ縦幅
+     */
+    setPageSize(width: number, height: number): void;
 }

@@ -233,16 +233,24 @@
     * --progressbar-width: 進行度バーの幅ピクセル数
     * --js-vh: 正確なvh数字
    */
+  /* preference, thumbsでの背景色 */
+  --laymic-container-bg-color: #333;
+  /* 各場所での半透明黒背景色 */
+  --laymic-translucent-bg-color: rgba(0, 0, 0, .7);
+  /* 全般的なテキスト色 */
+  --laymic-text-color: #fafafa;
   width: 100vw;
   height: calc(1vh * 100);
   height: calc(var(--js-vh, 1vh) * 100);
   position: fixed;
   top: 0;
   left: 0;
+  /* rootElの半透明黒背景色は少しだけ濃いめに */
   background: rgba(0, 0, 0, .8);
   transition: opacity .3s, visibility .3s;
   visibility: hidden;
   opacity: 0;
+  color: var(--laymic-text-color);
 }
 
 .laymic_root:-webkit-full-screen {
@@ -271,11 +279,10 @@
   position: absolute;
   width: 100%;
   height: 3rem;
-  background: rgba(0, 0, 0, .5);
+  background: var(--laymic-translucent-bg-color);
   left: 0;
   z-index: 20;
   transition: transform .3s;
-  color: #fafafa;
   /* 親要素のカーソル変化に追従させない */
   cursor: auto;
 }
@@ -403,7 +410,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, .7);
+  background: var(--laymic-translucent-bg-color);
   z-index: 18;
   /* 初期状態では非表示とする */
   visibility: hidden;
@@ -427,7 +434,6 @@
   justify-content: center;
   align-items: center;
   flex-flow: column nowrap;
-  color: #fafafa;
 }
 
 /* helpWrapper内に直置きされるタッチアイコン */
@@ -525,7 +531,7 @@
   max-height: 90%;
   max-width: 90%;
   padding: 0 var(--thumbs-wrapper-padding);
-  background: #333;
+  background: var(--laymic-container-bg-color);
   overflow: auto;
   display: grid;
   grid-gap: var(--thumb-item-gap);
@@ -547,36 +553,41 @@
 /* preference */
 
 .laymic_preferenceWrapper {
+  /* 認識性向上のため文字サイズを上げておく */
   --font-size: 1.1rem;
+  /* 選択用要素高さ計算のための余白数値 */
   --padding-size: .6rem;
+  /* 選択用要素の高さを計算 */
   --item-height: calc(var(--font-size) + var(--padding-size) * 2);
-  max-width: 90%;
-  max-height: 90%;
+  /* 最低でも確保する子要素横幅 */
+  --select-wrapper-min-width: 5.5rem;
+  /* 最大横幅は親要素より少し小さめに */
+  max-width: 80%;
+  /* 最大縦幅も同様 */
+  max-height: 80%;
   overflow: auto;
-  background: #333;
+  background: var(--laymic-container-bg-color);
   padding: 1rem;
   z-index: 18;
-  color: #fafafa;
-  /* max-contentに対応していないブラウザへのフォールバック */
-  height: 19.5rem;
-  height: -webkit-max-content;
-  height: max-content;
+  /* どの状況でもある程度の横幅は確保 */
   width: 35rem;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-between;
   font-size: var(--font-size);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: .5rem;
 }
 
-.laymic_preferenceWrapper .laymic_preferenceButton {
+.laymic_isMobile .laymic_preferenceWrapper {
+  /* スマホではアイテム間余白を1remずつに変更 */
+  grid-gap: 1rem;
+}
+
+.laymic_preferenceButton {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  max-height: var(--item-height);
   width: 100%;
   justify-content: space-between;
-  /* 設定ボタンごとでの余白 */
-  margin-bottom: .5rem;
 }
 
 .laymic_preferenceButton,
@@ -596,33 +607,36 @@
 .laymic_checkboxIconWrapper {
   display: flex;
   position: relative;
-  flex: 0 0 5rem;
+  /* selectWrapperの最小横幅と合わせる */
+  flex: 0 0 var(--select-wrapper-min-width);
   justify-content: flex-end;
 }
 
 .laymic_checkboxIconWrapper .laymic_svgIcon {
   --icon-size: var(--item-height);
-  /* select右端とcheckboxIcon右端を合わせる */
-  margin-right: -5px;
-}
-
-.laymic_select {
-  font-size: var(--font-size);
-  max-height: var(--item-height);
+  /* selectWrapper右端とcheckboxIcon右端を合わせるため微調整 */
+  margin-right: -2px;
 }
 
 .laymic_selectWrapper {
+  /* 選択中要素背景色 */
+  --highlight-bg-color: royalblue;
+  /* 現在値要素背景色 */
+  --current-bg-color: #e6e6e6;
+  /* 通常要素背景色 */
+  --normal-bg-color: #fafafa;
+  /* 通常要素文字色 */
+  --normal-text-color: #333;
   display: flex;
   flex-flow: column nowrap;
-  max-height: inherit;
   position: relative;
-  min-width: 5.5rem;
-  color: #333;
+  min-width: var(--select-wrapper-min-width);
+  color: var(--normal-text-color);
 }
 
 .laymic_selectCurrentItem {
   padding: var(--padding-size);
-  background: #e6e6e6;
+  background: var(--current-bg-color);
 }
 
 .laymic_selectItem {
@@ -632,12 +646,12 @@
 .laymic_selectItemWrapper {
   /* 通常時は非表示 */
   display: none;
-  background: #fafafa;
+  background: var(--normal-bg-color);
   position: absolute;
   /* 最小限の高さで上に浮かせる */
   z-index: 1;
   /* currentItemの下に来るように縦位置を調整 */
-  top: var(--item-height);
+  top: 100%;
   width: 100%;
 }
 
@@ -648,31 +662,48 @@
 
 .laymic_selectItem[aria-selected="true"] {
   /* 選択中ハイライト色設定 */
-  background: royalblue;
-  color: #fafafa;
+  background: var(--highlight-bg-color);
+  color: var(--laymic-text-color);
 }
 
 .laymic_checkboxLabel,
 .laymic_selectLabel {
   /* 画面幅が狭い際に効果を発揮する右側余白を追加 */
 	margin-right: .5rem;
+  /* テキストを左寄せにする */
+  text-align: left;
 }
 
 .laymic_preferenceNotice {
   /* フォントサイズをデフォルトに戻す */
-  font-size: medium;
-  font-size: initial;
-  /* 上下に余白を付ける */
-  margin: .5rem 0;
+  font-size: 1rem;
   display: flex;
   flex-flow: column nowrap;
   justify-content: flex-end;
   flex: 1 1 auto;
+  /* 上下に余白を付ける */
+  padding: .5rem 0;
 }
 
 .laymic_preferenceNotice p {
   /* 下向け余白をなくす */
   margin: 1rem 0 0;
+}
+
+/* PC画面では非表示する要素 */
+
+.laymic_preferenceIsDisabledTapSlidePage,
+.laymic_preferenceIsDisabledForceHorizView,
+.laymic_preferenceIsDisabledDoubleTapResetZoom {
+  display: none;
+}
+
+/* スマホ画面では表示する要素 */
+
+.laymic_isMobile .laymic_preferenceIsDisabledTapSlidePage,
+.laymic_isMobile .laymic_preferenceIsDisabledForceHorizView,
+.laymic_isMobile .laymic_preferenceIsDisabledDoubleTapResetZoom {
+  display: flex;
 }
 
 .laymic_pagination {
@@ -759,7 +790,8 @@
 /* for unsupported fullscreen api  */
 
 .laymic_isUnsupportedFullscreen .laymic_fullscreen,
-.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen {
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen,
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsDisabledDoubleTapResetZoom {
   display: none;
 }
 
@@ -779,8 +811,6 @@
   position: absolute;
   /* 非ズーム時は裏側に隠す */
   z-index: -1;
-  /* DEBUG: デバッグ用の赤色背景 */
-  /* background: rgba(255, 0, 0, .3); */
 }
 
 .laymic_isZoomed .laymic_zoomController {
@@ -810,13 +840,16 @@
   width: var(--icon-size);
 }
 
-.icon_checkBoxInner {
+.icon_checkboxInner {
+  /* checkboxOuter要素と重ねる */
   position: absolute;
+  right: 0;
+  top: 0
 }
 
 .laymic_root .icon_horizView,
 .laymic_root .icon_exitFullscreen,
-.laymic_root .icon_checkBoxInner,
+.laymic_root .icon_checkboxInner,
 .laymic_isVertView .icon_vertView,
 .laymic_isFullscreen .icon_fullscreen {
   display: none;
@@ -824,7 +857,7 @@
 
 .laymic_isVertView .icon_horizView,
 .laymic_isFullscreen .icon_exitFullscreen,
-.laymic_preferenceButton[aria-checked="true"] .icon_checkBoxInner {
+.laymic_preferenceButton[aria-checked="true"] .icon_checkboxInner {
   display: block;
 }
 

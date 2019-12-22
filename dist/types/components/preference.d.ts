@@ -9,12 +9,19 @@ export default class LaymicPreference {
     builder: DOMBuilder;
     data: PreferenceData;
     constructor(builder: DOMBuilder, rootEl: HTMLElement);
+    /**
+     * defaultデータは静的メソッドとして、
+     * 外部からも容易に呼び出せるようにしておく
+     */
+    static readonly defaultPreferenceData: PreferenceData;
     isAutoFullscreen: boolean;
-    isDisableTapSlidePage: boolean;
+    isDisabledTapSlidePage: boolean;
+    isDisabledForceHorizView: boolean;
+    isDisabledDoubleTapResetZoom: boolean;
     progressBarWidth: BarWidth;
     paginationVisibility: UIVisibility;
     zoomButtonRatio: number;
-    private readonly defaultPreferenceData;
+    private genPreferenceButtonClass;
     private readonly barWidthItems;
     private readonly uiVisibilityItems;
     private readonly zoomButtonRatioItems;
@@ -42,7 +49,7 @@ export default class LaymicPreference {
     /**
      * localStorageから設定データを読み込む
      */
-    private loadPreferenceData;
+    loadPreferenceData(): PreferenceData;
     /**
      * 現在のpreference状態をボタン状態に適用する
      * 主に初期化時に用いる関数

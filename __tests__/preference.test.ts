@@ -10,9 +10,11 @@ describe("preference class test", () => {
     preference["savePreferenceData"]();
     const data = preference["loadPreferenceData"]();
     expect(typeof data.isAutoFullscreen === "boolean").toBeTruthy();
-    expect(typeof data.isDisableTapSlidePage === "boolean").toBeTruthy();
+    expect(typeof data.isDisabledTapSlidePage === "boolean").toBeTruthy();
+    expect(typeof data.isDisabledDoubleTapResetZoom === "boolean").toBeTruthy();
     expect(typeof data.paginationVisibility === "string").toBeTruthy();
     expect(typeof data.progressBarWidth === "string").toBeTruthy();
+    expect(typeof data.zoomButtonRatio === "number").toBeTruthy();
   })
 
   it("isAutoFullscreen test", () => {
@@ -34,10 +36,10 @@ describe("preference class test", () => {
       false
     ];
     testValues.forEach(bool => {
-      preference.isDisableTapSlidePage = bool;
+      preference.isDisabledTapSlidePage = bool;
 
-      expect(preference.isDisableTapSlidePage).toBe(bool);
-      expect(preference["loadPreferenceData"]().isDisableTapSlidePage).toBe(bool);
+      expect(preference.isDisabledTapSlidePage).toBe(bool);
+      expect(preference["loadPreferenceData"]().isDisabledTapSlidePage).toBe(bool);
     })
   })
 
