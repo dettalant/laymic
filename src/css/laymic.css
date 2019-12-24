@@ -85,6 +85,8 @@
   transition: transform .3s;
   /* 親要素のカーソル変化に追従させない */
   cursor: auto;
+  /* 子要素のfocus表示をはみ出させないためのpadding */
+  padding: 2px 0;
 }
 
 .laymic_controllerTop {
@@ -191,7 +193,7 @@
 }
 
 .swiper-slide img,
-.laymic_thumbItem {
+.laymic_imgThumb {
   max-width: 100%;
   max-height: 100%;
   object-fit: scale-down;
@@ -320,7 +322,7 @@
   */
   max-height: 90%;
   max-width: 90%;
-  padding: 0 var(--thumbs-wrapper-padding);
+  padding: .5rem var(--thumbs-wrapper-padding);
   background: var(--laymic-container-bg-color);
   overflow: auto;
   display: grid;
@@ -329,14 +331,12 @@
   grid-auto-rows: var(--thumb-item-height);
   width: 100%;
   justify-content: space-around;
-  /* なんか下方向のpaddingだけ上手く効かないので苦肉の策 */
+  /* 下方向のpaddingだけ上手く効かないので苦肉の策 */
   border: solid transparent;
-  border-width: 1rem 0;
+  border-width: .5rem 0;
 }
 
 .laymic_thumbItem {
-  margin: auto;
-	cursor: pointer;
   overflow: hidden;
 }
 

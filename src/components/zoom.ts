@@ -148,7 +148,7 @@ export default class LaymicZoom {
    * @param  zoomX     正規化されたズーム時中央横座標
    * @param  zoomY     正規化されたズーム時中央縦座標
    */
-  enable(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
+  enable(zoomRatio: number = this.preference.zoomButtonRatio, zoomX: number = 0.5, zoomY: number = 0.5) {
     this.enableController();
     this.enableZoom(zoomRatio, zoomX, zoomY);
   }
@@ -160,7 +160,7 @@ export default class LaymicZoom {
    * @param  zoomX     正規化されたズーム時中央横座標
    * @param  zoomY     正規化されたズーム時中央縦座標
    */
-  enableZoom(zoomRatio: number = 1.5, zoomX: number = 0.5, zoomY: number = 0.5) {
+  enableZoom(zoomRatio: number = this.preference.zoomButtonRatio, zoomX: number = 0.5, zoomY: number = 0.5) {
     const {clientWidth: cw, clientHeight: ch} = this.rootEl;
     const translateX = -((cw * zoomRatio - cw) * zoomX);
     const translateY = -((ch * zoomRatio - ch) * zoomY);

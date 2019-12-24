@@ -1,6 +1,6 @@
 import { SwiperOptions, CommonEvent as SwiperCommonEvent } from "swiper";
-import { Swiper, Keyboard, Pagination, Lazy } from "swiper/js/swiper.esm";
-Swiper.use([Keyboard, Pagination, Lazy]);
+import { Swiper, Pagination, Lazy } from "swiper/js/swiper.esm";
+Swiper.use([Pagination, Lazy]);
 
 import LaymicStates from "./states";
 import {
@@ -12,6 +12,7 @@ import DOMBuilder from "./builder";
 import { rafSleep } from "../utils";
 
 export default class LaymicSlider {
+  isViewerUIActive = false;
   el: ViewerElements;
   swiper: Swiper;
   state: LaymicStates;
@@ -326,9 +327,6 @@ export default class LaymicSlider {
       "slideChange"
     ]
     detachEvents.forEach(evName => this.swiper.off(evName));
-
-    // キーボード操作を止める
-    this.disableSwiperKeyboardEvent();
   }
 
   /**
@@ -355,16 +353,23 @@ export default class LaymicSlider {
 
     // イベント受け付けを再開させる
     attachEvents.forEach(ev => this.swiper.on(ev.name, ev.handler.bind(this)));
-
-    // キーボード操作が止まっている場合はキーボード操作を再開させる
-    this.enableSwiperKeyboardEvent();
   }
 
   /**
    * ビューワー操作UIをトグルさせる
    */
   toggleViewerUI() {
-    this.el.rootEl.classList.toggle(this.builder.stateNames.visibleUI);
+    if (this.isViewerUIActive) {
+      this.hideViewerUI();
+    } else {
+      this.showViewerUI();
+    }
+  }
+
+  showViewerUI() {
+    const stateName = this.builder.stateNames.visibleUI;
+    this.el.rootEl.classList.add(stateName);
+    this.isViewerUIActive = true;
   }
 
   /**
@@ -372,9 +377,8 @@ export default class LaymicSlider {
    */
   hideViewerUI() {
     const stateName = this.builder.stateNames.visibleUI;
-    if (this.el.rootEl.classList.contains(stateName)) {
-      this.el.rootEl.classList.remove(stateName);
-    }
+    this.el.rootEl.classList.remove(stateName);
+    this.isViewerUIActive = false;
   }
 
   loadLazyImgs() {
@@ -593,18 +597,6 @@ export default class LaymicSlider {
       nextPage.classList.add(hidden);
     } else {
       nextPage.classList.remove(hidden);
-    }
-  }
-
-  private enableSwiperKeyboardEvent() {
-    if (this.swiper.keyboard && !this.swiper.keyboard.enabled) {
-      this.swiper.keyboard.enable();
-    }
-  }
-
-  private disableSwiperKeyboardEvent() {
-    if (this.swiper.keyboard) {
-      this.swiper.keyboard.disable();
     }
   }
 

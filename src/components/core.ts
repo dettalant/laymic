@@ -1,12 +1,15 @@
 import screenfull from "screenfull";
 import {
-  sleep,
+  rafSleep,
   isLaymicPages,
   rafThrottle,
   excludeHashLocation,
   isMultiTouch,
-  orientationChangeHandler,
-  orientationChangeFuncs,
+  orientationChangeHandlers,
+  parentOrientationChangeHandler,
+  keydownHandlers,
+  parentKeydownHandler,
+  parseKey,
 } from "../utils";
 import DOMBuilder from "./builder";
 import LaymicPreference from "./preference";
@@ -19,9 +22,10 @@ import LaymicSlider from "./slider";
 import {
   ViewerPages,
   ViewerElements,
+  ViewerUIButtons,
   LaymicPages,
   LaymicOptions,
-  PreferenceUpdateEventString
+  PreferenceUpdateEventString,
 } from "../interfaces/index";
 
 export default class Laymic {
@@ -56,8 +60,11 @@ export default class Laymic {
       const svgCtn = builder.createSVGIcons();
       document.body.appendChild(svgCtn);
 
-      // 向き変更イベント自体は一度のみ登録する
-      window.addEventListener("orientationchange", () => orientationChangeHandler());
+      // 向き変更親イベントは一度のみ登録する
+      window.addEventListener("orientationchange", () => parentOrientationChangeHandler());
+
+      // keydown親イベントも一度のみ登録する
+      window.addEventListener("keydown", e => parentKeydownHandler(e))
     }
 
     if (options.pageWidth && options.pageHeight) {
@@ -99,7 +106,8 @@ export default class Laymic {
 
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
-    rootEl.classList.add(classNames.root, stateNames.visibleUI);
+    rootEl.classList.add(classNames.root);
+    rootEl.tabIndex = -1;
     if (this.state.isLTR) rootEl.classList.add(stateNames.ltr);
     if (this.state.isMobile) rootEl.classList.add(stateNames.mobile);
     // fullscreen非対応なら全画面ボタンを非表示化する
@@ -139,6 +147,8 @@ export default class Laymic {
 
     // swiper管理クラスの追加
     this.slider = new LaymicSlider(this.el, this.builder, this.state);
+    // 初期状態ではビューワーUIを表示しておく
+    this.slider.showViewerUI();
 
     // ビューワー方向の初期値が縦読みの場合はそれを表示
     if (options.viewerDirection === "vertical") this.slider.enableVerticalView(false)
@@ -166,12 +176,19 @@ export default class Laymic {
     // display:none状態の場合でだけ動く部分
     if (isInitialOpen) {
       this.el.rootEl.style.display = "";
-      sleep(5).then(() => {
+      rafSleep().then(() => {
         // slideが追加された後に処理を行う必要があるため
         // sleepを噛ませて非同期処理とする
         this.slider.switchSingleSlideState();
       })
     };
+
+    // rootElにフォーカスを移す
+    rafSleep()
+      .then(() => rafSleep())
+      .then(() => {
+        this.el.rootEl.focus();
+      })
 
     // preferenceかinitOptionの値を適用する
     this.preference.applyPreferenceValues();
@@ -312,8 +329,7 @@ export default class Laymic {
         this.zoom.disable();
       } else {
         // 非ズーム時
-        const ratio = this.preference.zoomButtonRatio;
-        this.zoom.enable(ratio);
+        this.zoom.enable();
       }
       this.slider.hideViewerUI();
     })
@@ -419,6 +435,29 @@ export default class Laymic {
     // 場所ではイベント伝播を停止させる
     Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
+    type UIButton<T = ViewerUIButtons> = T[keyof T];
+    // ViewerUIButtonsに属するbutton要素に対してのkeydownイベント
+    Object.values(this.el.buttons).forEach((el: UIButton) => el.addEventListener("keydown", e => {
+      const btns = this.builder.classNames.buttons;
+      // 除外するクラス名リスト
+      const excludeNames = [
+        btns.thumbs,
+      ];
+      if (["Enter", " ", "Spacebar"].includes(e.key)) {
+        e.stopPropagation();
+
+        if (!excludeNames.some(name => {
+          if (!(e.target instanceof HTMLElement)) return;
+          return e.target.classList.contains(name);
+        })) {
+          // 除外クラス名が含まれない要素のみでの処理
+          rafSleep().then(() => {
+            this.el.rootEl.focus();
+          })
+        }
+      }
+    }))
+
     // カスタムイベント登録
     this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<PreferenceUpdateEventString>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)
 
@@ -428,8 +467,11 @@ export default class Laymic {
       this.viewUpdate();
     }))
 
+    // keydownイベント登録
+    keydownHandlers.push(this.keydownHandler.bind(this));
+
     // orientationchangeイベント登録
-    orientationChangeFuncs.push(this.slider.orientationChange.bind(this.slider));
+    orientationChangeHandlers.push(this.slider.orientationChange.bind(this.slider));
   }
 
   /**
@@ -511,7 +553,7 @@ export default class Laymic {
 
     docEl.style.overflowY = "";
     document.body.style.overflowY = "";
-    sleep(1).then(() => {
+    rafSleep().then(() => {
       // 次のプロセスへと移してから
       // スクロール状況を復帰させる
       docEl.scrollTop = this.state.bodyScrollTop;
@@ -553,6 +595,111 @@ export default class Laymic {
       // 通常時
       this.el.rootEl.classList.remove(fsClass);
     }
+  }
+
+  /**
+   * keydown時に呼び出されるハンドラ
+   * laymicでのキーボード操作をすべてこの関数でまかなう
+   * @param  e KeyboardEvent
+   */
+  private keydownHandler(e: KeyboardEvent) {
+    // ビューワーがアクティブ状態になければ早期リターン
+    if (!this.state.isActive) return;
+
+    const isZoomed = this.zoom.isZoomed;
+    const isHelpActive = this.help.isActive;
+    const isThumbsActive = this.thumbs.isActive;
+    const isPreferenceActive = this.preference.isActive;
+
+
+    // サブモード時の処理
+    const subModeHandler = (e: KeyboardEvent) => {
+      const key = e.key;
+      const { isMobile } = this.state;
+      if (isZoomed && !isMobile) {
+        // ズーム時操作
+        if (parseKey(key, ["Escape", "Esc", "z", "Z"])) this.zoom.disable();
+      } else if (isHelpActive) {
+        // ヘルプ展開時操作
+        // Escape, Space, Enter, hで閉じる
+        if (parseKey(key, ["Escape", "Esc", " ", "Spacebar", "Enter", "h", "H"])) this.help.hide();
+      } else if (isThumbsActive) {
+        // サムネイル表示展開時操作
+        if (parseKey(key, ["Escape", "Esc", "t", "T"])) this.thumbs.hide();
+      } else if (isPreferenceActive) {
+        // 設定画面展開時操作
+        if (parseKey(key, ["Escape", "Esc", "p", "P"])) this.preference.hide();
+      }
+    }
+
+    // メインモードでの処理
+    const mainModeHandler = (e: KeyboardEvent) => {
+      const key = e.key;
+      const { isLTR, isVertView, isMobile } = this.state;
+      // ビューワーを閉じるキーセット
+      const closeKeys = ["Escape", "Esc"];
+      // 前のページへと移動させるキーセット
+      const prevKeys = ["PageUp"];
+      // スペースキーの名前セット
+      const spaceKeys = [" ", "Spacebar"];
+      // 次のページへと移動させるキーセット
+      const nextKeys = ["PageDown"]
+
+      if (isVertView) {
+        // 縦読み時操作
+        // 縦読み時は上キーで前ページへ、下キーで次ページへ
+        prevKeys.push("ArrowUp");
+        nextKeys.push("ArrowDown")
+      } else if (isLTR) {
+        // LTR時操作
+        // LTR時は左キーで前ページへ、右キーで次ページへ
+        prevKeys.push("ArrowLeft");
+        nextKeys.push("ArrowRight");
+      } else {
+        // 通常時操作
+        // 通常時は右キーで前ページへ、左キーで次ページへ
+        prevKeys.push("ArrowRight");
+        nextKeys.push("ArrowLeft");
+      }
+
+      // Escキーが押されたならビューワーを閉じる
+      if (parseKey(key, closeKeys)) this.close();
+      // 特定のキーが押されたならページを戻す
+      if (parseKey(key, prevKeys) || e.shiftKey && parseKey(key, spaceKeys)) this.slider.slidePrev();
+      // 特定のキーが押されたならページを進める
+      if (parseKey(key, nextKeys) || !e.shiftKey && parseKey(key, spaceKeys)) this.slider.slideNext();
+
+      // ヘルプ展開
+      if (parseKey(key, ["h", "H"])) this.help.show();
+      // サムネイル展開
+      if (parseKey(key, ["t", "T"])) this.thumbs.show();
+      // 設定展開
+      if (parseKey(key, ["p", "P"])) this.preference.show();
+      // 縦読み/横読み切り替え
+      if (parseKey(key, ["d", "D"])) this.slider.toggleVerticalView();
+      // ビューワーUI切り替え
+      if (parseKey(key, ["v", "V"])) this.slider.toggleViewerUI();
+
+      // タブキーを押した際にビューワーUI表示
+      if (!this.slider.isViewerUIActive && parseKey(key, "Tab")) this.slider.showViewerUI();
+
+      // 非モバイルデバイスでのみズーム切り替え
+      if (!isMobile && parseKey(key, ["z", "Z"])) this.zoom.enable();
+    }
+
+    // サブモードが有効であるかのbool
+    const isSubModeActive = isZoomed || isHelpActive || isThumbsActive || isPreferenceActive;
+    if (isSubModeActive) {
+      // ズーム/ヘルプ/サムネイル/設定の
+      // いずれかが展開している状態での処理
+      subModeHandler(e);
+    } else {
+      // メイン操作モードでの処理
+      mainModeHandler(e)
+    }
+
+    // フルスクリーン切り替えは常時受け付ける
+    if (parseKey(e.key, ["f", "F"])) this.toggleFullscreen();
   }
 
   /**

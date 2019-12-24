@@ -247,10 +247,28 @@ export const isLaymicPages = (pages: any): pages is LaymicPages => {
 //   return result;
 // }
 
-export const orientationChangeFuncs: Function[] = []
+/**
+ * KeyboardEvent.keyの値が指定されたものと同じであるかをチェックする。
+ * @param key    KeyboardEvent.keyの値
+ * @param cmpKey 比較する文字列。文字列配列も指定可能
+ */
+export const parseKey = (key: string, cmpKey: string | string[]): boolean => {
+  const cmp = (typeof cmpKey === "string")
+    ? [cmpKey]
+    : cmpKey;
 
-export const orientationChangeHandler = () => {
-  orientationChangeFuncs.forEach(func => func())
+  return cmp.includes(key);
+}
+
+export const keydownHandlers: ((e: KeyboardEvent) => void)[] = [];
+export const parentKeydownHandler = (e: KeyboardEvent) => {
+  keydownHandlers.forEach(func => func(e));
+}
+
+export const orientationChangeHandlers: Function[] = [];
+
+export const parentOrientationChangeHandler = () => {
+  orientationChangeHandlers.forEach(func => func())
 }
 
 export const getDeviceOrientation = (): OrientationString => {

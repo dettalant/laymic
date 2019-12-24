@@ -1,9 +1,10 @@
 import { ViewerPages } from "../interfaces/index";
-import { setAriaExpanded, setRole } from "../utils"
+import { setAriaExpanded, setRole, rafSleep } from "../utils"
 import DOMBuilder from "./builder";
 import LaymicStates from "./states";
 
 export default class LaymicThumbnails {
+  isActive = false;
   state: LaymicStates;
   builder: DOMBuilder;
   rootEl: HTMLElement;
@@ -22,6 +23,7 @@ export default class LaymicThumbnails {
     const wrapperEl = builder.createDiv();
     wrapperEl.className = thumbsClassNames.wrapper;
     setRole(wrapperEl, "list");
+    wrapperEl.tabIndex = -1;
 
     const thumbEls = [];
     const loopLen = pages.length;
@@ -29,6 +31,10 @@ export default class LaymicThumbnails {
     for (let i = 0; i < loopLen; i++) {
       const p = pages[i];
       const t = thumbPages[i] || "";
+
+      const btn = builder.createButton(thumbsClassNames.item);
+      btn.title = (i + 1) + "P目へと遷移";
+      setRole(btn, "listitem");
 
       let el: Element;
       if (t !== "" || typeof p === "string") {
@@ -51,12 +57,10 @@ export default class LaymicThumbnails {
         el.classList.add(thumbsClassNames.slideThumb)
       }
 
-      el.classList.add(thumbsClassNames.item);
-
-      if (el instanceof HTMLElement) setRole(el, "listitem");
-
       thumbEls.push(el);
-      wrapperEl.appendChild(el);
+
+      btn.appendChild(el);
+      wrapperEl.appendChild(btn);
     }
 
     thumbsEl.appendChild(wrapperEl);
@@ -121,11 +125,23 @@ export default class LaymicThumbnails {
 
     this.rootEl.classList.add(this.builder.stateNames.showThumbs);
     setAriaExpanded(this.rootEl, true);
+    this.isActive = true;
+
+    // 少々遅延させてからフォーカスを移動させる
+    // 二回ほどrafSleepすると良い塩梅になる
+    rafSleep()
+      .then(() => rafSleep())
+      .then(() => {
+        this.wrapperEl.focus();
+      })
   }
 
   hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
     setAriaExpanded(this.rootEl, false);
+    this.isActive = false;
+    // サムネイル閉止時にrootElへとfocusを戻す
+    this.rootEl.focus();
   }
 
   /**

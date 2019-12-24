@@ -11,6 +11,7 @@ import { isBarWidth, isUIVisibility, setAriaExpanded, setRole } from "../utils";
 
 export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";
+  isActive = false;
   rootEl: HTMLElement;
   // preference el
   el: HTMLElement;
@@ -276,6 +277,7 @@ export default class LaymicPreference {
   show() {
     this.rootEl.classList.add(this.builder.stateNames.showPreference);
     setAriaExpanded(this.rootEl, true);
+    this.isActive = true;
   }
 
   /**
@@ -284,6 +286,7 @@ export default class LaymicPreference {
   hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showPreference);
     setAriaExpanded(this.rootEl, false);
+    this.isActive = false;
   }
 
   /**

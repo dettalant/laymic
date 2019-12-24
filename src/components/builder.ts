@@ -306,6 +306,7 @@ export default class DOMBuilder {
     const swiperEl = this.createDiv();
     swiperEl.className = "swiper-container " + this.classNames.slider;
     swiperEl.dir = (isLTR) ? "" : "rtl";
+    swiperEl.tabIndex = -1;
 
     const wrapperEl = this.createDiv();
     wrapperEl.className = "swiper-wrapper";
@@ -356,6 +357,8 @@ export default class DOMBuilder {
     const ctrlClassNames = this.classNames.controller;
     const ctrlEl = this.createDiv();
     ctrlEl.className = ctrlClassNames.controller;
+    ctrlEl.tabIndex = -1;
+
     const progressEl = this.createDiv();
     progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
 
@@ -364,46 +367,55 @@ export default class DOMBuilder {
     ctrlTopEl.setAttribute("aria-orientation", "horizontal");
     setRole(ctrlTopEl, "menu");
 
-    const direction = this.createButton();
-    direction.classList.add(btnClassNames.direction);
-    [
-      this.createSvgUseElement(this.icons.vertView),
-      this.createSvgUseElement(this.icons.horizView),
-    ].forEach(icon => direction.appendChild(icon))
+    const direction = this.createUIButton(
+      btnClassNames.direction,
+      "縦読み/横読み切り替え (d)",
+      [
+        this.icons.vertView,
+        this.icons.horizView
+      ]
+    );
 
-    const fullscreen = this.createButton();
-    [
-      this.createSvgUseElement(this.icons.fullscreen),
-      this.createSvgUseElement(this.icons.exitFullscreen),
-    ].forEach(icon => fullscreen.appendChild(icon));
-    fullscreen.classList.add(btnClassNames.fullscreen);
+    const fullscreen = this.createUIButton(
+      btnClassNames.fullscreen,
+      "フルスクリーン (f)",
+      [
+        this.icons.fullscreen,
+        this.icons.exitFullscreen
+      ]
+    )
 
-    const thumbs = this.createButton();
-    [
-      this.createSvgUseElement(this.icons.showThumbs),
-    ].forEach(icon => thumbs.appendChild(icon));
-    thumbs.classList.add(btnClassNames.thumbs);
+    const thumbs = this.createUIButton(
+      btnClassNames.thumbs,
+      "サムネイル (t)",
+      [this.icons.showThumbs]
+    );
 
-    const preference = this.createButton();
-    preference.classList.add(btnClassNames.preference);
-    const preferenceIcon = this.createSvgUseElement(this.icons.preference);
-    preference.appendChild(preferenceIcon);
+    const preference = this.createUIButton(
+      btnClassNames.preference,
+      "設定 (p)",
+      [this.icons.preference]
+    )
 
-    const close = this.createButton();
-    close.classList.add(btnClassNames.close);
-    const closeIcon = this.createSvgUseElement(this.icons.close);
-    close.appendChild(closeIcon);
+    const close = this.createUIButton(
+      btnClassNames.close,
+      "ビューワーを閉じる (Escape)",
+      [
+        this.icons.close
+      ]
+    )
 
-    const help = this.createButton();
-    help.classList.add(btnClassNames.help);
-    const helpIcon = this.createSvgUseElement(this.icons.showHelp);
-    help.appendChild(helpIcon);
+    const help = this.createUIButton(
+      btnClassNames.help,
+      "ヘルプ (h)",
+      [this.icons.showHelp]
+    )
 
-    const zoom = this.createButton();
-    zoom.classList.add(btnClassNames.zoom);
-    [
-      this.createSvgUseElement(this.icons.zoomIn),
-    ].forEach(icon => zoom.appendChild(icon));
+    const zoom = this.createUIButton(
+      btnClassNames.zoom,
+      "ズーム (z)",
+      [this.icons.zoomIn]
+    );
 
     [
       preference,
@@ -428,10 +440,12 @@ export default class DOMBuilder {
     const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage}`);
     const nextIcon = this.createSvgUseElement(this.icons.chevronLeft);
     nextPage.appendChild(nextIcon);
+    nextPage.tabIndex = -1;
 
     const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage}`);
     const prevIcon = this.createSvgUseElement(this.icons.chevronLeft);
     prevPage.appendChild(prevIcon);
+    nextPage.tabIndex = -1;
 
     const uiButtons: ViewerUIButtons = {
       help,
@@ -540,10 +554,22 @@ export default class DOMBuilder {
    * 空のbutton要素を返す
    * @return button要素
    */
-  createButton(className: string = this.classNames.uiButton): HTMLButtonElement {
+  createButton(className: string = ""): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = className;
+    return btn;
+  }
+
+  private createUIButton(className: string = "", title: string = "", icons: IconData[]): HTMLButtonElement {
+    const btn = this.createButton(this.classNames.uiButton);
+    if (className) btn.classList.add(className);
+    if (title) btn.title = title;
+
+    icons.forEach(icon => {
+      const svg = this.createSvgUseElement(icon);
+      btn.appendChild(svg);
+    })
     return btn;
   }
 

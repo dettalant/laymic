@@ -5,6 +5,8 @@ export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
   // 表示済みか否かを判別するbool
   _isDisplayed: boolean = false;
+  // 表示中か否かを判別するbool
+  isActive = false;
   rootEl: HTMLElement;
   // help el
   el: HTMLElement;
@@ -55,6 +57,7 @@ export default class LaymicHelp {
   show() {
     this.rootEl.classList.add(this.builder.stateNames.showHelp);
     setAriaExpanded(this.rootEl, true);
+    this.isActive = true;
   }
 
   hide() {
@@ -62,6 +65,7 @@ export default class LaymicHelp {
     setAriaExpanded(this.rootEl, false);
 
     this.isHelpDisplayed = true;
+    this.isActive = false;
   }
 
   private applyEventListeners() {
