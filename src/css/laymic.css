@@ -578,6 +578,8 @@
 .laymic_zoomWrapper {
   width: 100%;
   height: 100%;
+  /* 左上基準前提で処理を書いたので
+  この値を変えると表示崩れするはず */
   transform-origin: top left;
 }
 

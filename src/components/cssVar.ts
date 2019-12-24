@@ -27,7 +27,7 @@ export default class LaymicCSSVariables {
    * 厳密な表示サイズを計算する仕様に変更
    */
   updatePageSize() {
-    const {w: width, h: height} = this.getPageRealSize();
+    const {w: width, h: height} = this.getPageSize();
 
     this.el.rootEl.style.setProperty("--page-width", width + "px");
     this.el.rootEl.style.setProperty("--page-height", height + "px");
@@ -73,48 +73,11 @@ export default class LaymicCSSVariables {
   }
 
   /**
-   * cssレイアウトに用いる各ページサイズを返す
-   * 正確な値ではないことに注意
-   */
-  // private getPageSize(): PageSize {
-  //   const {w: aw, h: ah} = this.state.pageAspect;
-  //   const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
-  //   const {progressBarWidth: pbw, viewerPadding: vp, isVertView} = this.state;
-  //
-  //   const paddingNum = vp * 2;
-  //   // 最大サイズ
-  //   const [mw, mh] = (!isVertView)
-  //     ? [ow - paddingNum, oh - (pbw + paddingNum)]
-  //     : [ow - (pbw + paddingNum), oh - paddingNum];
-  //
-  //   let {w: pageWidth, h: pageHeight} = this.state.pageSize;
-  //
-  //   // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
-  //   // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
-  //   if (!this.state.isVertView && mw < pageWidth * 2
-  //     || mw > pageWidth && mh < pageHeight)
-  //   {
-  //     // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
-  //     pageWidth = Math.round(mh * aw / ah);
-  //     pageHeight = Math.round(pageWidth * ah / aw);
-  //   } else if (mh < pageHeight) {
-  //     // 縦読み時で縦幅が狭い場合のサイズ計算
-  //     pageHeight = Math.round(mw * ah / aw);
-  //     pageWidth = Math.round(pageHeight * aw / ah);
-  //   }
-  //
-  //   return {
-  //     w: pageWidth,
-  //     h: pageHeight
-  //   }
-  // }
-
-  /**
    * pageMaxSizeとpageRealSizeの差異から縮小率を返す
    * @return                        scaleに用いる縮小表示率
    */
   private getPageScaleRatio(): number {
-    const {w: realW, h: realH} = this.getPageRealSize();
+    const {w: realW, h: realH} = this.getPageSize();
     const {w: pageW, h: pageH} = this.state.pageSize;
 
     // アスペクト比固定の縮小表示を想定しているため
@@ -127,11 +90,11 @@ export default class LaymicCSSVariables {
   }
 
   /**
+   * cssレイアウトに用いる、
    * ページの実寸表示数値を出力する
-   * getPageSize()と比較して、厳密な計算を行っていることが特徴
-   * @return                        実寸のページサイズ
+   * @return 実寸のページサイズ
    */
-  private getPageRealSize(): PageSize {
+  private getPageSize(): PageSize {
     const {w: aw, h: ah} = this.state.pageAspect;
     const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
     const {
