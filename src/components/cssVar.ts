@@ -171,8 +171,8 @@ export default class LaymicCSSVariables {
     }
 
     return {
-      w: width,
-      h: height
+      w: Math.round(width),
+      h: Math.round(height)
     }
   }
 }

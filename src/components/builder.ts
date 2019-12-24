@@ -425,8 +425,13 @@ export default class DOMBuilder {
     });
 
     const paginationClass = this.classNames.pagination
-    const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
-    const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
+    const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage}`);
+    const nextIcon = this.createSvgUseElement(this.icons.chevronLeft);
+    nextPage.appendChild(nextIcon);
+
+    const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage}`);
+    const prevIcon = this.createSvgUseElement(this.icons.chevronLeft);
+    prevPage.appendChild(prevIcon);
 
     const uiButtons: ViewerUIButtons = {
       help,

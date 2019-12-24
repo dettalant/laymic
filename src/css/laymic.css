@@ -494,17 +494,26 @@
 }
 
 .laymic_pagination {
-  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  /* 通常時は主張控えめなアイコン色 */
+  color: rgba(255, 255, 255, .3);
   display: none;
   cursor: auto;
+  position: absolute;
+  top: calc(50% + var(--progressbar-width) / 2);
+  /* 表示位置をページ中央に合わせる */
+  transform: translateY(-50%);
+  /* .laymic_sliderの上に来るよう配置する */
+  z-index: 3;
 }
 
 .laymic_root.laymic_isVisiblePagination .laymic_pagination {
+  /* ページ送りボタンを表示する設定の際のみ表示 */
   display: flex;
 }
 
 .laymic_pagination.laymic_isActive {
-  --swiper-navigation-color: rgba(255, 255, 255, .9);
+  /* ハイライト時には主張強めなアイコン色 */
+  color: rgba(255, 255, 255, .9);
   cursor: pointer;
 }
 
@@ -514,59 +523,48 @@
 }
 
 /* 進むボタン */
-.swiper-button-next,
-.laymic_isLTR .swiper-button-prev {
-  left: 10px;
-  right: auto;
-}
-
-.swiper-button-next:after,
-.laymic_isLTR .swiper-button-prev:after {
-  content: 'prev';
+.laymic_paginationNext,
+/* LTR時の戻るボタン */
+.laymic_isLTR .laymic_paginationPrev {
+  left: 0;
 }
 
 /* 戻るボタン */
-.swiper-button-prev,
-.laymic_isLTR .swiper-button-next {
-  right: 10px;
-  left: auto;
-}
-.swiper-button-prev:after,
-.laymic_isLTR .swiper-button-next:after {
-  content: 'next';
+.laymic_paginationPrev,
+/* LTR時の進むボタン */
+.laymic_isLTR .laymic_paginationNext {
+  right: 0;
+  transform: translateY(-50%) rotate(180deg);
 }
 
 /* 縦読み時戻る進むボタン */
-.laymic_isVertView .swiper-button-next,
-.laymic_isVertView .swiper-button-prev {
-  left: 50%;
-  right: auto;
+.laymic_isVertView .laymic_paginationNext,
+.laymic_isVertView .laymic_paginationPrev {
+  left: calc(50% + var(--progressbar-width) / 2);
+  /* top値を一旦初期値に戻す */
+  top: auto;
   margin: 0;
 }
 
-.laymic_isVertView .swiper-button-next:after,
-.laymic_isVertView .swiper-button-prev:after {
-  content: "prev";
-}
-
-.laymic_isVertView .swiper-button-next {
-  top: auto;
+.laymic_isVertView .laymic_paginationNext {
 	bottom: 0;
-  transform: rotate(-90deg);
+  /* ページ中央に位置調整し、下向きにする */
+  transform: translateX(-50%) rotate(-90deg);
 }
 
-.laymic_isVertView .swiper-button-prev {
+.laymic_isVertView .laymic_paginationPrev {
 	top: 0;
-	bottom: auto;
-  transform: rotate(90deg);
+  /* ページ中央に位置調整し、上向きにする */
+  transform: translateX(-50%) rotate(90deg);
 }
 
 /* for mobile and zooming */
 .laymic_isMobile .laymic_pagination,
 .laymic_isZoomed .laymic_pagination {
+  /* モバイル環境ではクリックイベントを透過するように */
   pointer-events: none;
   /* モバイル環境ではアイコンハイライト色をオフにする */
-  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  color: rgba(255, 255, 255, .3);
 }
 
 /* for unsupported fullscreen api  */

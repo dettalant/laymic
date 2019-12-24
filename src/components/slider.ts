@@ -46,7 +46,6 @@ export default class LaymicSlider {
         el: ".swiper-pagination",
         type: "progressbar",
       },
-      keyboard: true,
       preloadImages: false,
       lazy: {
         loadPrevNext: true,
@@ -189,7 +188,7 @@ export default class LaymicSlider {
       // イベントを登録
       this.attachSwiperEvents();
       // lazyload指定
-      if (this.swiper.lazy) this.swiper.lazy.load();
+      this.forceLoadLazyImgs();
       // 表示調整イベント発火
       this.dispatchViewUpdate();
     }
@@ -378,7 +377,7 @@ export default class LaymicSlider {
     }
   }
 
-  loadLazyImg() {
+  loadLazyImgs() {
     if (this.swiper.lazy) {
       this.swiper.lazy.load();
     }
@@ -607,5 +606,23 @@ export default class LaymicSlider {
     if (this.swiper.keyboard) {
       this.swiper.keyboard.disable();
     }
+  }
+
+  /**
+   * 画像読み込み中にswiper.lazy.load()を呼び出した際に
+   * 画像読み込み中のまま止まるバグを回避するための関数
+   *
+   * lazyloading中を示すクラス名を
+   * 一旦削除してから読み込み直す
+   */
+  private forceLoadLazyImgs() {
+    if (!this.swiper.lazy) return;
+
+    const loadingClassName = "swiper-lazy-loading"
+    const loadingImgs = this.swiper.wrapperEl.getElementsByClassName(loadingClassName);
+
+    Array.from(loadingImgs).forEach(img => img.classList.remove(loadingClassName));
+
+    this.swiper.lazy.load();
   }
 }

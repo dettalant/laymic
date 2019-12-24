@@ -198,7 +198,7 @@ export default class Laymic {
     // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
     // 不具合があるようなので手動で画像読み込み
     if (this.state.isVertView && this.slider.activeIdx === 0) {
-      this.slider.loadLazyImg()
+      this.slider.loadLazyImgs()
     }
 
     // 履歴を追加せずにhash値を書き換える
