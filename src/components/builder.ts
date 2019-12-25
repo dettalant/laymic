@@ -42,7 +42,6 @@ export default class DOMBuilder {
         controller: "laymic_controller",
         controllerTop: "laymic_controllerTop",
         controllerBottom: "laymic_controllerBottom",
-        progressbar: "laymic_progressbar",
       },
       buttons: {
         direction: "laymic_direction",
@@ -54,6 +53,7 @@ export default class DOMBuilder {
         nextPage: "laymic_paginationNext",
         prevPage: "laymic_paginationPrev",
         zoom: "laymic_zoom",
+        progressbar: "laymic_progressbar",
       },
       svg: {
         icon: "laymic_svgIcon",
@@ -359,8 +359,10 @@ export default class DOMBuilder {
     ctrlEl.className = ctrlClassNames.controller;
     ctrlEl.tabIndex = -1;
 
-    const progressEl = this.createDiv();
-    progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
+    const progressbar = this.createButton();
+    // プログレスバーはTab押下でフォーカスが行かないように変更
+    progressbar.tabIndex = -1;
+    progressbar.className = "swiper-pagination " + btnClassNames.progressbar;
 
     const ctrlTopEl = this.createDiv();
     ctrlTopEl.className = ctrlClassNames.controllerTop;
@@ -456,7 +458,8 @@ export default class DOMBuilder {
       preference,
       direction,
       nextPage,
-      prevPage
+      prevPage,
+      progressbar,
     }
 
     const ctrlBottomEl = this.createDiv();
@@ -465,7 +468,7 @@ export default class DOMBuilder {
     [
       ctrlTopEl,
       ctrlBottomEl,
-      progressEl,
+      progressbar,
       nextPage,
       prevPage,
     ].forEach(el => ctrlEl.appendChild(el));

@@ -4,7 +4,6 @@ import {
   isLaymicPages,
   rafThrottle,
   excludeHashLocation,
-  isMultiTouch,
   orientationChangeHandlers,
   parentOrientationChangeHandler,
   keydownHandlers,
@@ -146,7 +145,13 @@ export default class Laymic {
     document.body.appendChild(this.el.rootEl);
 
     // swiper管理クラスの追加
-    this.slider = new LaymicSlider(this.el, this.builder, this.state);
+    this.slider = new LaymicSlider(
+      this.el,
+      this.builder,
+      this.state,
+      this.preference,
+      this.zoom,
+    );
     // 初期状態ではビューワーUIを表示しておく
     this.slider.showViewerUI();
 
@@ -356,13 +361,18 @@ export default class Laymic {
       this.close();
     });
 
+    // 次ページボタンのクリックイベント
     this.el.buttons.nextPage.addEventListener("click", () => {
       this.slider.slideNext();
     });
 
+    // 前ページボタンのクリックイベント
     this.el.buttons.prevPage.addEventListener("click", () => {
       this.slider.slidePrev();
     });
+
+    // 進捗バーのクリックイベント
+    this.el.buttons.progressbar.addEventListener("click", e => this.slider.progressbarClickHandler(e));
 
     // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
     [
@@ -370,68 +380,24 @@ export default class Laymic {
       this.el.controllerEl
     ].forEach(el => {
       // クリック時のイベント
-      el.addEventListener("click", e => {
-        if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
-          // モバイルブラウザでのタップページ送り無効化設定時は
-          // viewerUIのトグルだけ行う
-          this.slider.toggleViewerUI();
-        } else {
-          this.slider.slideClickHandler(e);
-        }
-      })
+      el.addEventListener("click", e => this.slider.sliderClickHandler(e));
 
       // マウス操作時のイベント
       el.addEventListener("mousemove", rafThrottle(e => {
-        this.slider.slideMouseHoverHandler(e);
+        this.slider.sliderMouseMoveHandler(e);
       }))
 
       // マウスホイールでのイベント
       // swiper純正のマウスホイール処理は動作がすっとろいので自作
-      el.addEventListener("wheel", rafThrottle(e => {
-        // 上下ホイール判定
-        // || RTL時の左右ホイール判定
-        // || LTR時の左右ホイール判定
-        const isNext = e.deltaY > 0
-        || !this.state.isLTR && e.deltaX < 0
-        || this.state.isLTR && e.deltaX > 0;
-        const isPrev = e.deltaY < 0
-        || !this.state.isLTR && e.deltaX > 0
-        || this.state.isLTR && e.deltaX < 0;
-
-        if (isNext) {
-          // 進む
-          this.slider.slideNext();
-        } else if (isPrev) {
-          // 戻る
-          this.slider.slidePrev();
-        }
-      }));
+      el.addEventListener("wheel", rafThrottle(e => this.slider.sliderWheelHandler(e)));
 
       if (this.state.isMobile) {
-        el.addEventListener("touchstart", e => {
-          this.zoom.updatePastDistance(e);
-        });
+        el.addEventListener("touchstart", e => this.slider.sliderTouchStartHandler(e));
 
-        el.addEventListener("touchmove", rafThrottle(e => {
-          // マルチタッチでない場合と全画面状態でない場合は早期リターン
-          if (!isMultiTouch(e)) return;
+        el.addEventListener("touchmove", rafThrottle(e => this.slider.sliderTouchMoveHandler(e)));
 
-          // フルスクリーン時は自前でのズームを行い、
-          // そうでない際は内部のscale値だけ加算させる
-          this.zoom.pinchZoom(e);
-        }));
-
-        el.addEventListener("touchend", () => {
-          // 自前ズームかデバイス側ズームがなされている場合
-          // zoomControllerを表出させる
-
-          if (this.zoom.isZoomed) {
-            this.zoom.enableController();
-            this.slider.hideViewerUI();
-          }
-        })
+        el.addEventListener("touchend", () => this.slider.sliderTouchEndHandler());
       }
-
     });
 
     this.el.rootEl.addEventListener("fullscreenchange", () => this.fullscreenChange());

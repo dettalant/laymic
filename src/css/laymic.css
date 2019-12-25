@@ -107,12 +107,25 @@
 
 .laymic_progressbar {
   /* #888か#999くらいの配色が良さそう */
-  --swiper-pagination-color: rgba(255, 255, 255, .3);
+  --swiper-pagination-color: rgba(255, 255, 255, .2);
+  /* 当たり判定インチキ要素のサイズ
+    他操作を阻害しないよう最低限の太さにしておく */
+  --collision-padding-size: .5rem;
 	width: 100%;
 	height: var(--progressbar-width);
   top: 0;
   left: 0;
   z-index: 15;
+}
+
+.laymic_root .laymic_progressbar {
+  /* 進捗バーの存在をわかりやすくするための背景色 */
+  background: rgba(255, 255,255, .1);
+}
+
+/* 当たり判定インチキの影響がfocusに出ないようにする */
+.laymic_progressbar:focus {
+  outline: 0;
 }
 
 /* isLTR設定がfalseの際にのみ有効なスタイル */
@@ -127,6 +140,29 @@
   width: var(--progressbar-width);
   left: auto;
   right: 0;
+}
+
+/* 進捗バークリック当たり判定をインチキするための透明要素 */
+.laymic_progressbar::before {
+  content: "";
+  height: var(--collision-padding-size);
+  /* 通常時は横幅いっぱいまで広がる */
+  width: inherit;
+  /* 進捗バーの下へと連なるように配置 */
+  top: 100%;
+  display: block;
+  position: absolute;
+}
+
+/* 縦読み時の表示調整 */
+.laymic_isVertView .laymic_progressbar::before {
+  width: var(--collision-padding-size);
+  /* 縦読み時は縦幅いっぱいまで広げる */
+  height: inherit;
+  /* 画面上に貼り付ける */
+  top: 0;
+  /* 進捗バーの左に寄り添うように配置 */
+  right: 100%;
 }
 
 .laymic_isVisibleUI .laymic_controllerTop,

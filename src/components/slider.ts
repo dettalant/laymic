@@ -3,13 +3,16 @@ import { Swiper, Pagination, Lazy } from "swiper/js/swiper.esm";
 Swiper.use([Pagination, Lazy]);
 
 import LaymicStates from "./states";
+import LaymicPreference from "./preference";
+import LaymicZoom from "./zoom";
+
 import {
   ViewerElements,
   SwiperViewType,
 } from "../interfaces/index";
 import DOMBuilder from "./builder";
 
-import { rafSleep } from "../utils";
+import { rafSleep, isMultiTouch } from "../utils";
 
 export default class LaymicSlider {
   isViewerUIActive = false;
@@ -17,12 +20,22 @@ export default class LaymicSlider {
   swiper: Swiper;
   state: LaymicStates;
   builder: DOMBuilder;
+  preference: LaymicPreference;
+  zoom: LaymicZoom;
   // 現在のviewType文字列
   viewType: SwiperViewType = "horizontal2p";
-  constructor(el: ViewerElements, builder: DOMBuilder,  states: LaymicStates) {
+  constructor(
+    el: ViewerElements,
+    builder: DOMBuilder,
+    states: LaymicStates,
+    preference: LaymicPreference,
+    zoom: LaymicZoom
+  ) {
     this.el = el;
     this.builder = builder;
     this.state = states;
+    this.preference = preference;
+    this.zoom = zoom;
 
     // 強制2p表示する条件が揃っていれば2p表示で初期化する
     const conf = (this.state.isDoubleSlideHorizView)
@@ -234,7 +247,7 @@ export default class LaymicSlider {
   /**
    * 画面幅に応じて、横読み時の
    * 「1p表示 <-> 2p表示」を切り替える
-   * @param isUpdateSwiper swiper.update()を行うか否か
+   * @param  isUpdateSwiper swiper.update()を行うか否か
    */
   switchSingleSlideState(isUpdateSwiper: boolean = true) {
     // swiperが初期化されていないなら早期リターン
@@ -263,9 +276,9 @@ export default class LaymicSlider {
    *
    * クリック判定基準についてはgetClickPoint()を参照のこと
    *
-   * @param  e  mouse event
+   * @param  e MouseEvent
    */
-  slideClickHandler(e: MouseEvent) {
+  private slideClickHandler(e: MouseEvent) {
     const [isNextClick, isPrevClick] = this.getClickPoint(e);
 
     if (isNextClick && !this.swiper.isEnd) {
@@ -282,10 +295,25 @@ export default class LaymicSlider {
   }
 
   /**
-   * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
-   * @param  e  mouse event
+   * スライダー部分のクリックハンドラ
+   * swiperElとcontrollerEl両方にこのハンドラが用いられる
+   * @param  e MouseEvent
    */
-  slideMouseHoverHandler(e: MouseEvent) {
+  sliderClickHandler(e: MouseEvent) {
+    if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
+      // モバイルブラウザでのタップページ送り無効化設定時は
+      // viewerUIのトグルだけ行う
+      this.toggleViewerUI();
+    } else {
+      this.slideClickHandler(e);
+    }
+  }
+
+  /**
+   * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
+   * @param  e MouseEvent
+   */
+  sliderMouseMoveHandler(e: MouseEvent) {
     const [isNextClick, isPrevClick] = this.getClickPoint(e);
     const {nextPage, prevPage} = this.el.buttons;
     const active = this.builder.stateNames.active;
@@ -294,7 +322,7 @@ export default class LaymicSlider {
     /**
      * swiperElとcontrollerElにおける
      * カーソル状態を一括設定する
-     * @param isPointer trueならばポインターが乗っかっている状態とみなす
+     * @param  isPointer trueならばポインターが乗っかっている状態とみなす
      */
     const setCursorStyle = (isPointer: boolean) => {
       const cursor = (isPointer) ? "pointer" : "";
@@ -316,6 +344,105 @@ export default class LaymicSlider {
       isCursorPointer = false;
     }
     setCursorStyle(isCursorPointer);
+  }
+
+  /**
+   * スライダー部分でのマウスホイール操作ハンドラ
+   * @param  e WheelEvent
+   */
+  sliderWheelHandler(e: WheelEvent) {
+    // 上下ホイール判定
+    // || RTL時の左右ホイール判定
+    // || LTR時の左右ホイール判定
+    const isNext = e.deltaY > 0
+    || !this.state.isLTR && e.deltaX < 0
+    || this.state.isLTR && e.deltaX > 0;
+    const isPrev = e.deltaY < 0
+    || !this.state.isLTR && e.deltaX > 0
+    || this.state.isLTR && e.deltaX < 0;
+
+    if (isNext) {
+      // 進む
+      this.slideNext();
+    } else if (isPrev) {
+      // 戻る
+      this.slidePrev();
+    }
+  }
+
+  /**
+   * スライダー部分でのTouchStartハンドラ
+   * @param  e TouchEvent
+   */
+  sliderTouchStartHandler(e: TouchEvent) {
+    this.zoom.updatePastDistance(e);
+  }
+
+  /**
+   * スライダー部分でのTouchMoveハンドラ
+   * @param  e TouchEvent
+   */
+  sliderTouchMoveHandler(e: TouchEvent) {
+    // マルチタッチでない場合と全画面状態でない場合は早期リターン
+    if (!isMultiTouch(e)) return;
+
+    // フルスクリーン時は自前でのズームを行い、
+    // そうでない際は内部のscale値だけ加算させる
+    this.zoom.pinchZoom(e);
+  }
+
+  /**
+   * スライダー部分でのTouchEndハンドラ
+   */
+  sliderTouchEndHandler() {
+    // 自前ズームかデバイス側ズームがなされている場合
+    // zoomControllerを表出させる
+
+    if (this.zoom.isZoomed) {
+      this.zoom.enableController();
+      this.hideViewerUI();
+    }
+  }
+
+  /**
+   * 進捗バー部分でのClickハンドラ
+   * @param  e MouseEvent
+   */
+  progressbarClickHandler(e: MouseEvent) {
+    const {isLTR, isVertView} = this.state;
+    const max = (isVertView)
+      ? window.innerHeight
+      : window.innerWidth;
+    // クリックされた場所を正規化して取得
+    // 縦読み時はe.clientYの値を、
+    // 通常横読み時はinnerWidthで反転させたe.clientXを
+    // LTR横読み時はe.clientXの値を用いる
+    let p = (isVertView)
+      ? e.clientY
+      : max - e.clientX;
+    if (isLTR) p = e.clientX;
+
+    const pageLen = this.swiper.slides.length;
+    const idx = Math.floor(p / (max / pageLen));
+
+    this.slideTo(idx);
+  }
+
+  /**
+   * orientationcange eventに登録する処理
+   */
+  orientationChange() {
+    const { isVertView, isMobile } = this.state;
+
+    // PC、または縦読みモード、
+    // または強制2p表示が無効化されている場合は早期リターン
+    if (!isMobile || isVertView) return;
+
+    this.switchHorizViewSize();
+  }
+
+  slideTo(idx: number, speed?: number) {
+    this.swiper.slideTo(idx, speed);
   }
 
   /**
@@ -390,23 +517,6 @@ export default class LaymicSlider {
     if (this.swiper.lazy) {
       this.swiper.lazy.load();
     }
-  }
-
-  /**
-   * orientationcange eventに登録する処理
-   */
-  orientationChange() {
-    const { isVertView, isMobile } = this.state;
-
-    // PC、または縦読みモード、
-    // または強制2p表示が無効化されている場合は早期リターン
-    if (!isMobile || isVertView) return;
-
-    this.switchHorizViewSize();
-  }
-
-  slideTo(idx: number, speed?: number) {
-    this.swiper.slideTo(idx, speed);
   }
 
   /**

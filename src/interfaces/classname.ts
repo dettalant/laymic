@@ -47,7 +47,6 @@ export interface LaymicControllerClassNames {
   controller: string,
   controllerTop: string,
   controllerBottom: string,
-  progressbar: string,
 }
 
 export interface LaymicThumbsClassNames {
