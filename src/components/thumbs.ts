@@ -1,5 +1,5 @@
 import { ViewerPages } from "../interfaces/index";
-import { setAriaExpanded, setRole, rafSleep } from "../utils"
+import { setAriaExpanded, setRole, multiRafSleep } from "../utils"
 import DOMBuilder from "./builder";
 import LaymicStates from "./states";
 
@@ -11,6 +11,7 @@ export default class LaymicThumbnails {
   el: HTMLElement;
   wrapperEl: HTMLElement;
   thumbEls: Element[];
+  thumbButtons: HTMLButtonElement[];
   constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: LaymicStates) {
     this.builder = builder;
     const thumbsClassNames = this.builder.classNames.thumbs;
@@ -26,6 +27,7 @@ export default class LaymicThumbnails {
     wrapperEl.tabIndex = -1;
 
     const thumbEls = [];
+    const thumbButtons = [];
     const loopLen = pages.length;
     // idxを使いたいので古めかしいforループを使用
     for (let i = 0; i < loopLen; i++) {
@@ -58,6 +60,7 @@ export default class LaymicThumbnails {
       }
 
       thumbEls.push(el);
+      thumbButtons.push(btn);
 
       btn.appendChild(el);
       wrapperEl.appendChild(btn);
@@ -67,7 +70,8 @@ export default class LaymicThumbnails {
 
     this.el = thumbsEl;
     this.wrapperEl = wrapperEl;
-    this.thumbEls = thumbEls
+    this.thumbEls = thumbEls;
+    this.thumbButtons = thumbButtons;
     this.state = state;
     this.rootEl = rootEl;
 
@@ -129,11 +133,9 @@ export default class LaymicThumbnails {
 
     // 少々遅延させてからフォーカスを移動させる
     // 二回ほどrafSleepすると良い塩梅になる
-    rafSleep()
-      .then(() => rafSleep())
-      .then(() => {
-        this.wrapperEl.focus();
-      })
+    multiRafSleep(2).then(() => {
+      this.wrapperEl.focus();
+    })
   }
 
   hide() {

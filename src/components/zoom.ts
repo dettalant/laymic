@@ -16,7 +16,11 @@ export default class LaymicZoom {
 
     this.controller = zoomEl;
     this.rootEl = rootEl;
+
     this.wrapper = builder.createZoomWrapper()
+    // focus操作を受け付けるようにしておく
+    this.wrapper.tabIndex = -1;
+
     this.builder = builder;
     this.preference = preference;
 
@@ -180,6 +184,8 @@ export default class LaymicZoom {
   enableController() {
     const zoomed = this.builder.stateNames.zoomed;
     this.wrapper.classList.add(zoomed);
+
+    this.wrapper.focus();
   }
 
   /**
@@ -190,6 +196,9 @@ export default class LaymicZoom {
     this.wrapper.classList.remove(zoomed);
     this.state.zoomRatio = 1.0;
     this.wrapper.style.transform = "";
+
+    // ズーム解除時にはrootElへとフォーカスを移す
+    this.rootEl.focus();
   }
 
   /**

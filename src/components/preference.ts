@@ -7,7 +7,13 @@ import {
   PreferenceUpdateEventString,
   UIVisibility
 } from "../interfaces/index";
-import { isBarWidth, isUIVisibility, setAriaExpanded, setRole } from "../utils";
+import {
+  isBarWidth,
+  isUIVisibility,
+  setAriaExpanded,
+  setRole,
+  multiRafSleep
+} from "../utils";
 
 export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";
@@ -42,6 +48,7 @@ export default class LaymicPreference {
     const wrapperEl = builder.createDiv();
     wrapperEl.className = names.wrapper;
     setRole(wrapperEl, "list");
+    wrapperEl.tabIndex = -1;
 
     const isAutoFullscreen = checkboxBuilder.create(
       "ビューワー展開時の自動全画面化",
@@ -278,6 +285,12 @@ export default class LaymicPreference {
     this.rootEl.classList.add(this.builder.stateNames.showPreference);
     setAriaExpanded(this.rootEl, true);
     this.isActive = true;
+
+    // 二回ほどrafSleepしてフォーカス移動タイミングをずらす
+    // 小手先技コードなので、デバイスによっては上手く動かないかも
+    multiRafSleep(2).then(() => {
+      this.wrapperEl.focus();
+    })
   }
 
   /**
@@ -287,6 +300,9 @@ export default class LaymicPreference {
     this.rootEl.classList.remove(this.builder.stateNames.showPreference);
     setAriaExpanded(this.rootEl, false);
     this.isActive = false;
+
+    // 設定画面を閉じる際にrootElへとフォーカスを移す
+    this.rootEl.focus(); 
   }
 
   /**

@@ -34,6 +34,13 @@ export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(r
 
 export const rafSleep = () => new Promise(res => requestAnimationFrame(res));
 
+export const multiRafSleep = async (len: number = 2) => {
+  const range = [...Array(len)].map((_, i) => i);
+  for (let _ of range) {
+    await rafSleep()
+  }
+}
+
 // /**
 //  * 画像をimg要素として読み取る
 //  * @param   path 画像path文字列

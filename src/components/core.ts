@@ -107,7 +107,7 @@ export default class Laymic {
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
     rootEl.classList.add(classNames.root);
-    rootEl.tabIndex = -1;
+    rootEl.tabIndex = 0;
     if (this.state.isLTR) rootEl.classList.add(stateNames.ltr);
     if (this.state.isMobile) rootEl.classList.add(stateNames.mobile);
     // fullscreen非対応なら全画面ボタンを非表示化する
@@ -317,9 +317,14 @@ export default class Laymic {
 
     // サムネイルのクリックイベント
     // 各サムネイルとswiper各スライドとを紐づける
-    this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
+    this.thumbs.thumbButtons.forEach((el, i) => el.addEventListener("click", () => {
+      const {isFirstSlideEmpty: isFSE, isDoubleSlideHorizView: isDSHV} = this.state;
+      // 空白ページを加味した正確なインデックス数値を計算
+      const idx = (isFSE && isDSHV)
+        ? i + 1
+        : i;
       this.thumbs.hide();
-      this.slider.slideTo(i);
+      this.slider.slideTo(idx);
     }));
 
     // ズームボタンのクリックイベント
@@ -431,6 +436,9 @@ export default class Laymic {
 
     this.el.rootEl.addEventListener("fullscreenchange", () => this.fullscreenChange());
 
+    // rootElにフォーカスが当たった際にはviewerUIを隠す
+    this.el.rootEl.addEventListener("focus", () => this.slider.hideViewerUI())
+
     // ユーザビリティのため「クリックしても何も起きない」
     // 場所ではイベント伝播を停止させる
     Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
@@ -438,23 +446,10 @@ export default class Laymic {
     type UIButton<T = ViewerUIButtons> = T[keyof T];
     // ViewerUIButtonsに属するbutton要素に対してのkeydownイベント
     Object.values(this.el.buttons).forEach((el: UIButton) => el.addEventListener("keydown", e => {
-      const btns = this.builder.classNames.buttons;
-      // 除外するクラス名リスト
-      const excludeNames = [
-        btns.thumbs,
-      ];
+      // 決定役割のキーが押された場合のみ
+      // バブリングを停止させる
       if (["Enter", " ", "Spacebar"].includes(e.key)) {
         e.stopPropagation();
-
-        if (!excludeNames.some(name => {
-          if (!(e.target instanceof HTMLElement)) return;
-          return e.target.classList.contains(name);
-        })) {
-          // 除外クラス名が含まれない要素のみでの処理
-          rafSleep().then(() => {
-            this.el.rootEl.focus();
-          })
-        }
       }
     }))
 
@@ -611,7 +606,6 @@ export default class Laymic {
     const isThumbsActive = this.thumbs.isActive;
     const isPreferenceActive = this.preference.isActive;
 
-
     // サブモード時の処理
     const subModeHandler = (e: KeyboardEvent) => {
       const key = e.key;
@@ -678,7 +672,7 @@ export default class Laymic {
       // 縦読み/横読み切り替え
       if (parseKey(key, ["d", "D"])) this.slider.toggleVerticalView();
       // ビューワーUI切り替え
-      if (parseKey(key, ["v", "V"])) this.slider.toggleViewerUI();
+      if (parseKey(key, ["v", "V"])) this.slider.toggleViewerUI(true);
 
       // タブキーを押した際にビューワーUI表示
       if (!this.slider.isViewerUIActive && parseKey(key, "Tab")) this.slider.showViewerUI();

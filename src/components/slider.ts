@@ -83,8 +83,9 @@ export default class LaymicSlider {
     } else {
       this.disableVerticalView()
     }
-    // 縦読みトグル時にはビューワーUIを隠す
-    this.hideViewerUI();
+    // 縦読み/横読みトグル時にはビューワーUIを隠す
+    // 同時にrootElへとフォーカスを移す
+    this.hideViewerUI(true);
   }
 
   /**
@@ -358,9 +359,9 @@ export default class LaymicSlider {
   /**
    * ビューワー操作UIをトグルさせる
    */
-  toggleViewerUI() {
+  toggleViewerUI(isMoveFocus: boolean = false) {
     if (this.isViewerUIActive) {
-      this.hideViewerUI();
+      this.hideViewerUI(isMoveFocus);
     } else {
       this.showViewerUI();
     }
@@ -375,10 +376,14 @@ export default class LaymicSlider {
   /**
    * ビューワー操作UIを非表示化する
    */
-  hideViewerUI() {
+  hideViewerUI(isMoveFocus: boolean = false) {
     const stateName = this.builder.stateNames.visibleUI;
     this.el.rootEl.classList.remove(stateName);
     this.isViewerUIActive = false;
+
+    // isMoveFocusがtrueの際、
+    // viewerUIを隠すと同時にrootElへとフォーカスを戻す
+    if (isMoveFocus) this.el.rootEl.focus()
   }
 
   loadLazyImgs() {

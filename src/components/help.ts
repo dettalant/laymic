@@ -1,5 +1,5 @@
 import DOMBuilder from "./builder";
-import { setAriaExpanded } from "../utils";
+import { setAriaExpanded, multiRafSleep } from "../utils";
 
 export default class LaymicHelp {
   private readonly ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
@@ -21,6 +21,7 @@ export default class LaymicHelp {
     const containerEl = builder.createDiv();
     containerEl.className = helpClassNames.container;
     setAriaExpanded(containerEl, false);
+    containerEl.tabIndex = -1;
 
     const wrapperEl = builder.createHelpWrapperEl();
 
@@ -58,6 +59,11 @@ export default class LaymicHelp {
     this.rootEl.classList.add(this.builder.stateNames.showHelp);
     setAriaExpanded(this.rootEl, true);
     this.isActive = true;
+    // フォーカス移動
+    // 二回ほどrafSleepすると良い塩梅になる
+    multiRafSleep(2).then(() => {
+      this.el.focus();
+    })
   }
 
   hide() {
@@ -66,6 +72,9 @@ export default class LaymicHelp {
 
     this.isHelpDisplayed = true;
     this.isActive = false;
+
+    // 閉止時にrootElへとフォーカスを移す
+    this.rootEl.focus();
   }
 
   private applyEventListeners() {
