@@ -4,25 +4,25 @@ import DOMBuilder from "./builder";
 import LaymicStates from "./states";
 
 export default class LaymicThumbnails {
-  isActive = false;
-  state: LaymicStates;
-  builder: DOMBuilder;
-  rootEl: HTMLElement;
-  el: HTMLElement;
-  wrapperEl: HTMLElement;
-  thumbEls: Element[];
-  thumbButtons: HTMLButtonElement[];
+  private _isActive = false;
+  readonly state: LaymicStates;
+  readonly builder: DOMBuilder;
+  readonly rootEl: HTMLElement;
+  readonly el: HTMLElement;
+  readonly wrapperEl: HTMLElement;
+  readonly thumbEls: Element[];
+  readonly thumbButtons: HTMLButtonElement[];
+
   constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: LaymicStates) {
     this.builder = builder;
-    const thumbsClassNames = this.builder.classNames.thumbs;
-    const thumbsEl = builder.createDiv();
-    thumbsEl.className = thumbsClassNames.container;
+    const thumbsNames = this.builder.classNames.thumbs;
+    const thumbsEl = builder.createDiv(thumbsNames.container);
+
     // 初期状態では表示しないようにしておく
     thumbsEl.style.display = "none";
     setAriaExpanded(thumbsEl, false);
 
-    const wrapperEl = builder.createDiv();
-    wrapperEl.className = thumbsClassNames.wrapper;
+    const wrapperEl = builder.createDiv(thumbsNames.wrapper);
     setRole(wrapperEl, "list");
     wrapperEl.tabIndex = -1;
 
@@ -34,7 +34,7 @@ export default class LaymicThumbnails {
       const p = pages[i];
       const t = thumbPages[i] || "";
 
-      const btn = builder.createButton(thumbsClassNames.item);
+      const btn = builder.createButton(thumbsNames.item);
       btn.title = (i + 1) + "P目へと遷移";
       setRole(btn, "listitem");
 
@@ -49,14 +49,14 @@ export default class LaymicThumbnails {
 
         const img = new Image();
         img.dataset.src = src;
-        img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
+        img.className = `${thumbsNames.lazyload} ${thumbsNames.imgThumb}`;
         el = img;
       } else {
         // thumbs用にnodeをコピー
         const slideEl = p.cloneNode(true);
         if (!(slideEl instanceof Element)) continue;
         el = slideEl;
-        el.classList.add(thumbsClassNames.slideThumb)
+        el.classList.add(thumbsNames.slideThumb)
       }
 
       thumbEls.push(el);
@@ -98,6 +98,14 @@ export default class LaymicThumbnails {
   }
 
   /**
+   * サムネイル画面表示中か否かのboolを返す
+   * @return サムネイル画面表示中ならばtrue
+   */
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  /**
    * thumbsWrapperElのwidthを計算し、
    * 折り返しが発生しないようなら横幅の値を書き換える
    */
@@ -120,6 +128,9 @@ export default class LaymicThumbnails {
     this.wrapperEl.style.width = widthStyleStr;
   }
 
+  /**
+   * サムネイル画面を表示する
+   */
   show() {
     if (this.el.style.display === "none") {
       // ページ読み込み後一度だけ動作する
@@ -129,7 +140,7 @@ export default class LaymicThumbnails {
 
     this.rootEl.classList.add(this.builder.stateNames.showThumbs);
     setAriaExpanded(this.rootEl, true);
-    this.isActive = true;
+    this._isActive = true;
 
     // 少々遅延させてからフォーカスを移動させる
     // 二回ほどrafSleepすると良い塩梅になる
@@ -138,10 +149,13 @@ export default class LaymicThumbnails {
     })
   }
 
+  /**
+   * サムネイル画面を閉じる
+   */
   hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
     setAriaExpanded(this.rootEl, false);
-    this.isActive = false;
+    this._isActive = false;
     // サムネイル閉止時にrootElへとfocusを戻す
     this.rootEl.focus();
   }

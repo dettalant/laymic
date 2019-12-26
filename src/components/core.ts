@@ -1,7 +1,6 @@
 import screenfull from "screenfull";
 import {
   rafSleep,
-  multiRafSleep,
   isLaymicPages,
   rafThrottle,
   wheelThrottle,
@@ -30,25 +29,26 @@ import {
 
 export default class Laymic {
   // HTMLElementまとめ
-  el: ViewerElements;
+  readonly el: ViewerElements;
   // mangaViewer内部で用いるステートまとめ
-  state: LaymicStates = new LaymicStates();
-  initOptions: LaymicOptions;
-  preference: LaymicPreference;
-  thumbs: LaymicThumbnails;
-  help: LaymicHelp;
-  zoom: LaymicZoom;
-  cssVar: LaymicCSSVariables;
-  slider: LaymicSlider;
-  builder: DOMBuilder;
+  readonly state: LaymicStates = new LaymicStates();
+  readonly initOptions: LaymicOptions;
+  readonly preference: LaymicPreference;
+  readonly thumbs: LaymicThumbnails;
+  readonly help: LaymicHelp;
+  readonly zoom: LaymicZoom;
+  readonly cssVar: LaymicCSSVariables;
+  readonly slider: LaymicSlider;
+  readonly builder: DOMBuilder;
 
   constructor(laymicPages: LaymicPages | ViewerPages, options: LaymicOptions = {}) {
     // 初期化引数を保管
     this.initOptions = options;
     const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
-    const rootEl = builder.createDiv();
     const {stateNames, classNames} = builder;
     this.builder = builder;
+
+    const rootEl = builder.createDiv(classNames.root);
 
     const [pages, thumbPages] = (isLaymicPages(laymicPages))
       ? [laymicPages.pages, laymicPages.thumbs || []]
@@ -106,7 +106,6 @@ export default class Laymic {
 
     // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
     rootEl.style.display = "none";
-    rootEl.classList.add(classNames.root);
     rootEl.tabIndex = 0;
     if (this.state.isLTR) rootEl.classList.add(stateNames.ltr);
     if (this.state.isMobile) rootEl.classList.add(stateNames.mobile);
@@ -184,16 +183,20 @@ export default class Laymic {
     // display:none状態の場合でだけ動く部分
     if (isInitialOpen) {
       this.el.rootEl.style.display = "";
-      rafSleep().then(() => {
-        // slideが追加された後に処理を行う必要があるため
-        // sleepを噛ませて非同期処理とする
-        this.slider.switchSingleSlideState();
-      })
+
+      // 表示していない場合のみヘルプ表示を行う
+      this.help.showOnlyOnce();
     };
 
-    // 確実なウェイトを取るため2回rafSleep
-    multiRafSleep(2)
+    rafSleep()
       .then(() => {
+        // slideが追加された後に処理を行う必要があるため
+        // rafSleepを噛ませて非同期処理とする
+        if (isInitialOpen) this.slider.switchSingleSlideState()
+        return rafSleep();
+      })
+      .then(() => {
+        // 確実なウェイトを取るため2回rafSleep
         // rootElにフォーカスを移す
         this.el.rootEl.focus();
         return rafSleep();
@@ -271,6 +274,11 @@ export default class Laymic {
     this.state.isActive = false;
   }
 
+  /**
+   * LaymicPreferenceの値が更新された際に
+   * 発火するイベントのハンドラ
+   * @param  e CustomEvent。e.detailに変更されたプロパティ名を格納する
+   */
   private laymicPreferenceUpdateHandler(e: CustomEvent<PreferenceUpdateEventString>) {
     if (e.detail === "progressBarWidth") {
       // progressBarWidth数値を取得する

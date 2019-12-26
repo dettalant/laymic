@@ -16,7 +16,7 @@ const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 // mangaViewerで用いるDOMを生成するやつ
 export default class DOMBuilder {
   // 使用するアイコンセット
-  icons: ViewerIcons = this.defaultMangaViewerIcons;
+  readonly icons: ViewerIcons = this.defaultMangaViewerIcons;
   readonly classNames = this.defaultLaymicClassNames;
   readonly stateNames = this.defaultLaymicStateClassNames;
   constructor(
@@ -259,6 +259,7 @@ export default class DOMBuilder {
       ]
     };
 
+    // material.io: touch_app
     const touchApp = {
       id: "laymic_svgTouchApp",
       className: "icon_touchApp",
@@ -268,6 +269,7 @@ export default class DOMBuilder {
       ]
     }
 
+    // material.io: chevron_left
     const chevronLeft = {
       id: "laymic_svgChevronLeft",
       className: "icon_chevronLeft",
@@ -303,13 +305,11 @@ export default class DOMBuilder {
    * @return           swiper-container要素
    */
   createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean, isAppendEmptySlide?: boolean): HTMLElement {
-    const swiperEl = this.createDiv();
-    swiperEl.className = "swiper-container " + this.classNames.slider;
+    const swiperEl = this.createDiv("swiper-container " + this.classNames.slider);
     swiperEl.dir = (isLTR) ? "" : "rtl";
     swiperEl.tabIndex = -1;
 
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = "swiper-wrapper";
+    const wrapperEl = this.createDiv("swiper-wrapper");
 
     // isFirstSlideEmpty引数がtrueならば
     // 空の要素を一番目に入れる
@@ -319,8 +319,7 @@ export default class DOMBuilder {
     }
 
     for (let p of pages) {
-      const divEl = this.createDiv();
-      divEl.className = "swiper-slide";
+      const divEl = this.createDiv("swiper-slide");
 
       if (p instanceof Element) {
         divEl.appendChild(p);
@@ -353,22 +352,19 @@ export default class DOMBuilder {
    * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
   createViewerController(): [HTMLElement, ViewerUIButtons] {
-    const btnClassNames = this.classNames.buttons
-    const ctrlClassNames = this.classNames.controller;
-    const ctrlEl = this.createDiv();
-    ctrlEl.className = ctrlClassNames.controller;
+    const btnsNames = this.classNames.buttons;
+    const ctrlNames = this.classNames.controller;
+    const ctrlEl = this.createDiv(ctrlNames.controller);
     ctrlEl.tabIndex = -1;
 
-    const progressbar = this.createDiv();
-    progressbar.className = "swiper-pagination " + btnClassNames.progressbar;
+    const progressbar = this.createDiv("swiper-pagination " + btnsNames.progressbar);
 
-    const ctrlTopEl = this.createDiv();
-    ctrlTopEl.className = ctrlClassNames.controllerTop;
+    const ctrlTopEl = this.createDiv(ctrlNames.controllerTop);
     ctrlTopEl.setAttribute("aria-orientation", "horizontal");
     setRole(ctrlTopEl, "menu");
 
     const direction = this.createUIButton(
-      btnClassNames.direction,
+      btnsNames.direction,
       "縦読み/横読み切り替え (d)",
       [
         this.icons.vertView,
@@ -377,7 +373,7 @@ export default class DOMBuilder {
     );
 
     const fullscreen = this.createUIButton(
-      btnClassNames.fullscreen,
+      btnsNames.fullscreen,
       "フルスクリーン (f)",
       [
         this.icons.fullscreen,
@@ -386,19 +382,19 @@ export default class DOMBuilder {
     )
 
     const thumbs = this.createUIButton(
-      btnClassNames.thumbs,
+      btnsNames.thumbs,
       "サムネイル (t)",
       [this.icons.showThumbs]
     );
 
     const preference = this.createUIButton(
-      btnClassNames.preference,
+      btnsNames.preference,
       "設定 (p)",
       [this.icons.preference]
     )
 
     const close = this.createUIButton(
-      btnClassNames.close,
+      btnsNames.close,
       "ビューワーを閉じる (Escape)",
       [
         this.icons.close
@@ -406,13 +402,13 @@ export default class DOMBuilder {
     )
 
     const help = this.createUIButton(
-      btnClassNames.help,
+      btnsNames.help,
       "ヘルプ (h)",
       [this.icons.showHelp]
     )
 
     const zoom = this.createUIButton(
-      btnClassNames.zoom,
+      btnsNames.zoom,
       "ズーム (z)",
       [this.icons.zoomIn]
     );
@@ -437,12 +433,12 @@ export default class DOMBuilder {
     });
 
     const paginationClass = this.classNames.pagination
-    const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage}`);
+    const nextPage = this.createButton(`${paginationClass} ${btnsNames.nextPage}`);
     const nextIcon = this.createSvgUseElement(this.icons.chevronLeft);
     nextPage.appendChild(nextIcon);
     nextPage.tabIndex = -1;
 
-    const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage}`);
+    const prevPage = this.createButton(`${paginationClass} ${btnsNames.prevPage}`);
     const prevIcon = this.createSvgUseElement(this.icons.chevronLeft);
     prevPage.appendChild(prevIcon);
     nextPage.tabIndex = -1;
@@ -460,8 +456,7 @@ export default class DOMBuilder {
       progressbar,
     }
 
-    const ctrlBottomEl = this.createDiv();
-    ctrlBottomEl.className = ctrlClassNames.controllerBottom;
+    const ctrlBottomEl = this.createDiv(ctrlNames.controllerBottom);
 
     [
       ctrlTopEl,
@@ -472,12 +467,6 @@ export default class DOMBuilder {
     ].forEach(el => ctrlEl.appendChild(el));
 
     return [ctrlEl, uiButtons]
-  }
-
-  createZoomWrapper(): HTMLElement {
-    const zoomWrapper = this.createDiv();
-    zoomWrapper.className = this.classNames.zoom.wrapper;
-    return zoomWrapper;
   }
 
   /**
@@ -547,8 +536,10 @@ export default class DOMBuilder {
    * 空のdiv要素を返す
    * @return div要素
    */
-  createDiv(): HTMLDivElement {
-    return document.createElement("div");
+  createDiv(className: string = ""): HTMLDivElement {
+    const div = document.createElement("div");
+    if (className) div.className = className;
+    return div;
   }
 
   /**
@@ -574,17 +565,22 @@ export default class DOMBuilder {
     return btn;
   }
 
-  createSpan(): HTMLSpanElement {
-    return document.createElement("span");
+  createSpan(className: string = "", textContent: string = ""): HTMLSpanElement {
+    const span = document.createElement("span");
+    if (className) span.className = className;
+    if (textContent) span.textContent = textContent;
+    return span;
   }
 
-  createParagraph(): HTMLParagraphElement {
-    return document.createElement("p");
+  createParagraph(className: string = "", textContent: string = ""): HTMLParagraphElement {
+    const p = document.createElement("p");
+    if (className) p.className = className;  
+    if (textContent) p.textContent = textContent;
+    return p;
   }
 
   createEmptySlideEl(): HTMLElement {
-    const emptyEl = this.createDiv();
-    emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
+    const emptyEl = this.createDiv("swiper-slide " + this.classNames.emptySlide);
     return emptyEl;
   }
 
@@ -593,16 +589,15 @@ export default class DOMBuilder {
    * @return helpWrapperとして用いられるHTMLElement
    */
   createHelpWrapperEl(): HTMLElement {
-    const helpClassNames = this.classNames.help;
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = helpClassNames.wrapper;
+    const helpNames = this.classNames.help;
+    const wrapperEl = this.createDiv(helpNames.wrapper);
 
     const innerWrapperEl = this.createHelpInnerWrapperEl();
 
     const touchAppIcon = this.createSvgUseElement(this.icons.touchApp);
 
-    const chevronsContainer = this.createDiv();
-    chevronsContainer.className = helpClassNames.chevronsContainer;
+    const chevronsContainer = this.createDiv(helpNames.chevronsContainer);
+
     const iconChevron = this.icons.chevronLeft;
     // 右向き矢印は一度生成してから反転クラス名を付与する
     const chevronRight = this.createSvgUseElement(iconChevron);
@@ -627,9 +622,8 @@ export default class DOMBuilder {
    * @return アイコン説明を散りばめたHTMLElement
    */
   private createHelpInnerWrapperEl(): HTMLElement {
-    const helpClassNames = this.classNames.help;
-    const innerWrapper = this.createDiv();
-    innerWrapper.className = helpClassNames.innerWrapper;
+    const helpNames = this.classNames.help;
+    const innerWrapper = this.createDiv(helpNames.innerWrapper);
     setRole(innerWrapper, "list");
 
     [
@@ -644,12 +638,12 @@ export default class DOMBuilder {
       {
         icons: [this.icons.fullscreen, this.icons.exitFullscreen],
         label: "全画面切り替え",
-        className: helpClassNames.fullscreenItem,
+        className: helpNames.fullscreenItem,
       },
       {
         icons: [this.icons.zoomIn],
         label: "拡大表示",
-        className: helpClassNames.zoomItem,
+        className: helpNames.zoomItem,
       },
       {
         icons: [this.icons.showThumbs],
@@ -672,20 +666,16 @@ export default class DOMBuilder {
         label: "機能呼び出し"
       }
     ].forEach(obj => {
-      const item = this.createDiv();
-      item.className = helpClassNames.innerItem;
+      const item = this.createDiv(helpNames.innerItem);
       setRole(item, "listitem");
 
       if (obj.className) item.classList.add(obj.className);
 
-      const iconWrapper = this.createDiv();
-      iconWrapper.className = helpClassNames.iconWrapper;
+      const iconWrapper = this.createDiv(helpNames.iconWrapper);
 
       obj.icons.forEach(icon => iconWrapper.appendChild(this.createSvgUseElement(icon)))
 
-      const label = this.createSpan();
-      label.textContent = obj.label;
-      label.className = helpClassNames.iconLabel;
+      const label = this.createSpan(helpNames.iconLabel, obj.label);
 
       [iconWrapper, label].forEach(el => item.appendChild(el));
 

@@ -15,15 +15,16 @@ import DOMBuilder from "./builder";
 import { rafSleep, isMultiTouch } from "../utils";
 
 export default class LaymicSlider {
-  isViewerUIActive = false;
-  el: ViewerElements;
-  swiper: Swiper;
-  state: LaymicStates;
-  builder: DOMBuilder;
-  preference: LaymicPreference;
-  zoom: LaymicZoom;
   // 現在のviewType文字列
   viewType: SwiperViewType = "horizontal2p";
+  swiper: Swiper;
+  readonly el: ViewerElements;
+  readonly state: LaymicStates;
+  readonly builder: DOMBuilder;
+  readonly preference: LaymicPreference;
+  readonly zoom: LaymicZoom;
+  private _isViewerUIActive = false;
+
   constructor(
     el: ViewerElements,
     builder: DOMBuilder,
@@ -45,10 +46,26 @@ export default class LaymicSlider {
     this.swiper = new Swiper(this.el.swiperEl, conf);
   }
 
+  /**
+   * ビューワー操作UIが現在表示されているかのboolを返す
+   * @return ビューワー操作UIが表示されているならtrue
+   */
+  get isViewerUIActive(): boolean {
+    return this._isViewerUIActive;
+  }
+
+  /**
+   * 現在表示中のページ数を表示する
+   * @return swiper.activeIndexを返す
+   */
   get activeIdx(): number {
     return this.swiper.activeIndex;
   }
 
+  /**
+   * 横読み1p表示にて用いる設定値
+   * @return SwiperOptions
+   */
   private get swiper1pHorizViewConf(): SwiperOptions {
     return {
       direction: "horizontal",
@@ -68,6 +85,10 @@ export default class LaymicSlider {
     }
   }
 
+  /**
+   * 横読み2p表示にて用いる設定値
+   * @return SwiperOptions
+   */
   private get swiper2pHorizViewConf(): SwiperOptions {
     const conf = this.swiper1pHorizViewConf;
     const patch: SwiperOptions = {
@@ -77,6 +98,10 @@ export default class LaymicSlider {
     return Object.assign(conf, patch);
   }
 
+  /**
+   * 縦読み表示にて用いる設定値
+   * @return SwiperOptions
+   */
   private get swiperVertViewConf(): SwiperOptions {
     const conf = this.swiper1pHorizViewConf;
     const patch: SwiperOptions = {
@@ -90,6 +115,10 @@ export default class LaymicSlider {
     return Object.assign(conf, patch);
   }
 
+  /**
+   * 縦読み/横読み表示のトグル切り替えを行う
+   * 同時にビューワーUIを隠し、rootElへとフォーカスを移す
+   */
   toggleVerticalView() {
     if (!this.state.isVertView) {
       this.enableVerticalView()
@@ -488,6 +517,7 @@ export default class LaymicSlider {
 
   /**
    * ビューワー操作UIをトグルさせる
+   * @param isMoveFocus trueであればrootElへとフォーカスを移す
    */
   toggleViewerUI(isMoveFocus: boolean = false) {
     if (this.isViewerUIActive) {
@@ -497,25 +527,32 @@ export default class LaymicSlider {
     }
   }
 
+  /**
+   * ビューワー操作UIを表示する
+   */
   showViewerUI() {
     const stateName = this.builder.stateNames.visibleUI;
     this.el.rootEl.classList.add(stateName);
-    this.isViewerUIActive = true;
+    this._isViewerUIActive = true;
   }
 
   /**
    * ビューワー操作UIを非表示化する
+   * @param isMoveFocus trueであればrootElへとフォーカスを移す
    */
   hideViewerUI(isMoveFocus: boolean = false) {
     const stateName = this.builder.stateNames.visibleUI;
     this.el.rootEl.classList.remove(stateName);
-    this.isViewerUIActive = false;
+    this._isViewerUIActive = false;
 
     // isMoveFocusがtrueの際、
     // viewerUIを隠すと同時にrootElへとフォーカスを戻す
     if (isMoveFocus) this.el.rootEl.focus()
   }
 
+  /**
+   * swiper内画像をlazyloadする
+   */
   loadLazyImgs() {
     if (this.swiper.lazy) {
       this.swiper.lazy.load();
@@ -524,6 +561,7 @@ export default class LaymicSlider {
 
   /**
    * 一つ前のスライドを表示する
+   *
    * swiper.slidePrev()には
    * 特定状況下で0番スライドに巻き戻る不具合が
    * 存在するようなので、slideTo()を用いて手動で動かしている
@@ -536,6 +574,10 @@ export default class LaymicSlider {
     this.swiper.slideTo(prevIdx, speed);
   }
 
+  /**
+   * 一つ次のスライドを表示する
+   * @param  speed アニメーション速度
+   */
   slideNext(speed?: number) {
     this.swiper.slideNext(speed);
   }

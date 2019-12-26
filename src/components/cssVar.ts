@@ -5,8 +5,8 @@ import {
   PageSize
 } from "../interfaces/index";
 export default class LaymicCSSVariables {
-  el: ViewerElements;
-  state: LaymicStates;
+  readonly el: ViewerElements;
+  readonly state: LaymicStates;
   constructor(el: ViewerElements, state: LaymicStates) {
     this.el = el;
     this.state = state;

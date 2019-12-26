@@ -4,20 +4,21 @@ import LaymicPreference from "./preference";
 import { rafThrottle, cancelableRafThrottle, isMobile, passiveFalseOption, isMultiTouch, createDoubleClickHandler} from "../utils";
 
 export default class LaymicZoom {
-  rootEl: HTMLElement;
-  wrapper: HTMLElement;
-  controller: HTMLElement;
-  builder: DOMBuilder;
-  preference: LaymicPreference
-  state: LaymicZoomStates = this.defaultLaymicZoomStates;
+  readonly rootEl: HTMLElement;
+  readonly wrapper: HTMLElement;
+  readonly controller: HTMLElement;
+  readonly builder: DOMBuilder;
+  readonly preference: LaymicPreference
+  readonly state: LaymicZoomStates = LaymicZoom.defaultLaymicZoomStates;
+
   constructor(builder: DOMBuilder, rootEl: HTMLElement, preference: LaymicPreference) {
-    const zoomEl = builder.createDiv();
-    zoomEl.className = builder.classNames.zoom.controller;
+    const zoomNames = builder.classNames.zoom;
+    const zoomEl = builder.createDiv(zoomNames.controller);
 
     this.controller = zoomEl;
     this.rootEl = rootEl;
 
-    this.wrapper = builder.createZoomWrapper()
+    this.wrapper = builder.createDiv(zoomNames.wrapper);
     // focus操作を受け付けるようにしておく
     this.wrapper.tabIndex = -1;
 
@@ -31,7 +32,7 @@ export default class LaymicZoom {
    * LaymicZoomStatesのデフォルト値を返す
    * @return LaymicZoomStatesデフォルト値
    */
-  get defaultLaymicZoomStates(): LaymicZoomStates {
+  static get defaultLaymicZoomStates(): LaymicZoomStates {
     return {
       zoomRatio: 1.0,
       minRatio: 1.0,
@@ -141,6 +142,12 @@ export default class LaymicZoom {
     this.state.zoomRect = zoomRect;
   }
 
+  /**
+   * 過去の二点タッチ距離を更新する
+   * pastDistanceは計算に用いるので、適時更新する必要がある
+   *
+   * @param  e TouchEvent
+   */
   updatePastDistance(e: TouchEvent) {
     const distance = this.getDistanceBetweenTouches(e);
     this.state.pastDistance = distance;
@@ -160,7 +167,7 @@ export default class LaymicZoom {
   /**
    * 拡大縮小処理を行う
    * 引数を省略した場合は中央寄せでズームする
-   * @param  zoomRatio ズーム倍率
+   * @param  zoomRatio ズーム倍率。関連設定値を参照する
    * @param  zoomX     正規化されたズーム時中央横座標
    * @param  zoomY     正規化されたズーム時中央縦座標
    */
@@ -283,7 +290,7 @@ export default class LaymicZoom {
 
   /**
    * touchstartに対して登録する処理まとめ
-   * @param  e タッチイベント
+   * @param  e TouchEvent
    */
   private touchStartHandler(e: TouchEvent) {
     e.stopPropagation();
@@ -299,7 +306,7 @@ export default class LaymicZoom {
 
   /**
    * touchmoveイベントに対して登録する処理まとめ
-   * @param  e タッチイベント
+   * @param  e TouchEvent
    */
   private touchMoveHandler(e: TouchEvent) {
     // rafThrottleでの非同期呼び出しを行うので
@@ -326,6 +333,7 @@ export default class LaymicZoom {
    * インスタンス生成時に一度だけ呼ばれることを想定
    */
   private applyEventListeners() {
+    // モバイル環境でのaddEventListnerまとめ
     const applyEventsForMobile = () => {
       this.controller.addEventListener("touchstart", e => this.touchStartHandler(e));
 
@@ -357,6 +365,7 @@ export default class LaymicZoom {
       }))
     }
 
+    // PC環境でのaddEventListenerまとめ
     const applyEventsForPC = () => {
       this.controller.addEventListener("click", () => {
         // ドラッグ操作がなされている場合は処理をスキップ
