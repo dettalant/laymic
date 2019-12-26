@@ -351,15 +351,18 @@ export default class LaymicSlider {
    * @param  e WheelEvent
    */
   sliderWheelHandler(e: WheelEvent) {
+    const dx = e.deltaX;
+    const dy = e.deltaY;
+    const isLTR = this.state.isLTR;
     // 上下ホイール判定
     // || RTL時の左右ホイール判定
     // || LTR時の左右ホイール判定
-    const isNext = e.deltaY > 0
-    || !this.state.isLTR && e.deltaX < 0
-    || this.state.isLTR && e.deltaX > 0;
-    const isPrev = e.deltaY < 0
-    || !this.state.isLTR && e.deltaX > 0
-    || this.state.isLTR && e.deltaX < 0;
+    const isNext = dy > 0
+      || !isLTR && dx < 0
+      || isLTR && dx > 0;
+    const isPrev = dy < 0
+      || !isLTR && dx > 0
+      || isLTR && dx < 0;
 
     if (isNext) {
       // 進む

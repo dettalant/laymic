@@ -116,6 +116,8 @@
   top: 0;
   left: 0;
   z-index: 15;
+  /* button同様カーソルをポインターにしておく */
+  cursor: pointer;
 }
 
 .laymic_root .laymic_progressbar {

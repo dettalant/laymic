@@ -1,8 +1,10 @@
 import screenfull from "screenfull";
 import {
   rafSleep,
+  multiRafSleep,
   isLaymicPages,
   rafThrottle,
+  wheelThrottle,
   excludeHashLocation,
   orientationChangeHandlers,
   parentOrientationChangeHandler,
@@ -21,7 +23,6 @@ import LaymicSlider from "./slider";
 import {
   ViewerPages,
   ViewerElements,
-  ViewerUIButtons,
   LaymicPages,
   LaymicOptions,
   PreferenceUpdateEventString,
@@ -152,8 +153,6 @@ export default class Laymic {
       this.preference,
       this.zoom,
     );
-    // 初期状態ではビューワーUIを表示しておく
-    this.slider.showViewerUI();
 
     // ビューワー方向の初期値が縦読みの場合はそれを表示
     if (options.viewerDirection === "vertical") this.slider.enableVerticalView(false)
@@ -164,7 +163,11 @@ export default class Laymic {
     // location.hashにmangaViewerIdと同値が指定されている場合は
     // 即座に開く
     if (this.state.isInstantOpen && location.hash === "#" + this.state.viewerId) {
-      this.open(true);
+      // progressbarが正常に表示されない不具合を避けるため
+      // rafSleepを噛ませておく
+      rafSleep().then(() => {
+        this.open(true);
+      })
     }
   }
 
@@ -188,11 +191,17 @@ export default class Laymic {
       })
     };
 
-    // rootElにフォーカスを移す
-    rafSleep()
-      .then(() => rafSleep())
+    // 確実なウェイトを取るため2回rafSleep
+    multiRafSleep(2)
       .then(() => {
+        // rootElにフォーカスを移す
         this.el.rootEl.focus();
+        return rafSleep();
+      })
+      .then(() => {
+        // rootElにfocusが当たるとviewerUIが隠れてしまうので
+        // rafSleepを挟んでからshowViewerUIして打ち消す
+        this.slider.showViewerUI();
       })
 
     // preferenceかinitOptionの値を適用する
@@ -389,7 +398,7 @@ export default class Laymic {
 
       // マウスホイールでのイベント
       // swiper純正のマウスホイール処理は動作がすっとろいので自作
-      el.addEventListener("wheel", rafThrottle(e => this.slider.sliderWheelHandler(e)));
+      el.addEventListener("wheel", wheelThrottle(rafThrottle(e => this.slider.sliderWheelHandler(e))));
 
       if (this.state.isMobile) {
         el.addEventListener("touchstart", e => this.slider.sliderTouchStartHandler(e));
@@ -409,15 +418,16 @@ export default class Laymic {
     // 場所ではイベント伝播を停止させる
     Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
 
-    type UIButton<T = ViewerUIButtons> = T[keyof T];
     // ViewerUIButtonsに属するbutton要素に対してのkeydownイベント
-    Object.values(this.el.buttons).forEach((el: UIButton) => el.addEventListener("keydown", e => {
+    Object.values(this.el.buttons)
+      .filter(el => el instanceof HTMLButtonElement)
+      .forEach((el: HTMLButtonElement) => el.addEventListener("keydown", e => {
       // 決定役割のキーが押された場合のみ
       // バブリングを停止させる
-      if (["Enter", " ", "Spacebar"].includes(e.key)) {
-        e.stopPropagation();
-      }
-    }))
+        if (["Enter", " ", "Spacebar"].includes(e.key)) {
+          e.stopPropagation();
+        }
+      }))
 
     // カスタムイベント登録
     this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<PreferenceUpdateEventString>) => this.laymicPreferenceUpdateHandler(e)) as EventListener)

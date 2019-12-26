@@ -133,6 +133,71 @@ export const cancelableRafThrottle = function<
   }
 }
 
+// trackpadでの疑似ホイール移動等をまかなうため、
+// ホイールイベントでの移動量を計算し、
+// 一般的なマウススクロール量と同じだけスクロールした場合にのみ
+// callbackを動作させる関数
+export const wheelThrottle = function<
+  T extends Element,
+  E extends WheelEvent
+> (callback: (ev: E) => void) {
+  // DOM_DELTA_LINE時に掛け合わせるlineHeight固定値
+  const lh = 18;
+  // 計算に用いるtmp変数群
+  let px = 0;
+  let py = 0;
+  let pastDx = 0;
+  let pastDy = 0;
+
+  // tmp変数を初期化する
+  const resetVariable = () => {
+    px = 0;
+    py = 0;
+    pastDx = 0;
+    pastDy = 0;
+  }
+
+  return function(this: T, ev: E) {
+    // callbackを呼び出す関数
+    // 同時にtmp変数も初期化しておく
+    const doCallback = () => {
+      resetVariable();
+      callback.call(this, ev)
+    }
+
+    // if DOM_DELTA_PAGE
+    // deltaPageモードでは無条件でcallbackを呼び出す
+    if (ev.deltaMode === 2) {
+      doCallback();
+      return;
+    }
+
+    const isDeltaPixel = ev.deltaMode === 0;
+    const [dx, dy] = (isDeltaPixel)
+      ? [ev.deltaX, ev.deltaY]
+      : [ev.deltaX * lh, ev.deltaY * lh];
+
+    // 過去の値と+-の方向が違っていたなら値をresetする
+    // いわゆるXORと同じことを行っている
+    if (pastDx > 0 !== dx > 0
+      || pastDy > 0 !== dy > 0
+    ) {
+      resetVariable();
+    }
+
+    // 値をtmp変数に足し合わせる
+    px += dx;
+    pastDx = dx;
+    py += dy;
+    pastDy = dy;
+
+    // tmp変数の値が50か-50を超えていればcallbackを呼び出す
+    if (Math.abs(px) > 50 || Math.abs(py) > 50) {
+      doCallback();
+    }
+  }
+}
+
 // export const createDoubleTapHandler = function<
 //   T extends HTMLElement,
 //   E extends TouchEvent

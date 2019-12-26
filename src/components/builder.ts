@@ -359,9 +359,7 @@ export default class DOMBuilder {
     ctrlEl.className = ctrlClassNames.controller;
     ctrlEl.tabIndex = -1;
 
-    const progressbar = this.createButton();
-    // プログレスバーはTab押下でフォーカスが行かないように変更
-    progressbar.tabIndex = -1;
+    const progressbar = this.createDiv();
     progressbar.className = "swiper-pagination " + btnClassNames.progressbar;
 
     const ctrlTopEl = this.createDiv();

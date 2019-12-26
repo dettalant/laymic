@@ -44,5 +44,5 @@ export interface ViewerUIButtons {
   nextPage: HTMLButtonElement,
   prevPage: HTMLButtonElement,
   zoom: HTMLButtonElement
-  progressbar: HTMLButtonElement,
+  progressbar: HTMLDivElement,
 }
