@@ -289,6 +289,10 @@ export default class LaymicZoom {
     const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
     const maxX = rw - cw;
     const maxY = rh - ch;
+
+    // maxX/maxYが0の場合はバグるので早期リターン
+    if (maxX === 0 || maxY === 0) return;
+
     let scrollSize = 60;
 
     // isPageScrollがtrueであれば、移動量をpage幅にする
@@ -318,13 +322,12 @@ export default class LaymicZoom {
 
     // `0 / 0`とした際はNaNとなってバグが出るので
     // max値に1を足しておく
-    const nx = (Math.abs(rx) + adjustX) / (maxX + 1);
-    const ny = (Math.abs(ry) + adjustY) / (maxY + 1);
+    const nx = (Math.abs(rx) + adjustX) / maxX;
+    const ny = (Math.abs(ry) + adjustY) / maxY;
 
     // 0~1の間にclampする
     const clampX = Math.max(Math.min(nx, 1), 0);
     const clampY = Math.max(Math.min(ny, 1), 0);
-
     this.enableZoom(this.state.zoomRatio, clampX, clampY);
   }
 
@@ -370,6 +373,8 @@ export default class LaymicZoom {
 
   /**
    * 画面中央座標を正規化して返す
+   * NOTE: ズームがなされてない時に呼び出されると
+   *       NaNを返すのだと思われる
    * @return [centeringX, centeringY]
    */
   private getNormalizedCurrentCenter(): [number, number] {
@@ -378,13 +383,11 @@ export default class LaymicZoom {
     const maxX = rw - iw;
     const maxY = rh - ih;
 
-    // `0 / 0`とした際はNaNとなってバグが出るので
-    // max値に1を足しておく
-    const nx = Math.abs(rx) / (maxX + 1);
-    const ny = Math.abs(ry) / (maxY + 1);
+    // NaNが返ったときは応急処置として0.5を返す
+    const nx = Math.abs(rx) / maxX || 0.5;
+    const ny = Math.abs(ry) / maxY || 0.5;
 
-    // 戻り値が[0, 0]の場合は[0.5, 0.5]を返す
-    return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
+    return [nx, ny];
   }
 
   /**

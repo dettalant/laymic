@@ -380,25 +380,61 @@ export default class LaymicSlider {
    * @param  e WheelEvent
    */
   sliderWheelHandler(e: WheelEvent) {
+    const mainModeHandler = (dx: number, dy: number) => {
+      const isLTR = this.state.isLTR;
+      // 上下ホイール判定
+      // || RTL時の左右ホイール判定
+      // || LTR時の左右ホイール判定
+      const isNext = dy > 0
+        || !isLTR && dx < 0
+        || isLTR && dx > 0;
+      const isPrev = dy < 0
+        || !isLTR && dx > 0
+        || isLTR && dx < 0;
+
+      if (isNext) {
+        // 進む
+        this.slideNext();
+      } else if (isPrev) {
+        // 戻る
+        this.slidePrev();
+      }
+    }
+
+    const zoomModeHandler = (dx: number, dy: number) => {
+      let direction: "up" | "down" | "right" | "left" | "" = "";
+
+      if (dx !== 0) direction = (dx > 0)
+        ? "right"
+        : "left";
+
+      if (dy !== 0) direction = (dy > 0)
+        ? "down"
+        : "up";
+
+      switch (direction) {
+        case "up":
+          this.zoom.scrollUp();
+          break;
+        case "down":
+          this.zoom.scrollDown();
+          break;
+        case "left":
+          this.zoom.scrollLeft();
+          break;
+        case "right":
+          this.zoom.scrollRight();
+          break;
+      }
+    }
+
     const dx = e.deltaX;
     const dy = e.deltaY;
-    const isLTR = this.state.isLTR;
-    // 上下ホイール判定
-    // || RTL時の左右ホイール判定
-    // || LTR時の左右ホイール判定
-    const isNext = dy > 0
-      || !isLTR && dx < 0
-      || isLTR && dx > 0;
-    const isPrev = dy < 0
-      || !isLTR && dx > 0
-      || isLTR && dx < 0;
 
-    if (isNext) {
-      // 進む
-      this.slideNext();
-    } else if (isPrev) {
-      // 戻る
-      this.slidePrev();
+    if (this.zoom.isZoomed) {
+      zoomModeHandler(dx, dy);
+    } else {
+      mainModeHandler(dx, dy);
     }
   }
 
