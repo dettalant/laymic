@@ -380,7 +380,9 @@ export default class LaymicSlider {
    * @param  e WheelEvent
    */
   sliderWheelHandler(e: WheelEvent) {
-    const mainModeHandler = (dx: number, dy: number) => {
+    const mainModeHandler = (e: WheelEvent) => {
+      const dx = e.deltaX;
+      const dy = e.deltaY;
       const isLTR = this.state.isLTR;
       // 上下ホイール判定
       // || RTL時の左右ホイール判定
@@ -401,16 +403,53 @@ export default class LaymicSlider {
       }
     }
 
-    const zoomModeHandler = (dx: number, dy: number) => {
+    const zoomModeHandler = (e: WheelEvent) => {
+      const dx = e.deltaX;
+      const dy = e.deltaY;
+      const isShift = e.shiftKey;
+      const isLTR = this.state.isLTR;
+
+      const isHorizSpin = dx !== 0;
+      const isVertSpin = dy !== 0;
+      const isDown = dy > 0;
+      const isRight = dx > 0;
       let direction: "up" | "down" | "right" | "left" | "" = "";
 
-      if (dx !== 0) direction = (dx > 0)
-        ? "right"
-        : "left";
+      if (isShift) {
+        // shift + ホイール時は上下ホイールで左右移動、
+        // 左右ホイールで上下移動と
+        // あべこべ操作にする
+        if (isLTR && isHorizSpin) {
+          direction = (isRight)
+            ? "down"
+            : "up";
+        } else if (isHorizSpin) {
+          direction = (isRight)
+            ? "up"
+            : "down";
+        }
 
-      if (dy !== 0) direction = (dy > 0)
-        ? "down"
-        : "up";
+        if (isLTR && isVertSpin) {
+          // LTR時
+          direction = (isDown)
+            ? "right"
+            : "left";
+        } else if (isVertSpin) {
+          // RTL(通常)時
+          direction = (isDown)
+            ? "left"
+            : "right";
+        }
+      } else {
+        // 通常
+        if (isHorizSpin) direction = (isRight)
+          ? "right"
+          : "left";
+
+        if (isVertSpin) direction = (isDown)
+          ? "down"
+          : "up";
+      }
 
       switch (direction) {
         case "up":
@@ -428,13 +467,10 @@ export default class LaymicSlider {
       }
     }
 
-    const dx = e.deltaX;
-    const dy = e.deltaY;
-
     if (this.zoom.isZoomed) {
-      zoomModeHandler(dx, dy);
+      zoomModeHandler(e);
     } else {
-      mainModeHandler(dx, dy);
+      mainModeHandler(e);
     }
   }
 
