@@ -209,6 +209,126 @@ export default class LaymicZoom {
   }
 
   /**
+   * ズーム中に上へとスクロール可能かどうかのboolを返す
+   * @return 上へとスクロール可能ならtrue
+   */
+  get isScrollableUp(): boolean {
+    const ch = this.rootEl.clientHeight;
+    const ry = this.state.zoomRect.t;
+    return this.isZoomed && ch > ch - Math.abs(ry);
+  }
+
+  /**
+   * ズーム中に下へとスクロール可能かどうかのboolを返す
+   * @return 下へとスクロール可能ならtrue
+   */
+  get isScrollableDown(): boolean {
+    const ch = this.rootEl.clientHeight;
+    const {t: ry, h: rh} = this.state.zoomRect;
+    return this.isZoomed && rh - ch > Math.abs(ry);
+  }
+
+  /**
+   * ズーム中に左へとスクロール可能かどうかのboolを返す
+   * @return 左へとスクロール可能ならtrue
+   */
+  get isScrollableLeft(): boolean {
+    const cw = this.rootEl.clientWidth;
+    const rx = this.state.zoomRect.l;
+    return this.isZoomed && cw > cw - Math.abs(rx);
+  }
+
+  /**
+   * ズーム中に右へとスクロール可能かどうかのboolを返す
+   * @return 右へとスクロール可能ならtrue
+   */
+  get isScrollableRight(): boolean {
+    const cw = this.rootEl.clientWidth;
+    const {l: rx, w: rw} = this.state.zoomRect;
+    return this.isZoomed && rw - cw > Math.abs(rx);
+  }
+
+  /**
+   * ズーム中に上へとスクロールさせる
+   * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+   */
+  scrollUp(isPageScroll: boolean = false) {
+    if (!this.isScrollableUp) return;
+    this.scroll("up", isPageScroll);
+  }
+
+  /**
+   * ズーム中に下へとスクロールさせる
+   * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+   */
+  scrollDown(isPageScroll: boolean = false) {
+    if (!this.isScrollableDown) return;
+    this.scroll("down", isPageScroll);
+  }
+
+  /**
+   * ズーム中に左へとスクロールさせる
+   * @param  isPageScroll trueならばページ横幅に応じてスクロール
+   */
+  scrollLeft(isPageScroll: boolean = false) {
+    if (!this.isScrollableLeft) return;
+    this.scroll("left", isPageScroll);
+  }
+
+  /**
+   * ズーム中に右へとスクロールさせる
+   * @param  isPageScroll trueならばページ横幅に応じてスクロール
+   */
+  scrollRight(isPageScroll: boolean = false) {
+    if (!this.isScrollableRight) return;
+    this.scroll("right", isPageScroll);
+  }
+
+  private scroll(direction: "up" | "down" | "left" | "right", isPageScroll: boolean = false) {
+    const {clientWidth: cw, clientHeight: ch} = this.rootEl;
+    const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
+    const maxX = rw - cw;
+    const maxY = rh - ch;
+    let scrollSize = 60;
+
+    // isPageScrollがtrueであれば、移動量をpage幅にする
+    if (isPageScroll) {
+      // 上下移動の場合はclientHeightを、
+      // 左右移動の場合はclientWidthを用いる
+      scrollSize = (direction === "up" || direction === "down")
+        ? ch
+        : cw;
+    }
+
+    let adjustX = 0;
+    let adjustY = 0;
+    if (direction === "up") {
+      // up
+      adjustY = -scrollSize
+    } else if (direction === "down") {
+      // down
+      adjustY = scrollSize
+    } else if (direction === "left") {
+      // left
+      adjustX = -scrollSize;
+    } else {
+      // right
+      adjustX = scrollSize;
+    }
+
+    // `0 / 0`とした際はNaNとなってバグが出るので
+    // max値に1を足しておく
+    const nx = (Math.abs(rx) + adjustX) / (maxX + 1);
+    const ny = (Math.abs(ry) + adjustY) / (maxY + 1);
+
+    // 0~1の間にclampする
+    const clampX = Math.max(Math.min(nx, 1), 0);
+    const clampY = Math.max(Math.min(ny, 1), 0);
+
+    this.enableZoom(this.state.zoomRatio, clampX, clampY);
+  }
+
+  /**
    * タッチされた二点間の距離を返す
    * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
    *
@@ -253,10 +373,10 @@ export default class LaymicZoom {
    * @return [centeringX, centeringY]
    */
   private getNormalizedCurrentCenter(): [number, number] {
-    const {innerWidth: cw, innerHeight: ch} = window;
+    const {innerWidth: iw, innerHeight: ih} = window;
     const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
-    const maxX = rw - cw;
-    const maxY = rh - ch;
+    const maxX = rw - iw;
+    const maxY = rh - ih;
 
     // `0 / 0`とした際はNaNとなってバグが出るので
     // max値に1を足しておく

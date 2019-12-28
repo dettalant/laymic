@@ -30,7 +30,7 @@ import {
 export default class Laymic {
   // HTMLElementまとめ
   readonly el: ViewerElements;
-  // mangaViewer内部で用いるステートまとめ
+  // laymic内部で用いるステートまとめ
   readonly state: LaymicStates = new LaymicStates();
   readonly initOptions: LaymicOptions;
   readonly preference: LaymicPreference;
@@ -596,7 +596,18 @@ export default class Laymic {
       const { isMobile } = this.state;
       if (isZoomed && !isMobile) {
         // ズーム時操作
-        if (parseKey(key, ["Escape", "Esc", "z", "Z"])) this.zoom.disable();
+        if (parseKey(key, ["Escape", "Esc", "Enter", "z", "Z"])) this.zoom.disable();
+        if (parseKey(key, "ArrowUp")) this.zoom.scrollUp();
+        if (parseKey(key, "ArrowDown")) this.zoom.scrollDown();
+        if (parseKey(key, "ArrowLeft")) this.zoom.scrollLeft();
+        if (parseKey(key, "ArrowRight")) this.zoom.scrollRight();
+        if (parseKey(key, "PageDown")
+          || !e.shiftKey && parseKey(key, [" ", "Spacebar"])) {
+          this.zoom.scrollDown(true);
+        } else if (parseKey(key, "PageUp") || e.shiftKey && parseKey(key, [" ", "Spacebar"])) {
+          this.zoom.scrollUp(true);
+        }
+
       } else if (isHelpActive) {
         // ヘルプ展開時操作
         // Escape, Space, Enter, hで閉じる
