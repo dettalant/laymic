@@ -1,6 +1,6 @@
 import Thumbnails from "#/components/thumbs";
 import DOMBuilder from "#/components/builder";
-import { ViewerStates } from "#/interfaces/core";
+import LaymicStates from "#/components/states";
 
 describe("thumbs class test", () => {
   const builder = new DOMBuilder();
@@ -9,16 +9,11 @@ describe("thumbs class test", () => {
     "test1.png",
     "test2.png",
   ]
-  const state: ViewerStates = {
-    viewerPadding: 10,
-    thumbItemWidth: 96,
-    thumbItemGap: 16,
-    thumbsWrapperPadding: 16,
-    thumbItemHeight: 128,
-  } as ViewerStates;
+
+  const states = new LaymicStates();
 
   const rootEl = builder.createDiv();
-  const thumbs = new Thumbnails(builder, rootEl, testPics, testPics, state);
+  const thumbs = new Thumbnails(builder, rootEl, testPics, testPics, states);
 
   it("revealImgs test", () => {
     thumbs.thumbEls.forEach(el => {
