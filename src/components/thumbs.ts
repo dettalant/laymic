@@ -143,8 +143,8 @@ export default class LaymicThumbnails {
     this._isActive = true;
 
     // 少々遅延させてからフォーカスを移動させる
-    // 二回ほどrafSleepすると良い塩梅になる
-    multiRafSleep(2).then(() => {
+    // 適当に5回ほどrafSleepする
+    multiRafSleep(5).then(() => {
       this.wrapperEl.focus();
     })
   }
@@ -163,14 +163,12 @@ export default class LaymicThumbnails {
   /**
    * 読み込み待ち状態のimg elementを全て読み込む
    * いわゆるlazyload処理
+   * @return  全画像読み込み完了を受け取れるPromiseオブジェクト
    */
-  private revealImgs() {
+  private revealImgs(): Promise<void[]> {
     const {lazyload, lazyloading, lazyloaded} = this.builder.classNames.thumbs;
-    this.thumbEls.forEach(el => {
-      if (!(el instanceof HTMLImageElement)) {
-        return;
-      }
 
+    const revealImg = (el: HTMLImageElement): Promise<void> => new Promise(res => {
       const s = el.dataset.src;
       if (s) {
         // 読み込み中はクラス名を変更
@@ -179,11 +177,26 @@ export default class LaymicThumbnails {
         // 読み込みが終わるとクラス名を再変更
         el.addEventListener("load", () => {
           el.classList.replace(lazyloading, lazyloaded);
+          res();
+        })
+
+        el.addEventListener("error", () => {
+          // 読み込み失敗時はとりあえずコンソール出力しておく
+          console.error("サムネイル画像読み込みに失敗: " + s);
+          res();
         })
 
         el.src = s;
       }
     })
+
+    return Promise.all(this.thumbEls
+      .map((el) => {
+        if (!(el instanceof HTMLImageElement)) return
+        return revealImg(el)
+      })
+      .filter(maybePromise => maybePromise !== void 0)
+    )
   }
 
   /**

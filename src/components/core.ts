@@ -1,6 +1,7 @@
 import screenfull from "screenfull";
 import {
   rafSleep,
+  multiRafSleep,
   isLaymicPages,
   rafThrottle,
   wheelThrottle,
@@ -193,7 +194,7 @@ export default class Laymic {
         // slideが追加された後に処理を行う必要があるため
         // rafSleepを噛ませて非同期処理とする
         if (isInitialOpen) this.slider.switchSingleSlideState()
-        return rafSleep();
+        return multiRafSleep(4);
       })
       .then(() => {
         // 確実なウェイトを取るため2回rafSleep

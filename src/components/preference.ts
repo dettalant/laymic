@@ -377,9 +377,9 @@ export default class LaymicPreference {
     setAriaExpanded(this.rootEl, true);
     this._isActive = true;
 
-    // 二回ほどrafSleepしてフォーカス移動タイミングをずらす
+    // 五回ほどrafSleepしてフォーカス移動タイミングをずらす
     // 小手先技コードなので、デバイスによっては上手く動かないかも
-    multiRafSleep(2).then(() => {
+    multiRafSleep(5).then(() => {
       this.wrapperEl.focus();
     })
   }
@@ -444,7 +444,7 @@ export default class LaymicPreference {
 
     if (dataStr) {
       try {
-        data = JSON.parse(dataStr);
+        data = Object.assign(data, JSON.parse(dataStr));
       } catch(e) {
         console.error(e);
         localStorage.removeItem(this.PREFERENCE_KEY);

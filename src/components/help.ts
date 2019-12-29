@@ -93,8 +93,8 @@ export default class LaymicHelp {
     this._isActive = true;
 
     // フォーカス移動
-    // 二回ほどrafSleepすると良い塩梅になる
-    multiRafSleep(2).then(() => {
+    // 余裕を持って5回ほどrafSleepする
+    multiRafSleep(5).then(() => {
       this.el.focus();
     })
   }

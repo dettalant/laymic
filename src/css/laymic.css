@@ -374,7 +374,8 @@
   border-width: .5rem 0;
 }
 
-.laymic_thumbItem {
+/* 優先度を上げるため冗長な書き方を行う */
+.laymic_thumbsWrapper .laymic_thumbItem {
   overflow: hidden;
 }
 
