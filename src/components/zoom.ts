@@ -110,8 +110,8 @@ export default class LaymicZoom {
     // その平均値をズームの中心座標とする
     const [bx, by] = this.getNormalizedPosBetweenTouches(e);
     const [cx, cy] = this.getNormalizedCurrentCenter();
-    const zoomX = (bx + cx) / 2;
     const zoomY = (by + cy) / 2;
+    const zoomX = (bx + cx) / 2;
 
     this.enableZoom(zoomRatio, zoomX, zoomY);
     this.state.pastDistance = distance;
@@ -373,19 +373,19 @@ export default class LaymicZoom {
 
   /**
    * 画面中央座標を正規化して返す
-   * NOTE: ズームがなされてない時に呼び出されると
-   *       NaNを返すのだと思われる
    * @return [centeringX, centeringY]
    */
   private getNormalizedCurrentCenter(): [number, number] {
     const {innerWidth: iw, innerHeight: ih} = window;
     const {l: rx, t: ry, w: rw, h: rh} = this.state.zoomRect;
-    const maxX = rw - iw;
-    const maxY = rh - ih;
 
-    // NaNが返ったときは応急処置として0.5を返す
-    const nx = Math.abs(rx) / maxX || 0.5;
-    const ny = Math.abs(ry) / maxY || 0.5;
+    // 画面中心座標を出す
+    const cx = Math.abs(rx) + iw / 2;
+    const cy = Math.abs(ry) + ih / 2;
+
+    // 画面中心座標を最大幅で割る
+    const nx = cx / rw;
+    const ny = cy / rh;
 
     return [nx, ny];
   }
