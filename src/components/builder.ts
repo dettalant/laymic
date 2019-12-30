@@ -374,7 +374,7 @@ export default class DOMBuilder {
 
     const fullscreen = this.createUIButton(
       btnsNames.fullscreen,
-      "フルスクリーン (f)",
+      "全画面切り替え (f)",
       [
         this.icons.fullscreen,
         this.icons.exitFullscreen
@@ -409,7 +409,7 @@ export default class DOMBuilder {
 
     const zoom = this.createUIButton(
       btnsNames.zoom,
-      "ズーム (z)",
+      "拡大 (z/ホイールクリック)",
       [this.icons.zoomIn]
     );
 
@@ -421,9 +421,9 @@ export default class DOMBuilder {
 
     [
       help,
+      zoom,
       direction,
       thumbs,
-      zoom,
       fullscreen,
       preference,
       close
@@ -574,7 +574,7 @@ export default class DOMBuilder {
 
   createParagraph(className: string = "", textContent: string = ""): HTMLParagraphElement {
     const p = document.createElement("p");
-    if (className) p.className = className;  
+    if (className) p.className = className;
     if (textContent) p.textContent = textContent;
     return p;
   }
@@ -641,17 +641,17 @@ export default class DOMBuilder {
         className: helpNames.fullscreenItem,
       },
       {
-        icons: [this.icons.zoomIn],
-        label: "拡大表示",
-        className: helpNames.zoomItem,
-      },
-      {
         icons: [this.icons.showThumbs],
         label: "サムネイル"
       },
       {
         icons: [this.icons.vertView, this.icons.horizView],
         label: "縦読み/横読み"
+      },
+      {
+        icons: [this.icons.zoomIn],
+        label: "拡大",
+        className: helpNames.zoomItem,
       },
       {
         icons: [this.icons.showHelp],

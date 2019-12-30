@@ -339,6 +339,26 @@ export default class LaymicSlider {
   }
 
   /**
+   * スライダー部分のマウスアップハンドラ
+   * ホイールクリックはclickでは取れないようなので
+   * 苦肉の策としてmouseupを用いる
+   * @param  e MouseEvent
+   */
+  sliderMouseUpHandler(e: MouseEvent) {
+    // ホイールクリック以外では処理終了
+    if (e.button !== 1) return;
+
+    if (this.zoom.isZoomed) {
+      // ズーム中はクリック同様ズーム終了
+      this.zoom.disable();
+    } else {
+      // 非ズーム時にホイールクリックでズーム
+      this.zoom.enable();
+      this.hideViewerUI();
+    }
+  }
+
+  /**
    * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
    * @param  e MouseEvent
    */
@@ -403,75 +423,10 @@ export default class LaymicSlider {
       }
     }
 
-    const zoomModeHandler = (e: WheelEvent) => {
-      const dx = e.deltaX;
-      const dy = e.deltaY;
-      const isShift = e.shiftKey;
-      const isLTR = this.state.isLTR;
-
-      const isHorizSpin = dx !== 0;
-      const isVertSpin = dy !== 0;
-      const isDown = dy > 0;
-      const isRight = dx > 0;
-      let direction: "up" | "down" | "right" | "left" | "" = "";
-
-      if (isShift) {
-        // shift + ホイール時は上下ホイールで左右移動、
-        // 左右ホイールで上下移動と
-        // あべこべ操作にする
-        if (isLTR && isHorizSpin) {
-          direction = (isRight)
-            ? "down"
-            : "up";
-        } else if (isHorizSpin) {
-          direction = (isRight)
-            ? "up"
-            : "down";
-        }
-
-        if (isLTR && isVertSpin) {
-          // LTR時
-          direction = (isDown)
-            ? "right"
-            : "left";
-        } else if (isVertSpin) {
-          // RTL(通常)時
-          direction = (isDown)
-            ? "left"
-            : "right";
-        }
-      } else {
-        // 通常
-        if (isHorizSpin) direction = (isRight)
-          ? "right"
-          : "left";
-
-        if (isVertSpin) direction = (isDown)
-          ? "down"
-          : "up";
-      }
-
-      switch (direction) {
-        case "up":
-          this.zoom.scrollUp();
-          break;
-        case "down":
-          this.zoom.scrollDown();
-          break;
-        case "left":
-          this.zoom.scrollLeft();
-          break;
-        case "right":
-          this.zoom.scrollRight();
-          break;
-      }
-    }
-
     if (this.zoom.isZoomed) {
-      zoomModeHandler(e);
-    } else {
-      mainModeHandler(e);
+      this.zoom.disable();
     }
+    mainModeHandler(e);
   }
 
   /**
