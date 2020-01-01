@@ -345,6 +345,15 @@ export default class LaymicSlider {
    * @param  e MouseEvent
    */
   sliderMouseUpHandler(e: MouseEvent) {
+    const getNormalizedPos = (e: MouseEvent) => {
+      const {clientX: cx, clientY: cy} = e;
+      const {clientWidth: cw, clientHeight: ch} = this.el.rootEl;
+
+      const nx = cx / cw;
+      const ny = cy / ch;
+      return [nx, ny]
+    }
+
     // ホイールクリック以外では処理終了
     if (e.button !== 1) return;
 
@@ -352,8 +361,11 @@ export default class LaymicSlider {
       // ズーム中はクリック同様ズーム終了
       this.zoom.disable();
     } else {
-      // 非ズーム時にホイールクリックでズーム
-      this.zoom.enable();
+      const ratio = this.preference.zoomButtonRatio;
+
+      const [nx, ny] = getNormalizedPos(e);
+      
+      this.zoom.enable(ratio, nx, ny);
       this.hideViewerUI();
     }
   }
