@@ -158,7 +158,7 @@ export default class LaymicPreference {
       isDisabledDoubleTapResetZoom: false,
       progressBarWidth: "auto",
       paginationVisibility: "auto",
-      zoomButtonRatio: 1.5,
+      zoomButtonRatio: 2.0,
     }
   }
 
@@ -340,7 +340,7 @@ export default class LaymicPreference {
   private get zoomButtonRatioItems(): SelectItem[] {
     return [
       { value: 1.5, label: "1.5倍"},
-      { value: 2.0, label: "2.0倍"},
+      { value: 2.0, label: "2.0倍", selected: true},
       { value: 2.5, label: "2.5倍"},
       { value: 3.0, label: "3.0倍"},
     ]
