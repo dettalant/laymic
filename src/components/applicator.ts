@@ -53,6 +53,7 @@ export default class LaymicApplicator {
 
     const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
     const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
+    const isAppendEmptySlide = compareString(el.dataset.isAppendEmptySlide || "", "false", false);
     const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
     const isLTR = compareString(el.dir, "ltr", true);
 
@@ -61,6 +62,7 @@ export default class LaymicApplicator {
       progressBarWidth,
       viewerDirection,
       isFirstSlideEmpty,
+      isAppendEmptySlide,
       isInstantOpen,
       isVisiblePagination,
       isLTR,
