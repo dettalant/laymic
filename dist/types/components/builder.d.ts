@@ -1,6 +1,6 @@
-import { ViewerPages, ViewerIcons, ViewerUIButtons, LaymicClassNames, LaymicStateClassNames } from "#/interfaces";
+import { ViewerPages, ViewerIcons, ViewerUIButtons, IconData, LaymicClassNames, LaymicStateClassNames } from "../interfaces/index";
 export default class DOMBuilder {
-    private icons;
+    readonly icons: ViewerIcons;
     readonly classNames: LaymicClassNames;
     readonly stateNames: LaymicStateClassNames;
     constructor(icons?: Partial<ViewerIcons>, classNames?: Partial<LaymicClassNames>, stateNames?: Partial<LaymicStateClassNames>);
@@ -18,7 +18,7 @@ export default class DOMBuilder {
      * @param  isLTR     左から右に流れる形式を取るならtrue
      * @return           swiper-container要素
      */
-    createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement;
+    createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean, isAppendEmptySlide?: boolean): HTMLElement;
     /**
      * 漫画ビューワーコントローラー要素を返す
      * @param  id    要素のid名となる文字列
@@ -32,7 +32,7 @@ export default class DOMBuilder {
      * @param  className 返す要素に追加するクラス名
      * @return           SVGElement
      */
-    private createSvgUseElement;
+    createSvgUseElement(icon: IconData): SVGElement;
     /**
      * 漫画ビューワーが用いるアイコンを返す
      * use要素を用いたsvg引用呼び出しを使うための前処理
@@ -43,17 +43,26 @@ export default class DOMBuilder {
      * 空のdiv要素を返す
      * @return div要素
      */
-    createDiv(): HTMLDivElement;
+    createDiv(className?: string): HTMLDivElement;
     /**
      * 空のbutton要素を返す
      * @return button要素
      */
     createButton(className?: string): HTMLButtonElement;
-    createSpan(): HTMLSpanElement;
-    createParagraph(): HTMLParagraphElement;
-    createCheckBoxButton(label: string, className?: string): HTMLButtonElement;
-    createSelectButton(label: string, values: string[], className?: string): HTMLButtonElement;
+    private createUIButton;
+    createSpan(className?: string, textContent?: string): HTMLSpanElement;
+    createParagraph(className?: string, textContent?: string): HTMLParagraphElement;
     createEmptySlideEl(): HTMLElement;
+    /**
+     * ヘルプとして表示する部分を出力する
+     * @return helpWrapperとして用いられるHTMLElement
+     */
+    createHelpWrapperEl(): HTMLElement;
+    /**
+     * ヘルプ内のアイコン説明部分を出力する
+     * @return アイコン説明を散りばめたHTMLElement
+     */
+    private createHelpInnerWrapperEl;
     /**
      * IconData形式のオブジェクトであるかを判別する
      * type guard用の関数

@@ -5,7 +5,8 @@ import {
   IconData,
   LaymicClassNames,
   LaymicStateClassNames
-} from "#/interfaces";
+} from "../interfaces/index";
+import { setRole } from "../utils";
 
 // svg namespace
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -15,7 +16,7 @@ const SVG_XLINK_NS = "http://www.w3.org/1999/xlink";
 // mangaViewerで用いるDOMを生成するやつ
 export default class DOMBuilder {
   // 使用するアイコンセット
-  private icons: ViewerIcons = this.defaultMangaViewerIcons;
+  readonly icons: ViewerIcons = this.defaultMangaViewerIcons;
   readonly classNames = this.defaultLaymicClassNames;
   readonly stateNames = this.defaultLaymicStateClassNames;
   constructor(
@@ -41,7 +42,6 @@ export default class DOMBuilder {
         controller: "laymic_controller",
         controllerTop: "laymic_controllerTop",
         controllerBottom: "laymic_controllerBottom",
-        progressbar: "laymic_progressbar",
       },
       buttons: {
         direction: "laymic_direction",
@@ -52,6 +52,8 @@ export default class DOMBuilder {
         help: "laymic_showHelp",
         nextPage: "laymic_paginationNext",
         prevPage: "laymic_paginationPrev",
+        zoom: "laymic_zoom",
+        progressbar: "laymic_progressbar",
       },
       svg: {
         icon: "laymic_svgIcon",
@@ -67,7 +69,9 @@ export default class DOMBuilder {
         container: "laymic_select",
         label: "laymic_selectLabel",
         wrapper: "laymic_selectWrapper",
+        current: "laymic_selectCurrentItem",
         item: "laymic_selectItem",
+        itemWrapper: "laymic_selectItemWrapper"
       },
       thumbs: {
         container: "laymic_thumbs",
@@ -82,15 +86,31 @@ export default class DOMBuilder {
       preference: {
         container: "laymic_preference",
         wrapper: "laymic_preferenceWrapper",
+        notice: "laymic_preferenceNotice",
         button: "laymic_preferenceButton",
         paginationVisibility: "laymic_preferencePaginationVisibility",
         isAutoFullscreen: "laymic_preferenceIsAutoFullscreen",
+        zoomButtonRatio: "laymic_preferenceZoomButtonRatio",
+        isDisabledTapSlidePage: "laymic_preferenceIsDisabledTapSlidePage",
+        isDisabledForceHorizView: "laymic_preferenceIsDisabledForceHorizView",
+        isDisabledDoubleTapResetZoom: "laymic_preferenceIsDisabledDoubleTapResetZoom",
       },
       help: {
         container: "laymic_help",
         wrapper: "laymic_helpWrapper",
         vertImg: "laymic_helpVertImg",
         horizImg: "laymic_helpHorizImg",
+        innerWrapper: "laymic_helpInnerWrapper",
+        innerItem: "laymic_helpInnerItem",
+        iconWrapper: "laymic_helpIconWrapper",
+        iconLabel: "laymic_helpIconLabel",
+        chevronsContainer: "laymic_helpChevrons",
+        zoomItem: "laymic_helpZoomItem",
+        fullscreenItem: "laymic_helpFullscreenItem",
+      },
+      zoom: {
+        controller: "laymic_zoomController",
+        wrapper: "laymic_zoomWrapper",
       }
     }
   }
@@ -99,6 +119,7 @@ export default class DOMBuilder {
     return {
       active: "laymic_isActive",
       hidden: "laymic_isHidden",
+      reversed: "laymic_isReversed",
       showHelp: "laymic_isShowHelp",
       showThumbs: "laymic_isShowThumbs",
       showPreference: "laymic_isShowPreference",
@@ -110,6 +131,7 @@ export default class DOMBuilder {
       unsupportedFullscreen: "laymic_isUnsupportedFullscreen",
       ltr: "laymic_isLTR",
       mobile: "laymic_isMobile",
+      zoomed: "laymic_isZoomed",
     }
   }
 
@@ -187,8 +209,8 @@ export default class DOMBuilder {
 
     // material.io: check_box(modified)
     const checkboxInner = {
-      id: "laymic_svgCheckBoxInner",
-      className: "icon_checkBoxInner",
+      id: "laymic_svgCheckboxInner",
+      className: "icon_checkboxInner",
       viewBox: "0 0 24 24",
       pathDs: [
         "M17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"
@@ -197,8 +219,8 @@ export default class DOMBuilder {
 
     // material.io: check_box(modified)
     const checkboxOuter = {
-      id: "laymic_svgCheckBoxOuter",
-      className: "icon_checkBoxOuter",
+      id: "laymic_svgCheckboxOuter",
+      className: "icon_checkboxOuter",
       viewBox: "0 0 24 24",
       pathDs: [
         "M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
@@ -216,6 +238,47 @@ export default class DOMBuilder {
       ]
     }
 
+    // material.io: zoom_in(modified)
+    const zoomIn = {
+      id: "laymic_svgZoomIn",
+      className: "icon_zoomIn",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+        "M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z",
+      ]
+    }
+
+    // material.io: unfold_more(modified)
+    const viewerDirection = {
+      id: "laymic_svgViewerDirection",
+      className: "icon_viewerDirection",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M18.17 12.002l-4.243 4.242 1.41 1.41 5.662-5.652-5.657-5.658-1.41 1.42zm-12.34 0l4.24-4.242-1.41-1.41L3 12.002l5.662 5.662 1.41-1.42z"
+      ]
+    };
+
+    // material.io: touch_app
+    const touchApp = {
+      id: "laymic_svgTouchApp",
+      className: "icon_touchApp",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M9.156 9.854v-3.56a2.381 2.381 0 014.76 0v3.56a4.27 4.27 0 001.904-3.56 4.279 4.279 0 00-4.284-4.285 4.279 4.279 0 00-4.284 4.284 4.27 4.27 0 001.904 3.561zm9.368 4.408l-4.322-2.152a1.34 1.34 0 00-.514-.104h-.724V6.293c0-.79-.638-1.428-1.428-1.428-.79 0-1.428.638-1.428 1.428V16.52l-3.266-.686c-.076-.01-.143-.029-.228-.029-.295 0-.562.124-.752.315l-.752.761 4.703 4.703c.257.258.619.42 1.009.42h6.464c.714 0 1.267-.524 1.371-1.22l.714-5.017c.01-.066.02-.133.02-.19 0-.59-.362-1.104-.867-1.314z"
+      ]
+    }
+
+    // material.io: chevron_left
+    const chevronLeft = {
+      id: "laymic_svgChevronLeft",
+      className: "icon_chevronLeft",
+      viewBox: "0 0 24 24",
+      pathDs: [
+        "M18 4.12L10.12 12 18 19.88 15.88 22l-10-10 10-10z"
+      ]
+    }
+
     return {
       close,
       fullscreen,
@@ -227,6 +290,10 @@ export default class DOMBuilder {
       checkboxInner,
       checkboxOuter,
       showHelp,
+      zoomIn,
+      viewerDirection,
+      touchApp,
+      chevronLeft
     }
   }
 
@@ -237,13 +304,12 @@ export default class DOMBuilder {
    * @param  isLTR     左から右に流れる形式を取るならtrue
    * @return           swiper-container要素
    */
-  createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean): HTMLElement {
-    const swiperEl = this.createDiv();
-    swiperEl.className = "swiper-container " + this.classNames.slider;
+  createSwiperContainer(pages: ViewerPages, isLTR?: boolean, isFirstSlideEmpty?: boolean, isAppendEmptySlide?: boolean): HTMLElement {
+    const swiperEl = this.createDiv("swiper-container " + this.classNames.slider);
     swiperEl.dir = (isLTR) ? "" : "rtl";
+    swiperEl.tabIndex = -1;
 
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = "swiper-wrapper";
+    const wrapperEl = this.createDiv("swiper-wrapper");
 
     // isFirstSlideEmpty引数がtrueならば
     // 空の要素を一番目に入れる
@@ -253,8 +319,7 @@ export default class DOMBuilder {
     }
 
     for (let p of pages) {
-      const divEl = this.createDiv();
-      divEl.className = "swiper-slide";
+      const divEl = this.createDiv("swiper-slide");
 
       if (p instanceof Element) {
         divEl.appendChild(p);
@@ -267,6 +332,14 @@ export default class DOMBuilder {
 
       wrapperEl.appendChild(divEl);
     }
+
+    // isAppendEmptySlide引数がtrueならば
+    // 空の要素を最後に入れる
+    if (isAppendEmptySlide) {
+      const emptyEl = this.createEmptySlideEl();
+      wrapperEl.appendChild(emptyEl);
+    }
+
     swiperEl.appendChild(wrapperEl);
 
     return swiperEl;
@@ -279,82 +352,116 @@ export default class DOMBuilder {
    * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
    */
   createViewerController(): [HTMLElement, ViewerUIButtons] {
-    const btnClassNames = this.classNames.buttons
-    const ctrlClassNames = this.classNames.controller;
-    const ctrlEl = this.createDiv();
-    ctrlEl.className = ctrlClassNames.controller;
-    const progressEl = this.createDiv();
-    progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
+    const btnsNames = this.classNames.buttons;
+    const ctrlNames = this.classNames.controller;
+    const ctrlEl = this.createDiv(ctrlNames.controller);
+    ctrlEl.tabIndex = -1;
 
-    const ctrlTopEl = this.createDiv();
-    ctrlTopEl.className = ctrlClassNames.controllerTop;
+    const progressbar = this.createDiv("swiper-pagination " + btnsNames.progressbar);
 
-    const direction = this.createButton();
-    direction.classList.add(btnClassNames.direction);
+    const ctrlTopEl = this.createDiv(ctrlNames.controllerTop);
+    ctrlTopEl.setAttribute("aria-orientation", "horizontal");
+    setRole(ctrlTopEl, "menu");
+
+    const direction = this.createUIButton(
+      btnsNames.direction,
+      "縦読み/横読み切り替え (d)",
+      [
+        this.icons.vertView,
+        this.icons.horizView
+      ]
+    );
+
+    const fullscreen = this.createUIButton(
+      btnsNames.fullscreen,
+      "全画面切り替え (f)",
+      [
+        this.icons.fullscreen,
+        this.icons.exitFullscreen
+      ]
+    )
+
+    const thumbs = this.createUIButton(
+      btnsNames.thumbs,
+      "サムネイル (t)",
+      [this.icons.showThumbs]
+    );
+
+    const preference = this.createUIButton(
+      btnsNames.preference,
+      "設定 (p)",
+      [this.icons.preference]
+    )
+
+    const close = this.createUIButton(
+      btnsNames.close,
+      "ビューワーを閉じる (Escape)",
+      [
+        this.icons.close
+      ]
+    )
+
+    const help = this.createUIButton(
+      btnsNames.help,
+      "ヘルプ (h)",
+      [this.icons.showHelp]
+    )
+
+    const zoom = this.createUIButton(
+      btnsNames.zoom,
+      "拡大 (z/ホイールクリック)",
+      [this.icons.zoomIn]
+    );
+
     [
-      this.createSvgUseElement(this.icons.vertView),
-      this.createSvgUseElement(this.icons.horizView),
-    ].forEach(icon => direction.appendChild(icon))
-
-    const fullscreen = this.createButton();
-    [
-      this.createSvgUseElement(this.icons.fullscreen),
-      this.createSvgUseElement(this.icons.exitFullscreen),
-    ].forEach(icon => fullscreen.appendChild(icon));
-    fullscreen.classList.add(btnClassNames.fullscreen);
-
-    const thumbs = this.createButton();
-    [
-      this.createSvgUseElement(this.icons.showThumbs),
-    ].forEach(icon => thumbs.appendChild(icon));
-    thumbs.classList.add(btnClassNames.thumbs);
-
-    const preference = this.createButton();
-    preference.classList.add(btnClassNames.preference);
-    const preferenceIcon = this.createSvgUseElement(this.icons.preference);
-    preference.appendChild(preferenceIcon);
-
-    const close = this.createButton();
-    close.classList.add(btnClassNames.close);
-    const closeIcon = this.createSvgUseElement(this.icons.close);
-    close.appendChild(closeIcon);
-
-    const help = this.createButton();
-    help.classList.add(btnClassNames.help);
-    const helpIcon = this.createSvgUseElement(this.icons.showHelp);
-    help.appendChild(helpIcon);
+      preference,
+      thumbs,
+      help,
+    ].forEach(el => el.setAttribute("aria-haspopup", "true"));
 
     [
       help,
+      zoom,
       direction,
       thumbs,
       fullscreen,
       preference,
       close
-    ].forEach(btn => ctrlTopEl.appendChild(btn));
+    ].forEach(btn => {
+      setRole(btn, "menuitem");
+      ctrlTopEl.appendChild(btn);
+    });
 
     const paginationClass = this.classNames.pagination
-    const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
-    const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
+    const nextPage = this.createButton(`${paginationClass} ${btnsNames.nextPage}`);
+    const nextIcon = this.createSvgUseElement(this.icons.chevronLeft);
+    nextPage.appendChild(nextIcon);
+    nextPage.tabIndex = -1;
+
+    const prevPage = this.createButton(`${paginationClass} ${btnsNames.prevPage}`);
+    const prevIcon = this.createSvgUseElement(this.icons.chevronLeft);
+    prevPage.appendChild(prevIcon);
+    nextPage.tabIndex = -1;
 
     const uiButtons: ViewerUIButtons = {
       help,
       close,
       thumbs,
+      zoom,
       fullscreen,
       preference,
       direction,
       nextPage,
-      prevPage
+      prevPage,
+      progressbar,
     }
 
-    const ctrlBottomEl = this.createDiv();
-    ctrlBottomEl.className = ctrlClassNames.controllerBottom;
+    const ctrlBottomEl = this.createDiv(ctrlNames.controllerBottom);
 
     [
       ctrlTopEl,
       ctrlBottomEl,
-      progressEl,
+      progressbar,
       nextPage,
       prevPage,
     ].forEach(el => ctrlEl.appendChild(el));
@@ -368,7 +475,7 @@ export default class DOMBuilder {
    * @param  className 返す要素に追加するクラス名
    * @return           SVGElement
    */
-  private createSvgUseElement(icon: IconData): SVGElement {
+  createSvgUseElement(icon: IconData): SVGElement {
     const svgClassNames = this.classNames.svg;
     const svgEl = document.createElementNS(SVG_NS, "svg");
     svgEl.setAttribute("class", `${svgClassNames.icon} ${icon.className}`);
@@ -429,93 +536,153 @@ export default class DOMBuilder {
    * 空のdiv要素を返す
    * @return div要素
    */
-  createDiv(): HTMLDivElement {
-    return document.createElement("div");
+  createDiv(className: string = ""): HTMLDivElement {
+    const div = document.createElement("div");
+    if (className) div.className = className;
+    return div;
   }
 
   /**
    * 空のbutton要素を返す
    * @return button要素
    */
-  createButton(className: string = this.classNames.uiButton): HTMLButtonElement {
+  createButton(className: string = ""): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = className;
     return btn;
   }
 
-  createSpan(): HTMLSpanElement {
-    return document.createElement("span");
-  }
+  private createUIButton(className: string = "", title: string = "", icons: IconData[]): HTMLButtonElement {
+    const btn = this.createButton(this.classNames.uiButton);
+    if (className) btn.classList.add(className);
+    if (title) btn.title = title;
 
-  createParagraph(): HTMLParagraphElement {
-    return document.createElement("p");
-  }
-
-  createCheckBoxButton(label: string, className: string = ""): HTMLButtonElement {
-    const checkboxClassNames = this.classNames.checkbox
-    const btn = this.createButton(`${checkboxClassNames.container} ${className}`);
-    const labelEl = this.createSpan();
-    labelEl.className = checkboxClassNames.label;
-    labelEl.textContent = label;
-
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = checkboxClassNames.iconWrapper;
-
-    [
-      this.createSvgUseElement(this.icons.checkboxOuter),
-      this.createSvgUseElement(this.icons.checkboxInner),
-    ].forEach(el => wrapperEl.appendChild(el));
-
-    [
-      labelEl,
-      wrapperEl,
-    ].forEach(el => btn.appendChild(el));
-
-    btn.addEventListener("click", e => {
-      btn.classList.toggle(this.stateNames.active);
-      e.stopPropagation();
-    });
-    return btn;
-  }
-
-  createSelectButton(label: string, values: string[], className: string = ""): HTMLButtonElement {
-    const selectClassNames = this.classNames.select;
-    const btn = this.createButton(`${selectClassNames.container} ${className}`);
-
-    const labelEl = this.createSpan();
-    labelEl.className = selectClassNames.label;
-    labelEl.textContent = label;
-
-    const wrapperEl = this.createDiv();
-    wrapperEl.className = selectClassNames.wrapper;
-
-    values.forEach((item, i) => {
-      const el = this.createDiv();
-      el.className =  `${selectClassNames.item} ${selectClassNames.item + i}`;
-
-      el.textContent = item;
-      el.dataset.itemIdx = i.toString();
-      wrapperEl.appendChild(el);
-    });
-
-    [
-      labelEl,
-      wrapperEl,
-    ].forEach(el => btn.appendChild(el));
-
-    btn.addEventListener("click", e => {
-      btn.classList.toggle(this.stateNames.active);
-      e.stopPropagation();
+    icons.forEach(icon => {
+      const svg = this.createSvgUseElement(icon);
+      btn.appendChild(svg);
     })
-
     return btn;
+  }
+
+  createSpan(className: string = "", textContent: string = ""): HTMLSpanElement {
+    const span = document.createElement("span");
+    if (className) span.className = className;
+    if (textContent) span.textContent = textContent;
+    return span;
+  }
+
+  createParagraph(className: string = "", textContent: string = ""): HTMLParagraphElement {
+    const p = document.createElement("p");
+    if (className) p.className = className;
+    if (textContent) p.textContent = textContent;
+    return p;
   }
 
   createEmptySlideEl(): HTMLElement {
-    const emptyEl = this.createDiv();
-    emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
+    const emptyEl = this.createDiv("swiper-slide " + this.classNames.emptySlide);
     return emptyEl;
+  }
+
+  /**
+   * ヘルプとして表示する部分を出力する
+   * @return helpWrapperとして用いられるHTMLElement
+   */
+  createHelpWrapperEl(): HTMLElement {
+    const helpNames = this.classNames.help;
+    const wrapperEl = this.createDiv(helpNames.wrapper);
+
+    const innerWrapperEl = this.createHelpInnerWrapperEl();
+
+    const touchAppIcon = this.createSvgUseElement(this.icons.touchApp);
+
+    const chevronsContainer = this.createDiv(helpNames.chevronsContainer);
+
+    const iconChevron = this.icons.chevronLeft;
+    // 右向き矢印は一度生成してから反転クラス名を付与する
+    const chevronRight = this.createSvgUseElement(iconChevron);
+    chevronRight.classList.add(this.stateNames.reversed);
+
+    [
+      this.createSvgUseElement(iconChevron),
+      chevronRight
+    ].forEach(el => chevronsContainer.appendChild(el));
+
+    [
+      chevronsContainer,
+      innerWrapperEl,
+      touchAppIcon,
+    ].forEach(el => wrapperEl.appendChild(el));
+
+    return wrapperEl;
+  }
+
+  /**
+   * ヘルプ内のアイコン説明部分を出力する
+   * @return アイコン説明を散りばめたHTMLElement
+   */
+  private createHelpInnerWrapperEl(): HTMLElement {
+    const helpNames = this.classNames.help;
+    const innerWrapper = this.createDiv(helpNames.innerWrapper);
+    setRole(innerWrapper, "list");
+
+    [
+      {
+        icons: [this.icons.close],
+        label: "閉じる"
+      },
+      {
+        icons: [this.icons.preference],
+        label: "設定"
+      },
+      {
+        icons: [this.icons.fullscreen, this.icons.exitFullscreen],
+        label: "全画面切り替え",
+        className: helpNames.fullscreenItem,
+      },
+      {
+        icons: [this.icons.showThumbs],
+        label: "サムネイル"
+      },
+      {
+        icons: [this.icons.vertView, this.icons.horizView],
+        label: "縦読み/横読み"
+      },
+      {
+        icons: [this.icons.zoomIn],
+        label: "拡大",
+        className: helpNames.zoomItem,
+      },
+      {
+        icons: [this.icons.showHelp],
+        label: "ヘルプ"
+      },
+      {
+        icons: [this.icons.viewerDirection],
+        label: "ページ送り"
+      },
+      {
+        icons: [this.icons.touchApp],
+        label: "機能呼び出し"
+      }
+    ].forEach(obj => {
+      const item = this.createDiv(helpNames.innerItem);
+      setRole(item, "listitem");
+
+      if (obj.className) item.classList.add(obj.className);
+
+      const iconWrapper = this.createDiv(helpNames.iconWrapper);
+
+      obj.icons.forEach(icon => iconWrapper.appendChild(this.createSvgUseElement(icon)))
+
+      const label = this.createSpan(helpNames.iconLabel, obj.label);
+
+      [iconWrapper, label].forEach(el => item.appendChild(el));
+
+      innerWrapper.appendChild(item);
+    })
+
+    return innerWrapper;
   }
 
   /**

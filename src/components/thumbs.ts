@@ -1,49 +1,77 @@
-import { ViewerPages, ViewerStates } from "#/interfaces";
-import DOMBuilder from "#/components/builder";
+import { ViewerPages } from "../interfaces/index";
+import { setAriaExpanded, setRole, multiRafSleep } from "../utils"
+import DOMBuilder from "./builder";
+import LaymicStates from "./states";
 
 export default class LaymicThumbnails {
-  state: ViewerStates;
-  builder: DOMBuilder;
-  rootEl: HTMLElement;
-  el: HTMLElement;
-  wrapperEl: HTMLElement;
-  thumbEls: Element[];
-  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, state: ViewerStates) {
+  private _isActive = false;
+  readonly state: LaymicStates;
+  readonly builder: DOMBuilder;
+  readonly rootEl: HTMLElement;
+  readonly el: HTMLElement;
+  readonly wrapperEl: HTMLElement;
+  readonly thumbEls: Element[];
+  readonly thumbButtons: HTMLButtonElement[];
+
+  constructor(builder: DOMBuilder, rootEl: HTMLElement, pages: ViewerPages, thumbPages: string[], state: LaymicStates) {
     this.builder = builder;
-    const thumbsClassNames = this.builder.classNames.thumbs;
-    const thumbsEl = builder.createDiv();
-    thumbsEl.className = thumbsClassNames.container;
+    const thumbsNames = this.builder.classNames.thumbs;
+    const thumbsEl = builder.createDiv(thumbsNames.container);
+
     // 初期状態では表示しないようにしておく
     thumbsEl.style.display = "none";
+    setAriaExpanded(thumbsEl, false);
 
-    const wrapperEl = builder.createDiv();
-    wrapperEl.className = thumbsClassNames.wrapper;
+    const wrapperEl = builder.createDiv(thumbsNames.wrapper);
+    setRole(wrapperEl, "list");
+    wrapperEl.tabIndex = -1;
 
     const thumbEls = [];
-    for (const p of pages) {
+    const thumbButtons = [];
+    const loopLen = pages.length;
+    // idxを使いたいので古めかしいforループを使用
+    for (let i = 0; i < loopLen; i++) {
+      const p = pages[i];
+      const t = thumbPages[i] || "";
+
+      const btn = builder.createButton(thumbsNames.item);
+      btn.title = (i + 1) + "P目へと遷移";
+      setRole(btn, "listitem");
+
       let el: Element;
-      if (typeof p === "string") {
+      if (t !== "" || typeof p === "string") {
+        let src = "";
+        if (t !== "") {
+          src = t;
+        } else if (typeof p === "string") {
+          src = p;
+        }
+
         const img = new Image();
-        img.dataset.src = p;
-        img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
+        img.dataset.src = src;
+        img.className = `${thumbsNames.lazyload} ${thumbsNames.imgThumb}`;
         el = img;
       } else {
         // thumbs用にnodeをコピー
         const slideEl = p.cloneNode(true);
         if (!(slideEl instanceof Element)) continue;
         el = slideEl;
-        el.classList.add(thumbsClassNames.slideThumb)
+        el.classList.add(thumbsNames.slideThumb)
       }
 
-      el.classList.add(thumbsClassNames.item);
       thumbEls.push(el);
-      wrapperEl.appendChild(el);
+      thumbButtons.push(btn);
+
+      btn.appendChild(el);
+      wrapperEl.appendChild(btn);
     }
+
     thumbsEl.appendChild(wrapperEl);
 
     this.el = thumbsEl;
     this.wrapperEl = wrapperEl;
-    this.thumbEls = thumbEls
+    this.thumbEls = thumbEls;
+    this.thumbButtons = thumbButtons;
     this.state = state;
     this.rootEl = rootEl;
 
@@ -70,30 +98,13 @@ export default class LaymicThumbnails {
   }
 
   /**
-   * 読み込み待ち状態のimg elementを全て読み込む
-   * いわゆるlazyload処理
+   * サムネイル画面表示中か否かのboolを返す
+   * @return サムネイル画面表示中ならばtrue
    */
-  private revealImgs() {
-    const {lazyload, lazyloading, lazyloaded} = this.builder.classNames.thumbs;
-    this.thumbEls.forEach(el => {
-      if (!(el instanceof HTMLImageElement)) {
-        return;
-      }
-
-      const s = el.dataset.src;
-      if (s) {
-        // 読み込み中はクラス名を変更
-        el.classList.replace(lazyload, lazyloading);
-
-        // 読み込みが終わるとクラス名を再変更
-        el.addEventListener("load", () => {
-          el.classList.replace(lazyloading, lazyloaded);
-        })
-
-        el.src = s;
-      }
-    })
+  get isActive(): boolean {
+    return this._isActive;
   }
+
   /**
    * thumbsWrapperElのwidthを計算し、
    * 折り返しが発生しないようなら横幅の値を書き換える
@@ -117,7 +128,10 @@ export default class LaymicThumbnails {
     this.wrapperEl.style.width = widthStyleStr;
   }
 
-  showThumbs() {
+  /**
+   * サムネイル画面を表示する
+   */
+  show() {
     if (this.el.style.display === "none") {
       // ページ読み込み後一度だけ動作する
       this.el.style.display = "";
@@ -125,10 +139,64 @@ export default class LaymicThumbnails {
     }
 
     this.rootEl.classList.add(this.builder.stateNames.showThumbs);
+    setAriaExpanded(this.rootEl, true);
+    this._isActive = true;
+
+    // 少々遅延させてからフォーカスを移動させる
+    // 適当に5回ほどrafSleepする
+    multiRafSleep(5).then(() => {
+      this.wrapperEl.focus();
+    })
   }
 
-  hideThumbs() {
+  /**
+   * サムネイル画面を閉じる
+   */
+  hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
+    setAriaExpanded(this.rootEl, false);
+    this._isActive = false;
+    // サムネイル閉止時にrootElへとfocusを戻す
+    this.rootEl.focus();
+  }
+
+  /**
+   * 読み込み待ち状態のimg elementを全て読み込む
+   * いわゆるlazyload処理
+   * @return  全画像読み込み完了を受け取れるPromiseオブジェクト
+   */
+  private revealImgs(): Promise<void[]> {
+    const {lazyload, lazyloading, lazyloaded} = this.builder.classNames.thumbs;
+
+    const revealImg = (el: HTMLImageElement): Promise<void> => new Promise(res => {
+      const s = el.dataset.src;
+      if (s) {
+        // 読み込み中はクラス名を変更
+        el.classList.replace(lazyload, lazyloading);
+
+        // 読み込みが終わるとクラス名を再変更
+        el.addEventListener("load", () => {
+          el.classList.replace(lazyloading, lazyloaded);
+          res();
+        })
+
+        el.addEventListener("error", () => {
+          // 読み込み失敗時はとりあえずコンソール出力しておく
+          console.error("サムネイル画像読み込みに失敗: " + s);
+          res();
+        })
+
+        el.src = s;
+      }
+    })
+
+    return Promise.all(this.thumbEls
+      .map((el) => {
+        if (!(el instanceof HTMLImageElement)) return
+        return revealImg(el)
+      })
+      .filter(maybePromise => maybePromise !== void 0)
+    )
   }
 
   /**
@@ -142,7 +210,7 @@ export default class LaymicThumbnails {
 
     // サムネイル表示中オーバーレイ要素でのクリックイベント
     this.el.addEventListener("click", () => {
-      this.hideThumbs();
+      this.hide();
     });
   }
 }

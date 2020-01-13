@@ -1,6 +1,6 @@
-import Laymic from "#/components/core";
-import { ViewerPages, LaymicOptions, LaymicApplicatorOptions } from "#/interfaces";
-import { isBarWidth, compareString } from "#/utils";
+import Laymic from "./core";
+import { ViewerPages, LaymicPages, LaymicOptions, LaymicApplicatorOptions } from "../interfaces/index";
+import { isBarWidth, compareString } from "../utils";
 
 // 複数ビューワーを一括登録したり、
 // html側から情報を読み取ってビューワー登録したりするためのclass
@@ -53,6 +53,7 @@ export default class LaymicApplicator {
 
     const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
     const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
+    const isAppendEmptySlide = compareString(el.dataset.isAppendEmptySlide || "", "false", false);
     const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
     const isLTR = compareString(el.dir, "ltr", true);
 
@@ -61,6 +62,7 @@ export default class LaymicApplicator {
       progressBarWidth,
       viewerDirection,
       isFirstSlideEmpty,
+      isAppendEmptySlide,
       isInstantOpen,
       isVisiblePagination,
       isLTR,
@@ -80,25 +82,34 @@ export default class LaymicApplicator {
       if (isFinite(horizPageMargin)) options.horizPageMargin = horizPageMargin;
       if (isFinite(viewerPadding)) options.viewerPadding = viewerPadding;
     }
-    // br以外のElementを取得
-    const pages: ViewerPages = Array.from(el.children)
-      .filter(el => el.tagName.toLowerCase() !== "br")
-      .map(childEl => {
-        let result: Element | string = childEl;
-        if (childEl instanceof HTMLImageElement) {
-          const src = childEl.dataset.src || childEl.src || "";
-          result = src;
-        }
 
-        return result;
-      });
+    const pageEls = Array.from(el.children).filter(el => el.tagName.toLowerCase() !== "br");
 
+    const pages: ViewerPages = pageEls.map(childEl => {
+      let result: Element | string = childEl;
+      if (childEl instanceof HTMLImageElement) {
+        const src = childEl.dataset.src || childEl.src || "";
+        result = src;
+      }
+
+      return result;
+    });
+
+    const thumbs: string[] = pageEls.map(childEl => {
+      return (childEl instanceof HTMLElement)
+        ? childEl.dataset.thumbSrc || ""
+        : "";
+    })
+
+    const laymicPages: LaymicPages = {
+      pages,
+      thumbs
+    }
+
+    // JSON.stringifyを経由させてundefined部分を抹消する
     const opts = Object.assign({}, initOptions, JSON.parse(JSON.stringify(options)));
 
-    this.laymicMap.set(viewerId || "laymic", new Laymic(pages, opts))
-
-    // 用をなしたテンプレート要素を削除
-    if (el.parentNode) el.parentNode.removeChild(el);
+    this.laymicMap.set(viewerId || "laymic", new Laymic(laymicPages, opts))
   }
 
   open(viewerId: string) {

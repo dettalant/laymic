@@ -1,161 +1,349 @@
-import DOMBuilder from "#/components/builder";
-import { PreferenceData, BarWidth, PreferenceButtons, UIVisibility } from "#/interfaces";
-import { isHTMLElementArray } from "#/utils";
+import { SimpleSelectBuilder, SelectItem, SimpleCheckboxBuilder, SimpleCheckbox, SimpleSelect } from "@dettalant/simple_choices";
+import DOMBuilder from "./builder";
+import {
+  PreferenceData,
+  PreferenceChoices,
+  BarWidth,
+  PreferenceUpdateEventString,
+  UIVisibility
+} from "../interfaces/index";
+import {
+  isBarWidth,
+  isUIVisibility,
+  setAriaExpanded,
+  setRole,
+  multiRafSleep
+} from "../utils";
 
 export default class LaymicPreference {
   private readonly PREFERENCE_KEY = "laymic_preferenceData";
-  rootEl: HTMLElement;
+  readonly rootEl: HTMLElement;
   // preference el
-  el: HTMLElement;
+  readonly el: HTMLElement;
   // preference wrapper el
-  wrapperEl: HTMLElement;
-  buttons: PreferenceButtons;
-  builder: DOMBuilder;
+  readonly wrapperEl: HTMLElement;
+  readonly choices: PreferenceChoices;
+  readonly builder: DOMBuilder;
   // preference save data
-  data: PreferenceData = this.defaultPreferenceData;
+  private data: PreferenceData = LaymicPreference.defaultPreferenceData;
+  private _isActive = false;
+
   constructor(builder: DOMBuilder, rootEl: HTMLElement) {
     this.builder = builder;
-    const containerEl = builder.createDiv();
-    const preferenceClassNames = this.builder.classNames.preference;
-    containerEl.className = preferenceClassNames.container;
 
-    const wrapperEl = builder.createDiv();
-    wrapperEl.className = preferenceClassNames.wrapper;
+    const selectBuilder = new SimpleSelectBuilder(this.builder.classNames.select);
+    const icons = this.builder.icons;
 
-    const preferenceBtnClass = preferenceClassNames.button;
-    const isAutoFullscreen = builder.createCheckBoxButton("ビューワー展開時の自動全画面化", `${preferenceBtnClass} ${preferenceClassNames.isAutoFullscreen}`);
+    const checkboxBuilder = new SimpleCheckboxBuilder(
+      this.builder.classNames.checkbox,
+      {
+        inner: this.builder.createSvgUseElement(icons.checkboxInner),
+        outer: this.builder.createSvgUseElement(icons.checkboxOuter),
+      }
+    );
 
-    const isEnableTapSlidePage = builder.createCheckBoxButton("タップデバイスでのタップページ送りを有効化", preferenceBtnClass);
+    // preference class names
+    const names = this.builder.classNames.preference;
+    const containerEl = builder.createDiv(names.container);
+    setAriaExpanded(containerEl, false);
 
-    const progressBarWidths = [
-      "初期値",
-      "非表示",
-      "細い",
-      "普通",
-      "太い"
-    ]
+    const wrapperEl = builder.createDiv(names.wrapper);
+    setRole(wrapperEl, "list");
+    wrapperEl.tabIndex = -1;
 
-    const progressBarWidth = builder.createSelectButton("進捗バー表示設定", progressBarWidths, preferenceBtnClass);
+    const isAutoFullscreen = checkboxBuilder.create(
+      "ビューワー展開時の自動全画面化",
+      false, this.genPreferenceButtonClass(names.isAutoFullscreen)
+    );
 
-    const uiVisibilityValues = [
-      "初期値",
-      "非表示",
-      "表示",
-    ];
+    const isDisabledTapSlidePage = checkboxBuilder.create(
+      "タップでのページ送り無効化",
+      false,
+      this.genPreferenceButtonClass(names.isDisabledTapSlidePage)
+    );
 
-    const paginationVisibility = builder.createSelectButton("ページ送りボタン表示設定", uiVisibilityValues, `${preferenceBtnClass} ${preferenceClassNames.paginationVisibility}`);
+    const isDisabledForceHorizView = checkboxBuilder.create(
+      "端末横持ち時の強制2p表示無効化",
+      false,
+      this.genPreferenceButtonClass(names.isDisabledForceHorizView)
+    )
 
-    const descriptionEl = builder.createDiv();
+    const isDisabledDoubleTapResetZoom = checkboxBuilder.create(
+      "ズーム中ダブルタップでのズーム解除無効化",
+      false,
+      this.genPreferenceButtonClass(names.isDisabledDoubleTapResetZoom)
+    );
+
+    const progressBarWidth = selectBuilder.create(
+      "進捗バー表示設定",
+      this.barWidthItems,
+      this.genPreferenceButtonClass()
+    );
+
+    const paginationVisibility = selectBuilder.create(
+      "ページ送りボタン表示設定",
+      this.uiVisibilityItems,
+      this.genPreferenceButtonClass(names.paginationVisibility)
+    );
+
+    const zoomButtonRatio = selectBuilder.create(
+      "ズームボタン倍率設定",
+      this.zoomButtonRatioItems,
+      this.genPreferenceButtonClass(names.zoomButtonRatio)
+    );
+
+    const noticeEl = builder.createDiv(names.notice);
     [
-      "",
-      "※1: 一部設定値は次回ページ読み込み時に適用されます",
-      "※2: 自動全画面処理はビューワー展開ボタンクリック時にしか動きません",
+      "※1: 自動全画面化設定はビューワー展開ボタンクリック時にのみ用いられます",
+      "※2: タップページ送り無効化設定は次回ページ読み込み時に適用されます",
     ].forEach(s => {
-      const p = builder.createParagraph();
-      p.textContent = s;
-      descriptionEl.appendChild(p);
+      const p = builder.createParagraph(undefined, s);
+      noticeEl.appendChild(p);
     });
 
-    [
+    const prefItemEls: HTMLElement[] = [
+      // ここでの並び順が表示順に反映される
       progressBarWidth,
+      zoomButtonRatio,
       paginationVisibility,
       isAutoFullscreen,
-      isEnableTapSlidePage,
-      descriptionEl
-    ].forEach(el => wrapperEl.appendChild(el));
+      isDisabledTapSlidePage,
+      isDisabledForceHorizView,
+      isDisabledDoubleTapResetZoom
+    ].map(choice => choice.el.container);
+    // 説明文要素を追加
+    prefItemEls.push(noticeEl);
+
+    prefItemEls.forEach(el => {
+      wrapperEl.appendChild(el);
+      setRole(el, "listitem");
+    });
     containerEl.appendChild(wrapperEl);
 
     this.rootEl = rootEl;
     this.el = containerEl;
     this.wrapperEl = wrapperEl;
-    this.buttons = {
-      isAutoFullscreen,
-      isEnableTapSlidePage,
+
+    this.choices = {
       progressBarWidth,
       paginationVisibility,
+      zoomButtonRatio,
+      isAutoFullscreen,
+      isDisabledTapSlidePage,
+      isDisabledForceHorizView,
+      isDisabledDoubleTapResetZoom,
     };
+
     // 各種イベントをボタンに適用
     this.applyEventListeners();
   }
 
-  private get defaultPreferenceData(): PreferenceData {
+  /**
+   * 設定画面が現在表示中であるかのboolを返す
+   * @return 設定画面表示中であるならばtrue
+   */
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  /**
+   * defaultデータは静的メソッドとして、
+   * 外部からも容易に呼び出せるようにしておく
+   */
+  static get defaultPreferenceData(): PreferenceData {
     return {
       isAutoFullscreen: false,
-      isEnableTapSlidePage: false,
+      isDisabledTapSlidePage: false,
+      isDisabledForceHorizView: false,
+      isDisabledDoubleTapResetZoom: false,
       progressBarWidth: "auto",
       paginationVisibility: "auto",
+      zoomButtonRatio: 2.0,
     }
   }
 
+  /**
+   * ビューワー展開時の自動フルスクリーン化のbool
+   * この設定がtrueであっても、ユーザー操作イベント経由でないと
+   * 自動全画面化は行われない
+   *
+   * @return trueなら自動フルスクリーン化
+   */
   get isAutoFullscreen(): boolean {
     return this.data.isAutoFullscreen;
   }
 
+  /**
+   * ビューワー展開時の自動フルスクリーン化のbool
+   * @param  bool trueなら自動フルスクリーン化
+   */
   set isAutoFullscreen(bool: boolean) {
     this.data.isAutoFullscreen = bool;
     this.savePreferenceData();
   }
 
-  get isEnableTapSlidePage(): boolean {
-    return this.data.isEnableTapSlidePage;
+  /**
+   * タップでのページ送りを無効化するかのbool
+   * @return trueならばタップでのページ送り無効化
+   */
+  get isDisabledTapSlidePage(): boolean {
+    return this.data.isDisabledTapSlidePage;
   }
 
-  set isEnableTapSlidePage(bool: boolean) {
-    this.data.isEnableTapSlidePage = bool;
+  /**
+   * タップでのページ送りを無効化するかのbool
+   * 同時にPreferenceUpdateEventを発火させる
+   *
+   * @param  bool trueならばタップでのページ送り無効化
+   */
+  set isDisabledTapSlidePage(bool: boolean) {
+    this.data.isDisabledTapSlidePage = bool;
+    this.savePreferenceData();
+    this.dispatchPreferenceUpdateEvent("isDisabledTapSlidePage");
+  }
+
+  /**
+   * モバイル環境横持ち時の強制2p表示を無効化するかのbool
+   * @return trueならば強制2p表示無効化
+   */
+  get isDisabledForceHorizView(): boolean {
+    return this.data.isDisabledForceHorizView;
+  }
+
+  /**
+   * モバイル環境横持ち時の強制2p表示を無効化するかのbool
+   * 同時にPreferenceUpdateEventを発火させる
+   *
+   * @param  bool trueならば強制2p表示無効化
+   */
+  set isDisabledForceHorizView(bool: boolean) {
+    this.data.isDisabledForceHorizView = bool;
+    this.savePreferenceData();
+    this.dispatchPreferenceUpdateEvent("isDisabledForceHorizView");
+  }
+
+  /**
+   * ズーム時ダブルタップでのズーム終了機能を無効化するかのbool
+   * @return trueならばダブルタップでのズーム終了を無効化
+   */
+  get isDisabledDoubleTapResetZoom(): boolean {
+    return this.data.isDisabledDoubleTapResetZoom;
+  }
+
+  /**
+   * ズーム時ダブルタップでのズーム終了機能を無効化するかのbool
+   * @param  bool trueならばダブルタップでのズーム終了を無効化
+   */
+  set isDisabledDoubleTapResetZoom(bool: boolean) {
+    this.data.isDisabledDoubleTapResetZoom = bool;
     this.savePreferenceData();
   }
 
-
+  /**
+   * 進捗バーの太さ値を返す
+   * @return BarWidth文字列
+   */
   get progressBarWidth(): BarWidth {
     return this.data.progressBarWidth
   }
 
-  set progressBarWidth(Width: BarWidth) {
-    this.data.progressBarWidth = Width;
+  /**
+   * 新たな進捗バーの太さ値を設定する
+   * 同時にPreferenceUpdateEventを発火させる
+   *
+   * @param  width BarWidth文字列
+   */
+  set progressBarWidth(width: BarWidth) {
+    this.data.progressBarWidth = width;
     this.savePreferenceData();
     this.dispatchPreferenceUpdateEvent("progressBarWidth");
   }
 
+  /**
+   * ページ送りボタンの表示設定値を返す
+   * @return UIVisibility文字列
+   */
   get paginationVisibility(): UIVisibility {
     return this.data.paginationVisibility;
   }
 
+  /**
+   * 新たなページ送りボタン表示設定値を設定する
+   * 同時にPreferenceUpdateEventを発火させる
+   *
+   * @param  visibility UIVisibility文字列
+   */
   set paginationVisibility(visibility: UIVisibility) {
     this.data.paginationVisibility = visibility;
     this.savePreferenceData();
     this.dispatchPreferenceUpdateEvent("paginationVisibility");
   }
 
-  private savePreferenceData() {
-    localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
-  }
-
-  private dispatchPreferenceUpdateEvent(detail: string = "") {
-    const ev = new CustomEvent("LaymicPreferenceUpdate", {
-      detail
-    });
-
-    this.rootEl.dispatchEvent(ev);
+  /**
+   * PC版ズームボタン押下時のズーム率を返す
+   * @return ズーム率数値
+   */
+  get zoomButtonRatio(): number {
+    return this.data.zoomButtonRatio;
   }
 
   /**
-   * localStorageから設定データを読み込む
+   * PC版ズームボタン押下時のズーム率を設定する
+   * @param  ratio ズーム率数値
    */
-  private loadPreferenceData(): PreferenceData {
-    const dataStr = localStorage.getItem(this.PREFERENCE_KEY);
+  set zoomButtonRatio(ratio: number) {
+    this.data.zoomButtonRatio = ratio;
+    this.savePreferenceData();
+  }
 
-    let data = this.defaultPreferenceData;
+  /**
+   * 設定ボタン要素に指定するクラス名を生成する
+   * @param  className preferenceButtonクラスに加えて指定するクラス名
+   * @return           ボタンクラス名文字列
+   */
+  private genPreferenceButtonClass(className: string = ""): string {
+    let btnName = this.builder.classNames.preference.button;
+    if (className) btnName += " " + className;
+    return btnName;
+  }
 
-    if (dataStr) {
-      try {
-        data = JSON.parse(dataStr);
-      } catch(e) {
-        console.error(e);
-        localStorage.removeItem(this.PREFERENCE_KEY);
-      }
-    }
+  /**
+   * BarWidth Itemの内部値と表示ラベル値をまとめたものを返す
+   * @return BarWidth Itemをまとめた配列
+   */
+  private get barWidthItems(): SelectItem[] {
+    return [
+      {value: "auto", label: "初期値"},
+      {value: "none", label: "非表示"},
+      {value: "tint", label: "細い"},
+      {value: "medium", label: "普通"},
+      {value: "bold", label: "太い"},
+    ]
+  }
 
-    return data;
+  /**
+   * UIVisibility Itemの内部値と表示ラベルをまとめたものを返す
+   * @return UIVisibility Itemをまとめた配列
+   */
+  private get uiVisibilityItems(): SelectItem[] {
+    return [
+      {value: "auto", label: "初期値"},
+      {value: "hidden", label: "非表示"},
+      {value: "visible", label: "表示"},
+    ]
+  }
+
+  /**
+   * zoomButtonRatioの内部値と表示ラベルをまとめたものを返す
+   * @return zoomButtonRatio Itemをまとめた配列
+   */
+  private get zoomButtonRatioItems(): SelectItem[] {
+    return [
+      { value: 1.5, label: "1.5倍"},
+      { value: 2.0, label: "2.0倍", selected: true},
+      { value: 2.5, label: "2.5倍"},
+      { value: 3.0, label: "3.0倍"},
+    ]
   }
 
   /**
@@ -164,14 +352,16 @@ export default class LaymicPreference {
    */
   applyPreferenceValues() {
     // 更新前のデータをdeep copy
-    const oldData = Object.assign(this.data);
+    const oldData: PreferenceData = Object.assign(this.data);
     // 設定値をlocalStorageの値と同期させる
     this.data = this.loadPreferenceData();
 
-    const dispatchs = [];
+    const dispatchs: PreferenceUpdateEventString[] = [];
     // 新旧で値が異なっていればdispatchsに追加
     if (oldData.progressBarWidth !== this.data.progressBarWidth) dispatchs.push("progressBarWidth");
     if (oldData.paginationVisibility !== this.data.paginationVisibility) dispatchs.push("paginationVisibility");
+    if (oldData.isDisabledTapSlidePage !== this.data.isDisabledTapSlidePage) dispatchs.push("isDisabledTapSlidePage");
+    if (oldData.isDisabledForceHorizView !== this.data.isDisabledForceHorizView) dispatchs.push("isDisabledForceHorizView");
 
     dispatchs.forEach(s => this.dispatchPreferenceUpdateEvent(s));
 
@@ -180,199 +370,30 @@ export default class LaymicPreference {
   }
 
   /**
-   * 現在のpreference状態をボタン状態に適用する
-   * 主に初期化時に用いる関数
-   */
-  private overwritePreferenceElValues() {
-    const {
-      isAutoFullscreen,
-      isEnableTapSlidePage,
-      paginationVisibility,
-      progressBarWidth,
-    } = this.buttons;
-
-    const {
-      active
-    } = this.builder.stateNames;
-
-    if (this.isAutoFullscreen) {
-      isAutoFullscreen.classList.add(active);
-    } else {
-      isAutoFullscreen.classList.remove(active);
-    }
-
-    if (this.isEnableTapSlidePage) {
-      isEnableTapSlidePage.classList.add(active);
-    } else {
-      isEnableTapSlidePage.classList.remove(active);
-    }
-
-    const uiVisibilityValues: UIVisibility[] = [
-      "auto",
-      "hidden",
-      "visible",
-    ];
-
-    const barWidthValues: BarWidth[] = [
-      "auto",
-      "none",
-      "tint",
-      "medium",
-      "bold",
-    ];
-
-    [
-      {
-        // pagination visibility
-        els: this.getSelectItemEls(paginationVisibility),
-        idx: uiVisibilityValues.indexOf(this.paginationVisibility)
-      },
-      {
-        // progress bar width
-        els: this.getSelectItemEls(progressBarWidth),
-        idx: barWidthValues.indexOf(this.progressBarWidth)
-      }
-    ].forEach(obj => {
-      const {els, idx} = obj;
-      if (isHTMLElementArray(els) && els[idx]) {
-        els[idx].style.order = "-1";
-      }
-    })
-  }
-
-  /**
-   * 各種ボタンイベントを登録する
-   * インスタンス生成時に一度だけ呼び出される
-   */
-  private applyEventListeners() {
-    this.buttons.isAutoFullscreen.addEventListener("click", () => {
-      this.isAutoFullscreen = !this.isAutoFullscreen;
-    });
-
-    this.buttons.isEnableTapSlidePage.addEventListener("click", () => {
-      this.isEnableTapSlidePage = !this.isEnableTapSlidePage;
-    });
-
-    const paginationVisibilityHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
-      if (!(e.target instanceof HTMLElement)) return;
-
-      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-
-      if (idx === 0) {
-        // auto
-        this.paginationVisibility = "auto";
-      } else if (idx === 1) {
-        // horizontal
-        this.paginationVisibility = "hidden";
-      } else if (idx === 2) {
-        // vertical
-        this.paginationVisibility = "visible";
-      }
-
-      itemEls.forEach(el => el.style.order = "");
-
-      el.style.order = "-1";
-    }
-
-    const progressBarWidthHandler = (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => {
-      if (!(e.target instanceof HTMLElement)) return;
-
-      const idx = parseInt(e.target.dataset.itemIdx || "", 10);
-
-      if (idx === 0) {
-        // auto
-        this.progressBarWidth = "auto";
-      } else if (idx === 1) {
-        // horizontal
-        this.progressBarWidth = "none";
-      } else if (idx === 2) {
-        // vertical
-        this.progressBarWidth = "tint";
-      } else if (idx === 3) {
-        this.progressBarWidth = "medium";
-      } else if (idx === 4) {
-        this.progressBarWidth = "bold";
-      }
-
-      itemEls.forEach(el => el.style.order = "");
-
-      el.style.order = "-1";
-    }
-
-    // 各種selectButton要素のイベントリスナーを登録
-    [
-      {
-        el: this.buttons.paginationVisibility,
-        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => paginationVisibilityHandler(e, el, itemEls)
-      },
-      {
-        el: this.buttons.progressBarWidth,
-        callback: (e: MouseEvent, el: HTMLElement, itemEls: HTMLElement[]) => progressBarWidthHandler(e, el, itemEls)
-      },
-    ].forEach(obj => {
-      const {el: parentEl, callback} = obj;
-      const els = this.getSelectItemEls(parentEl);
-      if (isHTMLElementArray(els)) {
-        els.forEach(el => el.addEventListener("click", e => {
-          // 親要素がアクティブな時 === selectButtonが選択された時
-          // この時だけ処理を動かす
-          const isActive = parentEl.classList.contains(this.builder.stateNames.active);
-          if (isActive) {
-            callback(e, el, els);
-          }
-        }));
-      }
-    })
-
-    // preference wrapperのクリックイベント
-    this.wrapperEl.addEventListener("click", e => {
-      // セレクトボタン要素を全て非アクティブ化
-      this.deactivateSelectButtons();
-
-      // クリックイベントをpreference containerへ伝播させない
-      e.stopPropagation();
-    })
-
-    // preference containerのクリックイベント
-    this.el.addEventListener("click", () => {
-      this.deactivateSelectButtons();
-      this.hidePreference();
-    })
-  }
-
-  /**
    * 設定画面を表示する
    */
-  showPreference() {
+  show() {
     this.rootEl.classList.add(this.builder.stateNames.showPreference);
+    setAriaExpanded(this.rootEl, true);
+    this._isActive = true;
+
+    // 五回ほどrafSleepしてフォーカス移動タイミングをずらす
+    // 小手先技コードなので、デバイスによっては上手く動かないかも
+    multiRafSleep(5).then(() => {
+      this.wrapperEl.focus();
+    })
   }
 
   /**
    * 設定画面を非表示とする
    */
-  hidePreference() {
+  hide() {
     this.rootEl.classList.remove(this.builder.stateNames.showPreference);
-  }
+    setAriaExpanded(this.rootEl, false);
+    this._isActive = false;
 
-  /**
-   * 全てのセレクトボタンを非アクティブ状態にする
-   * 設定画面が閉じられる際に呼び出される
-   */
-  private deactivateSelectButtons() {
-    [
-      this.buttons.progressBarWidth,
-      this.buttons.paginationVisibility,
-    ].forEach(el => el.classList.remove(this.builder.stateNames.active));
-  }
-
-  /**
-   * 入力した要素内部にあるselectItem要素を配列として返す
-   * @param  el selectButtonを想定した引数
-   * @return    クラス名で抽出したElement配列
-   */
-  private getSelectItemEls(el: HTMLElement): Element[] {
-    const selectItemClass = this.builder.classNames.select.item;
-    return Array.from(el.getElementsByClassName(selectItemClass) || [])
+    // 設定画面を閉じる際にrootElへとフォーカスを移す
+    this.rootEl.focus();
   }
 
   /**
@@ -391,5 +412,208 @@ export default class LaymicPreference {
     }
 
     return width;
+  }
+
+  /**
+   * 現在の設定値オブジェクトをlocalStorageに保存する
+   */
+  private savePreferenceData() {
+    localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
+  }
+
+  /**
+   * LaymicPreferenceUpdateイベントを発火させる
+   * このイベントはlaymicの設定値が変更された際に発火するイベントである。
+   * @param  detail どの値が変更されたかを通知する文字列
+   */
+  private dispatchPreferenceUpdateEvent(detail: PreferenceUpdateEventString) {
+    const ev = new CustomEvent("LaymicPreferenceUpdate", {
+      detail
+    });
+
+    this.rootEl.dispatchEvent(ev);
+  }
+
+  /**
+   * localStorageから設定データを読み込む
+   */
+  loadPreferenceData(): PreferenceData {
+    const dataStr = localStorage.getItem(this.PREFERENCE_KEY);
+
+    let data = LaymicPreference.defaultPreferenceData;
+
+    if (dataStr) {
+      try {
+        data = Object.assign(data, JSON.parse(dataStr));
+      } catch(e) {
+        console.error(e);
+        localStorage.removeItem(this.PREFERENCE_KEY);
+      }
+    }
+
+    return data;
+  }
+
+  /**
+   * 現在のpreference状態をボタン状態に適用する
+   * 主に初期化時に用いる関数
+   */
+  private overwritePreferenceElValues() {
+    const {
+      paginationVisibility,
+      progressBarWidth,
+      zoomButtonRatio,
+      isAutoFullscreen,
+      isDisabledTapSlidePage,
+      isDisabledForceHorizView,
+      isDisabledDoubleTapResetZoom,
+    } = this.choices;
+
+    const checkboxs: {
+      choice: SimpleCheckbox,
+      bool: boolean,
+    }[] = [
+      {
+        choice: isAutoFullscreen,
+        bool: this.isAutoFullscreen
+      },
+      {
+        choice: isDisabledTapSlidePage,
+        bool: this.isDisabledTapSlidePage
+      },
+      {
+        choice: isDisabledForceHorizView,
+        bool: this.isDisabledForceHorizView
+      },
+      {
+        choice: isDisabledDoubleTapResetZoom,
+        bool: this.isDisabledDoubleTapResetZoom
+      }
+    ];
+
+    checkboxs.forEach(obj => obj.choice.setChecked(obj.bool, false));
+
+    const selects: {
+      choice: SimpleSelect,
+      idx: number,
+    }[] = [
+      {
+        choice: paginationVisibility,
+        idx: this.uiVisibilityItems.findIndex(item => item.value === this.paginationVisibility)
+      },
+      {
+        choice: progressBarWidth,
+        idx: this.barWidthItems.findIndex(item => item.value === this.progressBarWidth)
+      },
+      {
+        choice: zoomButtonRatio,
+        idx: this.zoomButtonRatioItems.findIndex(item => item.value === this.zoomButtonRatio)
+      }
+    ];
+
+    selects.forEach(obj => {
+      if (obj.idx !== -1) obj.choice.updateCurrentItem(obj.idx, false);
+    })
+  }
+
+  /**
+   * 各種ボタンイベントを登録する
+   * インスタンス生成時に一度だけ呼び出される
+   */
+  private applyEventListeners() {
+    const {
+      paginationVisibility,
+      progressBarWidth,
+      zoomButtonRatio,
+      isAutoFullscreen,
+      isDisabledTapSlidePage,
+      isDisabledForceHorizView,
+      isDisabledDoubleTapResetZoom,
+    } = this.choices;
+
+    const isAutoFullscreenHandler = (bool: boolean) => this.isAutoFullscreen = bool;
+
+    const isDisabledTapSlidePageHandler = (bool: boolean) => this.isDisabledTapSlidePage = bool;
+
+    const isDisabledForceHorizViewHandler = (bool: boolean) => this.isDisabledForceHorizView = bool;
+
+    const isDisabledDoubleTapResetZoomHandler = (bool: boolean) => this.isDisabledDoubleTapResetZoom = bool;
+
+    const checkboxHandlers: {
+      choice: SimpleCheckbox
+      handler: Function
+    }[] = [
+      {
+        choice: isAutoFullscreen,
+        handler: isAutoFullscreenHandler
+      },
+      {
+        choice: isDisabledTapSlidePage,
+        handler: isDisabledTapSlidePageHandler
+      },
+      {
+        choice: isDisabledForceHorizView,
+        handler: isDisabledForceHorizViewHandler
+      },
+      {
+        choice: isDisabledDoubleTapResetZoom,
+        handler: isDisabledDoubleTapResetZoomHandler
+      }
+    ];
+
+    checkboxHandlers.forEach(obj => {
+      obj.choice.el.container.addEventListener("SimpleCheckboxEvent", ((e: CustomEvent<boolean>) => {
+        obj.handler(e.detail);
+      }) as EventListener)
+    })
+
+    const paginationVisibilityHandler = (item: SelectItem) => {
+      if (isUIVisibility(item.value))
+      this.paginationVisibility = item.value;
+    }
+
+    const progressBarWidthHandler = (item: SelectItem) => {
+      if (isBarWidth(item.value)) this.progressBarWidth = item.value;
+    }
+
+    const zoomButtonRatioHandler = (item: SelectItem) => {
+      const ratio = item.value;
+      if (Number.isFinite(ratio)) this.zoomButtonRatio = ratio;
+    }
+
+    const selectHandlers: {
+      choice: SimpleSelect,
+      handler: Function,
+    }[] = [
+      {
+        choice: paginationVisibility,
+        handler: paginationVisibilityHandler
+      },
+      {
+        choice: progressBarWidth,
+        handler: progressBarWidthHandler
+      },
+      {
+        choice: zoomButtonRatio,
+        handler: zoomButtonRatioHandler
+      }
+    ];
+
+    selectHandlers.forEach(obj => {
+      obj.choice.el.container.addEventListener("SimpleSelectEvent", ((e: CustomEvent<SelectItem>) => {
+        obj.handler(e.detail);
+      }) as EventListener)
+    });
+
+    // preference wrapperのクリックイベント
+    this.wrapperEl.addEventListener("click", e => {
+      // クリックイベントをpreference containerへ伝播させない
+      e.stopPropagation();
+    });
+
+    // preference containerのクリックイベント
+    this.el.addEventListener("click", () => {
+      this.hide();
+    });
   }
 }

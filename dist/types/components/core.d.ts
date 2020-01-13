@@ -1,106 +1,44 @@
-import { Swiper } from "swiper/js/swiper.esm";
-import DOMBuilder from "#/components/builder";
-import LaymicPreference from "#/components/preference";
-import LaymicThumbnails from "#/components/thumbs";
-import LaymicHelp from "#/components/help";
-import { ViewerPages, ViewerElements, LaymicOptions, ViewerStates } from "#/interfaces";
+import DOMBuilder from "./builder";
+import LaymicPreference from "./preference";
+import LaymicThumbnails from "./thumbs";
+import LaymicHelp from "./help";
+import LaymicZoom from "./zoom";
+import LaymicCSSVariables from "./cssVar";
+import LaymicStates from "./states";
+import LaymicSlider from "./slider";
+import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions } from "../interfaces/index";
 export default class Laymic {
-    el: ViewerElements;
-    state: ViewerStates;
-    initOptions: LaymicOptions;
-    preference: LaymicPreference;
-    thumbs: LaymicThumbnails;
-    help: LaymicHelp;
-    swiper: Swiper;
-    builder: DOMBuilder;
-    constructor(pages: ViewerPages, options?: LaymicOptions);
+    readonly el: ViewerElements;
+    readonly state: LaymicStates;
+    readonly initOptions: LaymicOptions;
+    readonly preference: LaymicPreference;
+    readonly thumbs: LaymicThumbnails;
+    readonly help: LaymicHelp;
+    readonly zoom: LaymicZoom;
+    readonly cssVar: LaymicCSSVariables;
+    readonly slider: LaymicSlider;
+    readonly builder: DOMBuilder;
+    constructor(laymicPages: LaymicPages | ViewerPages, options?: LaymicOptions);
     /**
-     * swiper-containerの要素サイズを返す
-     * @return 要素サイズオブジェクト
+     * オーバーレイ表示を展開させる
+     * @param  isDisabledFullscreen trueならば全画面化処理を無効化する
      */
-    private readonly swiperElRect;
+    open(isDisabledFullscreen?: boolean): void;
     /**
-     * 初期状態のmangaViewerステートオブジェクトを返す
-     * @return this.stateの初期値
+     * オーバーレイ表示を閉じる
      */
-    private readonly defaultMangaViewerStates;
-    private readonly mainSwiperHorizViewConf;
-    private readonly mainSwiperVertViewConf;
+    close(): void;
     /**
-     * 横読み2p表示するか否かの判定を行う
-     * @return  2p表示する解像度ならばtrue
+     * LaymicPreferenceの値が更新された際に
+     * 発火するイベントのハンドラ
+     * @param  e CustomEvent。e.detailに変更されたプロパティ名を格納する
      */
-    private readonly isDoubleSlideHorizView;
+    private laymicPreferenceUpdateHandler;
     /**
      * 各種イベントの登録
      * インスタンス生成時に一度だけ呼び出されることを想定
      */
     private applyEventListeners;
-    /**
-     * オーバーレイ表示を展開させる
-     * @param  isDisableFullscreen trueならば全画面化処理を無効化する
-     */
-    open(isDisableFullscreen?: boolean): void;
-    /**
-     * オーバーレイ表示を閉じる
-     */
-    close(isHashChange?: boolean): void;
-    /**
-     * 縦読み表示へと切り替える
-     */
-    private enableVerticalView;
-    /**
-     * 横読み表示へと切り替える
-     */
-    private disableVerticalView;
-    /**
-     * 画面幅に応じて、横読み時の
-     * 「1p表示 <-> 2p表示」を切り替える
-     */
-    private switchSingleSlideState;
-    /**
-     * 1p目空スライドを削除する
-     */
-    private removeFirstEmptySlide;
-    /**
-     * 空スライドを1p目に追加する
-     * 重複して追加しないように、空スライドが存在しない場合のみ追加する
-     */
-    private prependFirstEmptySlide;
-    /**
-     * 入力したMouseEventが
-     * mangaViewer画面のクリックポイントに重なっているかを返す
-     *
-     * 横読み時   : 左側クリックで進む、右側クリックで戻る
-     * 横読みLTR時: 右側クリックで進む、左側クリックで戻る
-     * 縦読み時   : 下側クリックで進む、上側クリックで戻る
-     *
-     * @param  e mouse event
-     * @return   [次に進むクリックポイントに重なっているか, 前に戻るクリックポイントに重なっているか]
-     */
-    private getClickPoint;
-    /**
-     * mangaViewer画面をクリックした際のイベントハンドラ
-     *
-     * クリック判定基準についてはgetClickPoint()を参照のこと
-     *
-     * @param  e  mouse event
-     */
-    private slideClickHandler;
-    /**
-     * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
-     * @param  e  mouse event
-     */
-    private slideMouseHoverHandler;
-    private changePaginationVisibility;
-    /**
-     * ビューワー操作UIをトグルさせる
-     */
-    private toggleViewerUI;
-    /**
-     * ビューワー操作UIを非表示化する
-     */
-    private hideViewerUI;
     /**
      * mangaViewer表示を更新する
      * 主にswiperの表示を更新するための関数
@@ -112,16 +50,7 @@ export default class Laymic {
      * 非全画面状態ならば全画面化させて、
      * 全画面状態であるならそれを解除する
      */
-    private fullscreenHandler;
-    /**
-     * css変数として各ページ最大サイズを再登録する
-     * cssPageWidthUpdateという関数名だけど
-     * pageHeightの値も更新するのはこれいかに
-     */
-    private cssPageWidthUpdate;
-    private cssProgressBarWidthUpdate;
-    private cssViewerPaddingUpdate;
-    private cssJsVhUpdate;
+    private toggleFullscreen;
     /**
      * mangaViewerと紐付いたrootElを表示する
      */
@@ -139,14 +68,29 @@ export default class Laymic {
      */
     private enableBodyScroll;
     /**
-     * pageSizeと関連する部分を一挙に設定する
-     * @param  width  新たなページ横幅
-     * @param  height 新たなページ縦幅
+     * ページ送りボタンを強制的非表示化する
+     * ステート状態をいじるのはバグの元なので直書きで非表示化する
      */
-    private setPageSize;
+    private disablePagination;
     /**
-     * 入力したpathの画像からpageSizeを設定する
-     * @param src 画像path
+     * ページ送りボタン強制的非表示化を解除する
+     * 直書きでのstyle付与を無くす
      */
-    private setPageSizeFromImgPath;
+    private enablePagination;
+    /**
+     * fullscreenchangeイベントに登録する処理
+     * もしscreenfullのapiを通さず全画面状態が解除されても、
+     * 最低限の見た目だけは整えるために分離
+     */
+    private fullscreenChange;
+    /**
+     * keydown時に呼び出されるハンドラ
+     * laymicでのキーボード操作をすべてこの関数でまかなう
+     * @param  e KeyboardEvent
+     */
+    private keydownHandler;
+    /**
+     * state内のrootElの要素サイズを更新する
+     */
+    private updateRootElRect;
 }

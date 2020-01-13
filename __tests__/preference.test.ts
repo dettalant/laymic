@@ -1,6 +1,6 @@
 import Preference from "#/components/preference";
 import DOMBuilder from "#/components/builder";
-import { BarWidth, UIVisibility } from "#/interfaces";
+import { BarWidth, UIVisibility } from "#/interfaces/index";
 
 describe("preference class test", () => {
   const builder = new DOMBuilder();
@@ -10,9 +10,11 @@ describe("preference class test", () => {
     preference["savePreferenceData"]();
     const data = preference["loadPreferenceData"]();
     expect(typeof data.isAutoFullscreen === "boolean").toBeTruthy();
-    expect(typeof data.isEnableTapSlidePage === "boolean").toBeTruthy();
+    expect(typeof data.isDisabledTapSlidePage === "boolean").toBeTruthy();
+    expect(typeof data.isDisabledDoubleTapResetZoom === "boolean").toBeTruthy();
     expect(typeof data.paginationVisibility === "string").toBeTruthy();
     expect(typeof data.progressBarWidth === "string").toBeTruthy();
+    expect(typeof data.zoomButtonRatio === "number").toBeTruthy();
   })
 
   it("isAutoFullscreen test", () => {
@@ -34,10 +36,10 @@ describe("preference class test", () => {
       false
     ];
     testValues.forEach(bool => {
-      preference.isEnableTapSlidePage = bool;
+      preference.isDisabledTapSlidePage = bool;
 
-      expect(preference.isEnableTapSlidePage).toBe(bool);
-      expect(preference["loadPreferenceData"]().isEnableTapSlidePage).toBe(bool);
+      expect(preference.isDisabledTapSlidePage).toBe(bool);
+      expect(preference["loadPreferenceData"]().isDisabledTapSlidePage).toBe(bool);
     })
   })
 
@@ -71,82 +73,34 @@ describe("preference class test", () => {
     })
   })
 
+  it("zoomButtonRatio test", () => {
+    const testValues = [
+      2.5,
+      3.0,
+      2.0,
+      // ここから実用はしないけど指定できる数値
+      2.2,
+      3.3,
+      10,
+      1.5,
+    ];
+
+    testValues.forEach(value => {
+      preference.zoomButtonRatio = value;
+      expect(preference.zoomButtonRatio).toBe(value);
+      expect(preference["loadPreferenceData"]().zoomButtonRatio).toBe(value);
+    })
+  })
+
   it("dispatchPreferenceUpdateEvent test", done => {
-    const preferenceTest = "preferenceTest";
+    const testStr = "isAutoFullscreen";
     preference.rootEl.addEventListener("LaymicPreferenceUpdate", ((e: CustomEvent<string>) => {
-      if (e.detail === preferenceTest) {
+      if (e.detail === testStr) {
         expect(true).toBeTruthy();
         done();
       }
     }) as EventListener);
 
-    preference["dispatchPreferenceUpdateEvent"](preferenceTest);
-  })
-
-  it("applyCurrentPreferenceValue test", () => {
-    const key = preference["PREFERENCE_KEY"];
-    const data = preference["loadPreferenceData"]();
-
-    const pbwValue = "none";
-    const pvValue = "visible";
-
-    data.isAutoFullscreen = true;
-    data.isEnableTapSlidePage = true;
-    data.progressBarWidth = pbwValue;
-    data.paginationVisibility = pvValue;
-
-    localStorage.setItem(key, JSON.stringify(data));
-
-    const preference2 = new Preference(builder, rootEl);
-    const uiVisibilityValues: UIVisibility[] = [
-      "auto",
-      "hidden",
-      "visible",
-    ];
-
-    const barWidthValues: BarWidth[] = [
-      "auto",
-      "none",
-      "tint",
-      "medium",
-      "bold",
-    ];
-    const {
-      isAutoFullscreen,
-      isEnableTapSlidePage,
-      progressBarWidth,
-      paginationVisibility,
-    } = preference2.buttons;
-
-    const progressbarIdx = barWidthValues.indexOf(pbwValue);
-    const paginationIdx = uiVisibilityValues.indexOf(pvValue);
-
-    const active = preference2.builder.stateNames.active;
-
-    preference2["applyCurrentPreferenceValue"]();
-
-    expect(isAutoFullscreen.classList.contains(active)).toBeTruthy();
-    expect(isEnableTapSlidePage.classList.contains(active)).toBeTruthy();
-
-    [
-      {
-        el: progressBarWidth,
-        idx: progressbarIdx,
-      },
-      {
-        el: paginationVisibility,
-        idx: paginationIdx,
-      }
-    ].forEach(obj => {
-      const els = preference2["getSelectItemEls"](obj.el) as HTMLElement[];
-      els.forEach(el => {
-        if (el.dataset.itemIdx === obj.idx.toString()) {
-          // 選択状態の一つのみがorder === "-1"となる
-          expect(el.style.order).toBe("-1");
-        } else {
-          expect(el.style.order).toBe("");
-        }
-      })
-    })
+    preference["dispatchPreferenceUpdateEvent"](testStr);
   })
 })

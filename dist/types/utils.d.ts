@@ -1,4 +1,4 @@
-import { BarWidth } from "#/interfaces";
+import { BarWidth, UIVisibility, LaymicPages, OrientationString } from "./interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -19,14 +19,12 @@ export declare const viewerCnt: () => number;
  * @return    Promiseに包まれたsetTimeout戻り値
  */
 export declare const sleep: (ms: number) => Promise<Function>;
-/**
- * 画像をimg要素として読み取る
- * @param   path 画像path文字列
- * @return       Promiseに包まれたHTMLImageElement
- */
-export declare const readImage: (path: string) => Promise<HTMLImageElement>;
+export declare const rafSleep: () => Promise<unknown>;
+export declare const multiRafSleep: (len?: number) => Promise<void>;
 export declare const isMobile: () => boolean;
-export declare const isExistTouchEvent: () => boolean;
+export declare const isSupportedPassive: () => boolean;
+export declare const passiveFalseOption: AddEventListenerOptions | false;
+export declare const isMultiTouch: (e: TouchEvent) => boolean;
 /**
  * requestAnimationFrameを用いて呼び出し頻度を下げた関数を返す
  * addEventListener第二引数に用いられることを想定。
@@ -42,8 +40,28 @@ export declare const isExistTouchEvent: () => boolean;
  * @return          イベントデータを受け取る関数
  */
 export declare const rafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => (this: T, ev: E) => void;
-export declare const isHTMLElementArray: (array: any) => array is HTMLElement[];
+export declare const cancelableRafThrottle: <T extends Element, E extends Event>(callback: (ev: E) => void) => {
+    listener: (this: T, ev: E) => void;
+    canceler: () => void;
+};
+export declare const wheelThrottle: <T extends Element, E extends WheelEvent>(callback: (ev: E) => void) => (this: T, ev: E) => void;
+export declare const createDoubleClickHandler: <T extends HTMLElement, E extends MouseEvent>(callback: (e: E) => void, ms?: number) => (this: T, e: E) => void;
 export declare const isBarWidth: (s: any) => s is BarWidth;
+export declare const isUIVisibility: (s: any) => s is UIVisibility;
 export declare const compareString: <T>(s: string, cmp: string, success: T) => T | undefined;
 export declare const excludeHashLocation: () => string;
 export declare const calcWindowVH: (el?: HTMLElement) => void;
+export declare const isLaymicPages: (pages: any) => pages is LaymicPages;
+/**
+ * KeyboardEvent.keyの値が指定されたものと同じであるかをチェックする。
+ * @param key    KeyboardEvent.keyの値
+ * @param cmpKey 比較する文字列。文字列配列も指定可能
+ */
+export declare const parseKey: (key: string, cmpKey: string | string[]) => boolean;
+export declare const keydownHandlers: ((e: KeyboardEvent) => void)[];
+export declare const parentKeydownHandler: (e: KeyboardEvent) => void;
+export declare const orientationChangeHandlers: Function[];
+export declare const parentOrientationChangeHandler: () => void;
+export declare const getDeviceOrientation: () => OrientationString;
+export declare const setAriaExpanded: (el: HTMLElement, bool: boolean) => void;
+export declare const setRole: (el: HTMLElement, role: string) => void;

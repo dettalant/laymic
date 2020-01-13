@@ -1,4 +1,4 @@
-import { BarWidth } from "#/interfaces";
+import { BarWidth, UIVisibility, LaymicPages, OrientationString } from "./interfaces/index";
 /**
  * 最大公約数を計算する
  * ユークリッドの互除法を使用
@@ -15,15 +15,15 @@ export const calcGCD = (x: number, y: number) => {
   return x;
 }
 
-let _viewerCntNum = 0;
 /**
  * インスタンスで固有のviewerIdを出力するための関数
  * 呼び出されるたびにインクリメントするだけ
  * @return  固有のviewerId数値
  */
-export const viewerCnt = () => {
-  return _viewerCntNum++;
-}
+export const viewerCnt = (() => {
+  let _viewerCntNum = 0;
+  return () => _viewerCntNum++;
+})()
 
 /**
  * 一定時間ウェイトを取る
@@ -32,27 +32,53 @@ export const viewerCnt = () => {
  */
 export const sleep = (ms: number) => new Promise<Function>((res) => setTimeout(res, ms))
 
-/**
- * 画像をimg要素として読み取る
- * @param   path 画像path文字列
- * @return       Promiseに包まれたHTMLImageElement
- */
-export const readImage = (path: string): Promise<HTMLImageElement> => {
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => res(img);
-    img.onerror = (e) => rej(e);
-    img.src = path;
-  })
+export const rafSleep = () => new Promise(res => requestAnimationFrame(res));
+
+export const multiRafSleep = async (len: number = 2) => {
+  const range = [...Array(len)].map((_, i) => i);
+  for (let _ of range) {
+    await rafSleep()
+  }
 }
+
+// /**
+//  * 画像をimg要素として読み取る
+//  * @param   path 画像path文字列
+//  * @return       Promiseに包まれたHTMLImageElement
+//  */
+// export const readImage = (path: string): Promise<HTMLImageElement> => {
+//   return new Promise((res, rej) => {
+//     const img = new Image();
+//     img.onload = () => res(img);
+//     img.onerror = (e) => rej(e);
+//     img.src = path;
+//   })
+// }
 
 export const isMobile = (): boolean => {
   const regex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i;
   return regex.test(window.navigator.userAgent);
 }
 
-export const isExistTouchEvent = (): boolean => {
-  return "ontouchmove" in window;
+// export const isExistTouchEvent = (): boolean => {
+//   return "ontouchmove" in window;
+// }
+
+export const isSupportedPassive = () => {
+  let passive = false;
+  const options = Object.defineProperty({}, "passive", {
+    get() { passive = true; }
+  });
+  const testFunc = () => {}
+  window.addEventListener("test", testFunc, options);
+  window.removeEventListener("test", testFunc);
+  return passive;
+}
+
+export const passiveFalseOption: AddEventListenerOptions | false = (isSupportedPassive()) ? {passive: false} : false;
+
+export const isMultiTouch = (e: TouchEvent): boolean =>  {
+  return e.targetTouches.length > 1;
 }
 
 /**
@@ -69,7 +95,10 @@ export const isExistTouchEvent = (): boolean => {
  * @param  callback 頻度を下げて呼び出されるコールバック関数
  * @return          イベントデータを受け取る関数
  */
-export const rafThrottle = function<T extends Element, E extends Event>(callback: (ev: E) => void) {
+export const rafThrottle = function<
+  T extends Element,
+  E extends Event
+>(callback: (ev: E) => void) {
   let requestId = 0;
   return function(this: T, ev: E) {
     if (requestId) return;
@@ -80,23 +109,180 @@ export const rafThrottle = function<T extends Element, E extends Event>(callback
   }
 }
 
-export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
-  let bool = true;
-
-  if (Array.isArray(array) && array.length > 0) {
-    array.forEach(v => {
-      const b = v instanceof HTMLElement;
-      if (!b) bool = false;
-    })
-  } else {
-    bool = false;
+export const cancelableRafThrottle = function<
+  T extends Element,
+  E extends Event,
+>(callback: (ev: E) => void) {
+  let requestId = 0;
+  const listener = function(this: T, ev: E) {
+    if (requestId) return;
+    requestId = requestAnimationFrame(() => {
+      requestId = 0;
+      callback.call(this, ev);
+    });
   }
 
-  return bool;
+  const canceler = () => {
+    cancelAnimationFrame(requestId);
+    requestId = 0;
+  }
+
+  return {
+    listener,
+    canceler
+  }
 }
+
+// trackpadでの疑似ホイール移動等をまかなうため、
+// ホイールイベントでの移動量を計算し、
+// 一般的なマウススクロール量と同じだけスクロールした場合にのみ
+// callbackを動作させる関数
+export const wheelThrottle = function<
+  T extends Element,
+  E extends WheelEvent
+> (callback: (ev: E) => void) {
+  // DOM_DELTA_LINE時に掛け合わせるlineHeight固定値
+  const lh = 18;
+  // 計算に用いるtmp変数群
+  let px = 0;
+  let py = 0;
+  let pastDx = 0;
+  let pastDy = 0;
+
+  // tmp変数を初期化する
+  const resetVariable = () => {
+    px = 0;
+    py = 0;
+    pastDx = 0;
+    pastDy = 0;
+  }
+
+  return function(this: T, ev: E) {
+    // callbackを呼び出す関数
+    // 同時にtmp変数も初期化しておく
+    const doCallback = () => {
+      resetVariable();
+      callback.call(this, ev)
+    }
+
+    // if DOM_DELTA_PAGE
+    // deltaPageモードでは無条件でcallbackを呼び出す
+    if (ev.deltaMode === 2) {
+      doCallback();
+      return;
+    }
+
+    const isDeltaPixel = ev.deltaMode === 0;
+    const [dx, dy] = (isDeltaPixel)
+      ? [ev.deltaX, ev.deltaY]
+      : [ev.deltaX * lh, ev.deltaY * lh];
+
+    // 過去の値と+-の方向が違っていたなら値をresetする
+    // いわゆるXORと同じことを行っている
+    if (pastDx > 0 !== dx > 0
+      || pastDy > 0 !== dy > 0
+    ) {
+      resetVariable();
+    }
+
+    // 値をtmp変数に足し合わせる
+    px += dx;
+    pastDx = dx;
+    py += dy;
+    pastDy = dy;
+
+    // tmp変数の値が50か-50を超えていればcallbackを呼び出す
+    if (Math.abs(px) > 50 || Math.abs(py) > 50) {
+      doCallback();
+    }
+  }
+}
+
+// export const createDoubleTapHandler = function<
+//   T extends HTMLElement,
+//   E extends TouchEvent
+// > (
+//   callback: (e: E) => void,
+//   ms: number = 500,
+//   distance: number = 40
+// ) {
+//   let tapCnt = 0;
+//   let pastX = 0;
+//   let pastY = 0;
+//
+//   const isContainedDistance = (e: TouchEvent): boolean => {
+//     const {clientX: cx, clientY: cy} = e.changedTouches[0];
+//     const diffX = Math.abs(cx - pastX);
+//     const diffY = Math.abs(cy - pastY);
+//
+//     return diffX < distance && diffY < distance;
+//   }
+//
+//   const setPastPos = (e: TouchEvent) => {
+//     const {clientX: cx, clientY: cy} = e.changedTouches[0];
+//     pastX = cx;
+//     pastY = cy;
+//   }
+//
+//   return function(this: T, e: E) {
+//     if (!tapCnt) {
+//       tapCnt++;
+//       sleep(ms).then(() => {
+//         tapCnt = 0;
+//       });
+//     } else if (isContainedDistance(e)) {
+//       // ダブルタップ処理
+//       callback.call(this, e);
+//       tapCnt = 0;
+//     }
+//     setPastPos(e)
+//   }
+// }
+
+// ipadではdblclick eventが使えないと聞いたので
+// click eventで同じ操作を代用するためのもの
+export const createDoubleClickHandler = function<
+  T extends HTMLElement,
+  E extends MouseEvent
+> (
+  callback: (e: E) => void,
+  ms: number = 500,
+) {
+  let clickCnt = 0;
+  return function(this: T, e: E) {
+    if (!clickCnt) {
+      clickCnt++;
+      sleep(ms).then(() => {
+        clickCnt = 0;
+      })
+    } else {
+      callback.call(this, e);
+      clickCnt = 0;
+    }
+  }
+}
+
+// export const isHTMLElementArray = (array: any): array is HTMLElement[] => {
+//   let bool = true;
+//
+//   if (Array.isArray(array) && array.length > 0) {
+//     array.forEach(v => {
+//       const b = v instanceof HTMLElement;
+//       if (!b) bool = false;
+//     })
+//   } else {
+//     bool = false;
+//   }
+//
+//   return bool;
+// }
 
 export const isBarWidth = (s: any): s is BarWidth => {
   return s === "auto" || s === "none" || s === "tint" || s === "bold" || s === "medium";
+}
+
+export const isUIVisibility = (s: any): s is UIVisibility => {
+  return s === "auto" || s === "none" || s === "visible";
 }
 
 export const compareString = <T>(s: string, cmp: string, success: T): T | undefined => {
@@ -109,3 +295,69 @@ export const calcWindowVH = (el: HTMLElement = document.documentElement) => {
   const vh = window.innerHeight * 0.01;
   el.style.setProperty("--js-vh", vh + "px");
 }
+
+export const isLaymicPages = (pages: any): pages is LaymicPages => {
+  return "pages" in pages && Array.isArray(pages.pages);
+}
+
+// /**
+//  * ViewerPages内はじめのHTMLImageElementのsrcを取得する
+//  * @param  pages laymicに指定された全ページ
+//  * @return       取得したsrc文字列。取得できなければ空欄を返す
+//  */
+// export const getBeginningSrc = (pages: ViewerPages): string => {
+//   let result = "";
+//   for (let p of pages) {
+//     if (typeof p === "string") {
+//       result = p;
+//       break;
+//     } else if (p instanceof HTMLImageElement) {
+//       result = p.dataset.src || p.src;
+//       break;
+//     }
+//   }
+//   return result;
+// }
+
+/**
+ * KeyboardEvent.keyの値が指定されたものと同じであるかをチェックする。
+ * @param key    KeyboardEvent.keyの値
+ * @param cmpKey 比較する文字列。文字列配列も指定可能
+ */
+export const parseKey = (key: string, cmpKey: string | string[]): boolean => {
+  const cmp = (typeof cmpKey === "string")
+    ? [cmpKey]
+    : cmpKey;
+
+  return cmp.includes(key);
+}
+
+export const keydownHandlers: ((e: KeyboardEvent) => void)[] = [];
+export const parentKeydownHandler = (e: KeyboardEvent) => {
+  keydownHandlers.forEach(func => func(e));
+}
+
+export const orientationChangeHandlers: Function[] = [];
+
+export const parentOrientationChangeHandler = () => {
+  orientationChangeHandlers.forEach(func => func())
+}
+
+export const getDeviceOrientation = (): OrientationString => {
+  let orientation: OrientationString = "unknown";
+  if (screen.orientation) {
+    const type = screen.orientation.type;
+    if (type.includes("landscape")) orientation = "landscape";
+    if (type.includes("portrait")) orientation = "portrait";
+  } else if (window.orientation) {
+    orientation = (parseInt(window.orientation.toString(), 10) % 180)
+    ? "landscape"
+    : "portrait";
+  }
+
+  return orientation;
+}
+
+export const setAriaExpanded = (el: HTMLElement, bool: boolean) => el.setAttribute("aria-expanded", (bool) ? "true" : "false");
+
+export const setRole = (el: HTMLElement, role: string) => el.setAttribute("role", role);

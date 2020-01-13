@@ -4,13 +4,6 @@
  * laymicの動作に必要な部分だけ抜粋
  */
 
-@font-face {
-  font-family: 'swiper-icons';
-  src: url("data:application/font-woff;charset=utf-8;base64, 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") format("woff");
-  font-weight: 400;
-  font-style: normal;
-}
-
 :root {
   --swiper-theme-color: #007aff;
 }
@@ -27,8 +20,6 @@
 }
 
 .swiper-container-vertical > .swiper-wrapper {
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
   flex-direction: column;
 }
 
@@ -37,23 +28,17 @@
   width: 100%;
   height: 100%;
   z-index: 1;
-  display: -webkit-box;
   display: flex;
-  -webkit-transition-property: -webkit-transform;
-  transition-property: -webkit-transform;
   transition-property: transform;
-  transition-property: transform, -webkit-transform;
   box-sizing: content-box;
 }
 
 .swiper-container-android .swiper-slide,
 .swiper-wrapper {
-  -webkit-transform: translate3d(0px, 0, 0);
   transform: translate3d(0px, 0, 0);
 }
 
 .swiper-container-free-mode > .swiper-wrapper {
-  -webkit-transition-timing-function: ease-out;
   transition-timing-function: ease-out;
   margin: 0 auto;
 }
@@ -63,10 +48,7 @@
   width: 100%;
   height: 100%;
   position: relative;
-  -webkit-transition-property: -webkit-transform;
-  transition-property: -webkit-transform;
   transition-property: transform;
-  transition-property: transform, -webkit-transform;
 }
 
 .swiper-slide-invisible-blank {
@@ -78,79 +60,6 @@
   /*
   --swiper-navigation-color: var(--swiper-theme-color);
   */
-}
-
-.swiper-button-prev,
-.swiper-button-next {
-  position: absolute;
-  top: 50%;
-  width: calc(44px / 44 * 27);
-  width: calc(var(--swiper-navigation-size) / 44 * 27);
-  height: 44px;
-  height: var(--swiper-navigation-size);
-  margin-top: calc(-1 * 44px / 2);
-  margin-top: calc(-1 * var(--swiper-navigation-size) / 2);
-  z-index: 10;
-  cursor: pointer;
-  display: -webkit-box;
-  display: flex;
-  -webkit-box-align: center;
-  align-items: center;
-  -webkit-box-pack: center;
-  justify-content: center;
-  color: var(--swiper-theme-color);
-  color: var(--swiper-navigation-color, var(--swiper-theme-color));
-}
-
-.swiper-button-prev.swiper-button-disabled,
-.swiper-button-next.swiper-button-disabled {
-  opacity: 0.35;
-  cursor: auto;
-  pointer-events: none;
-}
-
-.swiper-button-prev:after,
-.swiper-button-next:after {
-  font-family: swiper-icons;
-  font-size: 44px;
-  font-size: var(--swiper-navigation-size);
-  text-transform: none !important;
-}
-
-.swiper-button-prev,
-.swiper-container-rtl .swiper-button-next {
-  left: 10px;
-  right: auto;
-}
-
-.swiper-button-prev:after,
-.swiper-container-rtl .swiper-button-next:after {
-  content: 'prev';
-}
-
-.swiper-button-next,
-.swiper-container-rtl .swiper-button-prev {
-  right: 10px;
-  left: auto;
-}
-
-.swiper-button-next:after,
-.swiper-container-rtl .swiper-button-prev:after {
-  content: 'next';
-}
-
-.swiper-button-prev.swiper-button-white,
-.swiper-button-next.swiper-button-white {
-  --swiper-navigation-color: #ffffff;
-}
-
-.swiper-button-prev.swiper-button-black,
-.swiper-button-next.swiper-button-black {
-  --swiper-navigation-color: #000000;
-}
-
-.swiper-button-lock {
-  display: none;
 }
 
 /* Progress */
@@ -168,14 +77,11 @@
   top: 0;
   width: 100%;
   height: 100%;
-  -webkit-transform: scale(0);
   transform: scale(0);
-  -webkit-transform-origin: left top;
   transform-origin: left top;
 }
 
 .swiper-container-rtl .swiper-pagination-progressbar .swiper-pagination-progressbar-fill {
-  -webkit-transform-origin: right top;
   transform-origin: right top;
 }
 
@@ -250,17 +156,24 @@
     * --progressbar-width: 進行度バーの幅ピクセル数
     * --js-vh: 正確なvh数字
    */
+  /* preference, thumbsでの背景色 */
+  --laymic-container-bg-color: #333;
+  /* 各場所での半透明黒背景色 */
+  --laymic-translucent-bg-color: rgba(0, 0, 0, .7);
+  /* 全般的なテキスト色 */
+  --laymic-text-color: #fafafa;
   width: 100vw;
   height: calc(1vh * 100);
   height: calc(var(--js-vh, 1vh) * 100);
   position: fixed;
   top: 0;
   left: 0;
+  /* rootElの半透明黒背景色は少しだけ濃いめに */
   background: rgba(0, 0, 0, .8);
-  -webkit-transition: opacity .3s, visibility .3s;
   transition: opacity .3s, visibility .3s;
   visibility: hidden;
   opacity: 0;
+  color: var(--laymic-text-color);
 }
 
 .laymic_root:-webkit-full-screen {
@@ -289,54 +202,62 @@
   position: absolute;
   width: 100%;
   height: 3rem;
-  background: rgba(0, 0, 0, .5);
+  background: var(--laymic-translucent-bg-color);
   left: 0;
   z-index: 20;
-  -webkit-transition: -webkit-transform .3s;
-  transition: -webkit-transform .3s;
   transition: transform .3s;
-  transition: transform .3s, -webkit-transform .3s;
-  color: #fafafa;
   /* 親要素のカーソル変化に追従させない */
   cursor: auto;
+  /* 子要素のfocus表示をはみ出させないためのpadding */
+  padding: 2px 0;
 }
 
 .laymic_controllerTop {
   top: 0;
   /* HACK: safari z-index bug対策にtranslate3d使用 */
-  -webkit-transform: translate3d(0, -100%, 0);
   transform: translate3d(0, -100%, 0);
-  display: -webkit-box;
   display: flex;
-  -webkit-box-align: center;
   align-items: center;
   /* 暫定で右寄せ */
-  -webkit-box-pack: end;
   justify-content: flex-end;
 }
 
 .laymic_controllerBottom {
   bottom: 0;
   /* HACK: safari z-index bug対策にtranslate3d使用 */
-  -webkit-transform: translate3d(0, 100%, 0);
   transform: translate3d(0, 100%, 0);
 }
 
 .laymic_progressbar {
   /* #888か#999くらいの配色が良さそう */
-  --swiper-pagination-color: rgba(255, 255, 255, .3);
+  --swiper-pagination-color: rgba(255, 255, 255, .2);
+  /* 当たり判定インチキ要素のサイズ
+    他操作を阻害しないよう最低限の太さにしておく */
+  --collision-padding-size: .5rem;
 	width: 100%;
 	height: var(--progressbar-width);
   top: 0;
   left: 0;
   z-index: 15;
+  /* button同様カーソルをポインターにしておく */
+  cursor: pointer;
+}
+
+.laymic_root .laymic_progressbar {
+  /* 進捗バーの存在をわかりやすくするための背景色 */
+  background: rgba(255, 255,255, .1);
+}
+
+/* 当たり判定インチキの影響がfocusに出ないようにする */
+
+.laymic_progressbar:focus {
+  outline: 0;
 }
 
 /* isLTR設定がfalseの際にのみ有効なスタイル */
 
 .laymic_root:not(.laymic_isLTR) .laymic_progressbar .swiper-pagination-progressbar-fill {
   /* プログレスバーが右から左へ流れるようにする */
-  -webkit-transform-origin: right top;
   transform-origin: right top;
 }
 
@@ -349,16 +270,44 @@
   right: 0;
 }
 
+/* 進捗バークリック当たり判定をインチキするための透明要素 */
+
+.laymic_progressbar::before {
+  content: "";
+  height: var(--collision-padding-size);
+  /* 通常時は横幅いっぱいまで広がる */
+  width: inherit;
+  /* 進捗バーの下へと連なるように配置 */
+  top: 100%;
+  display: block;
+  position: absolute;
+}
+
+/* 縦読み時の表示調整 */
+
+.laymic_isVertView .laymic_progressbar::before {
+  width: var(--collision-padding-size);
+  /* 縦読み時は縦幅いっぱいまで広げる */
+  height: inherit;
+  /* 画面上に貼り付ける */
+  top: 0;
+  /* 進捗バーの左に寄り添うように配置 */
+  right: 100%;
+}
+
 .laymic_isVisibleUI .laymic_controllerTop,
 .laymic_isVisibleUI .laymic_controllerBottom {
-  -webkit-transform: translateY(0);
   transform: translateY(0);
 }
 
 .swiper-wrapper {
   /* 縦読み時などでの中央寄せ */
-  -webkit-box-align: center;
   align-items: center;
+}
+
+.laymic_controller,
+.laymic_slider {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .laymic_slider,
@@ -368,7 +317,6 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
 }
 
@@ -399,11 +347,8 @@
 }
 
 .laymic_slider .swiper-slide {
-  display: -webkit-box;
   display: flex;
-  -webkit-box-pack: center;
   justify-content: center;
-  -webkit-box-align: center;
   align-items: center;
   max-width: var(--page-width);
   max-height: var(--page-height);
@@ -414,14 +359,11 @@
 }
 
 .swiper-slide img,
-.laymic_thumbItem {
+.laymic_imgThumb {
   max-width: 100%;
   max-height: 100%;
-  -o-object-fit: scale-down;
   object-fit: scale-down;
-  /* NOTE: 後でprefixを足す必要あり */
   -webkit-user-select: none;
-  -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
@@ -434,11 +376,11 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, .5);
+  background: var(--laymic-translucent-bg-color);
   z-index: 18;
+  /* 初期状態では非表示とする */
   visibility: hidden;
   opacity: 0;
-  -webkit-transition: opacity .3s, visibility .3s;
   transition: opacity .3s, visibility .3s;
 }
 
@@ -452,32 +394,94 @@
 /* help */
 
 .laymic_helpWrapper {
-  max-width: 90%;
-  max-height: 90%;
   height: 100%;
   width: 100%;
-  display: -webkit-box;
   display: flex;
-  -webkit-box-pack: center;
   justify-content: center;
-  -webkit-box-align: center;
   align-items: center;
+  flex-flow: column nowrap;
 }
 
-.laymic_helpHorizImg,
-.laymic_helpVertImg {
-  max-width: 100%;
-  max-height: 100%;
-  opacity: .9;
+/* helpWrapper内に直置きされるタッチアイコン */
+
+.laymic_helpWrapper > .icon_touchApp {
+	--icon-size: calc(4vmin + 2rem);
+  /* 上下余白幅を若干確保して、`.laymic_helpInnerWrapper`を上に押し上げる */
+  margin: 2vmin 0;
 }
 
-.laymic_helpHorizImg,
-.laymic_isVertView .laymic_helpVertImg {
-  display: inline-block;
+.laymic_helpInnerWrapper {
+  background: rgba(0, 0, 0, .5);
+  /* フォントサイズはアイコンより少し小さく */
+  font-size: calc(3vmin + .2rem);
+  /* フォントサイズを起点に余白指定 */
+  padding: .5em;
+  /* 気持ち上に引き上げておいたほうがなんか良い気がする */
+  margin-top: -2vmin;
 }
 
-.laymic_helpVertImg,
-.laymic_isVertView .laymic_helpHorizImg {
+.laymic_helpInnerItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.laymic_helpIconWrapper {
+  display: flex;
+}
+
+.laymic_helpIconWrapper .laymic_svgIcon {
+  /* 画面サイズと比例させつつ固定値も混ぜる */
+  --icon-size: calc(3vmin + .5rem);
+}
+
+.laymic_helpIconLabel {
+  margin-left: .5vmin;
+}
+
+.laymic_helpChevrons {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 念の為helpInnerWrapperより後ろにしておく */
+  z-index: -1;
+}
+
+.laymic_isVertView .laymic_helpChevrons {
+  width: auto;
+  height: 100%;
+  flex-direction: column;
+}
+
+/* ページ送り方向を示唆するヘルプ要素 */
+
+.laymic_helpChevrons .icon_chevronLeft {
+  --icon-size: calc(4vmin + 2rem);
+}
+
+.laymic_helpChevrons .icon_chevronLeft.laymic_isReversed {
+  transform: rotateY(180deg);
+}
+
+/* 縦読み時は二つのchevronを適切に回転させる */
+
+.laymic_isVertView .laymic_helpChevrons .icon_chevronLeft {
+  transform: rotate(90deg);
+}
+
+.laymic_isVertView .laymic_helpChevrons .icon_chevronLeft.laymic_isReversed {
+  transform: rotate(270deg)
+}
+
+/* UI内に当該ボタンが表示されていない場合は説明の上でも非表示とする */
+
+.laymic_isUnsupportedFullscreen .laymic_helpFullscreenItem,
+.laymic_isMobile .laymic_helpZoomItem {
   display: none;
 }
 
@@ -492,8 +496,8 @@
   */
   max-height: 90%;
   max-width: 90%;
-  padding: 0 var(--thumbs-wrapper-padding);
-  background: #333;
+  padding: .5rem var(--thumbs-wrapper-padding);
+  background: var(--laymic-container-bg-color);
   overflow: auto;
   display: grid;
   grid-gap: var(--thumb-item-gap);
@@ -501,50 +505,55 @@
   grid-auto-rows: var(--thumb-item-height);
   width: 100%;
   justify-content: space-around;
-  /* なんか下方向のpaddingだけ上手く効かないので苦肉の策 */
+  /* 下方向のpaddingだけ上手く効かないので苦肉の策 */
   border: solid transparent;
-  border-width: 1rem 0;
+  border-width: .5rem 0;
 }
 
-.laymic_thumbItem {
-  margin: auto;
-	cursor: pointer;
+/* 優先度を上げるため冗長な書き方を行う */
+
+.laymic_thumbsWrapper .laymic_thumbItem {
   overflow: hidden;
 }
 
+/* preference */
+
 .laymic_preferenceWrapper {
-  max-width: 90%;
-  max-height: 90%;
+  /* 認識性向上のため文字サイズを上げておく */
+  --font-size: 1.1rem;
+  /* 選択用要素高さ計算のための余白数値 */
+  --padding-size: .6rem;
+  /* 選択用要素の高さを計算 */
+  --item-height: calc(var(--font-size) + var(--padding-size) * 2);
+  /* 最低でも確保する子要素横幅 */
+  --select-wrapper-min-width: 5.5rem;
+  /* 最大横幅は親要素より少し小さめに */
+  max-width: 80%;
+  /* 最大縦幅も同様 */
+  max-height: 80%;
   overflow: auto;
-  background: #333;
+  background: var(--laymic-container-bg-color);
   padding: 1rem;
   z-index: 18;
-  color: #fafafa;
-  height: 17rem;
+  /* どの状況でもある程度の横幅は確保 */
   width: 35rem;
-  display: -webkit-box;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-  flex-flow: column nowrap;
-  -webkit-box-pack: justify;
-  justify-content: space-between;
+  font-size: var(--font-size);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: .5rem;
+}
+
+.laymic_isMobile .laymic_preferenceWrapper {
+  /* スマホではアイテム間余白を1remずつに変更 */
+  grid-gap: 1rem;
 }
 
 .laymic_preferenceButton {
-  display: -webkit-box;
   display: flex;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
   flex-flow: row nowrap;
-  -webkit-box-align: center;
   align-items: center;
-  max-height: 2rem;
   width: 100%;
-  -webkit-box-pack: justify;
   justify-content: space-between;
-  /* 設定ボタンごとでの余白 */
-  margin-bottom: .5rem;
 }
 
 .laymic_preferenceButton,
@@ -556,74 +565,134 @@
 .laymic_uiButton {
   max-height: 100%;
   max-width: 2.5rem;
-  display: -webkit-box;
   display: flex;
 }
 
 /* select button & checkbox button */
 
 .laymic_checkboxIconWrapper {
-  display: -webkit-box;
   display: flex;
   position: relative;
-  -webkit-box-flex: 0;
-  flex: 0 0 5rem;
-  -webkit-box-pack: end;
+  /* selectWrapperの最小横幅と合わせる */
+  flex: 0 0 var(--select-wrapper-min-width);
   justify-content: flex-end;
 }
 
-.laymic_select {
-  max-height: 2rem;
+.laymic_checkboxIconWrapper .laymic_svgIcon {
+  --icon-size: var(--item-height);
+  /* selectWrapper右端とcheckboxIcon右端を合わせるため微調整 */
+  margin-right: -2px;
 }
 
 .laymic_selectWrapper {
-  display: -webkit-box;
+  /* 選択中要素背景色 */
+  --highlight-bg-color: royalblue;
+  /* 現在値要素背景色 */
+  --current-bg-color: #e6e6e6;
+  /* 通常要素背景色 */
+  --normal-bg-color: #fafafa;
+  /* 通常要素文字色 */
+  --normal-text-color: #333;
   display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
   flex-flow: column nowrap;
-  overflow: hidden;
-  max-height: inherit;
   position: relative;
-  z-index: 10;
-  -webkit-box-flex: 0;
-  flex: 0 0 5rem;
+  min-width: var(--select-wrapper-min-width);
+  color: var(--normal-text-color);
+}
+
+.laymic_selectCurrentItem {
+  padding: var(--padding-size);
+  background: var(--current-bg-color);
+}
+
+.laymic_selectItem {
+  padding: var(--padding-size);
+}
+
+.laymic_selectItemWrapper {
+  /* 通常時は非表示 */
+  display: none;
+  background: var(--normal-bg-color);
+  position: absolute;
+  /* 最小限の高さで上に浮かせる */
+  z-index: 1;
+  /* currentItemの下に来るように縦位置を調整 */
+  top: 100%;
+  width: 100%;
+}
+
+.laymic_selectItemWrapper[aria-expanded="true"] {
+  /* 展開中は表示する */
+  display: block;
+}
+
+.laymic_selectItem[aria-selected="true"] {
+  /* 選択中ハイライト色設定 */
+  background: var(--highlight-bg-color);
+  color: var(--laymic-text-color);
 }
 
 .laymic_checkboxLabel,
 .laymic_selectLabel {
-  margin-right: 1rem;
+  /* 画面幅が狭い際に効果を発揮する右側余白を追加 */
+	margin-right: .5rem;
+  /* テキストを左寄せにする */
+  text-align: left;
 }
 
-.laymic_selectItem {
-  padding: 0.5rem 1rem;
-  background: #fafafa;
-  color: #333;
-  pointer-events: none;
+.laymic_preferenceNotice {
+  /* フォントサイズをデフォルトに戻す */
+  font-size: 1rem;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  /* 上下に余白を付ける */
+  padding: .5rem 0;
 }
 
-.laymic_select.laymic_isActive .laymic_selectWrapper {
-  overflow: visible;
-  z-index: 12;
+.laymic_preferenceNotice p {
+  /* 下向け余白をなくす */
+  margin: 1rem 0 0;
 }
 
-.laymic_select.laymic_isActive .laymic_selectItem {
-  pointer-events: auto;
+/* PC画面では非表示する要素 */
+
+.laymic_preferenceIsDisabledTapSlidePage,
+.laymic_preferenceIsDisabledForceHorizView,
+.laymic_preferenceIsDisabledDoubleTapResetZoom {
+  display: none;
+}
+
+/* スマホ画面では表示する要素 */
+
+.laymic_isMobile .laymic_preferenceIsDisabledTapSlidePage,
+.laymic_isMobile .laymic_preferenceIsDisabledForceHorizView,
+.laymic_isMobile .laymic_preferenceIsDisabledDoubleTapResetZoom {
+  display: flex;
 }
 
 .laymic_pagination {
-  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  /* 通常時は主張控えめなアイコン色 */
+  color: rgba(255, 255, 255, .3);
   display: none;
   cursor: auto;
+  position: absolute;
+  top: calc(50% + var(--progressbar-width) / 2);
+  /* 表示位置をページ中央に合わせる */
+  transform: translateY(-50%);
+  /* .laymic_sliderの上に来るよう配置する */
+  z-index: 3;
 }
 
 .laymic_root.laymic_isVisiblePagination .laymic_pagination {
-  display: -webkit-box;
+  /* ページ送りボタンを表示する設定の際のみ表示 */
   display: flex;
 }
 
 .laymic_pagination.laymic_isActive {
-  --swiper-navigation-color: rgba(255, 255, 255, .9);
+  /* ハイライト時には主張強めなアイコン色 */
+  color: rgba(255, 255, 255, .9);
   cursor: pointer;
 }
 
@@ -634,69 +703,90 @@
 
 /* 進むボタン */
 
-.swiper-button-next,
-.laymic_isLTR .swiper-button-prev {
-  left: 10px;
-  right: auto;
-}
-
-.swiper-button-next:after,
-.laymic_isLTR .swiper-button-prev:after {
-  content: 'prev';
+.laymic_paginationNext,
+/* LTR時の戻るボタン */
+.laymic_isLTR .laymic_paginationPrev {
+  left: 0;
 }
 
 /* 戻るボタン */
 
-.swiper-button-prev,
-.laymic_isLTR .swiper-button-next {
-  right: 10px;
-  left: auto;
-}
-
-.swiper-button-prev:after,
-.laymic_isLTR .swiper-button-next:after {
-  content: 'next';
+.laymic_paginationPrev,
+/* LTR時の進むボタン */
+.laymic_isLTR .laymic_paginationNext {
+  right: 0;
+  transform: translateY(-50%) rotate(180deg);
 }
 
 /* 縦読み時戻る進むボタン */
 
-.laymic_isVertView .swiper-button-next,
-.laymic_isVertView .swiper-button-prev {
-  left: 50%;
-  right: auto;
+.laymic_isVertView .laymic_paginationNext,
+.laymic_isVertView .laymic_paginationPrev {
+  left: calc(50% + var(--progressbar-width) / 2);
+  /* top値を一旦初期値に戻す */
+  top: auto;
   margin: 0;
 }
 
-.laymic_isVertView .swiper-button-next:after,
-.laymic_isVertView .swiper-button-prev:after {
-  content: "prev";
-}
-
-.laymic_isVertView .swiper-button-next {
-  top: auto;
+.laymic_isVertView .laymic_paginationNext {
 	bottom: 0;
-  -webkit-transform: rotate(-90deg);
-  transform: rotate(-90deg);
+  /* ページ中央に位置調整し、下向きにする */
+  transform: translateX(-50%) rotate(-90deg);
 }
 
-.laymic_isVertView .swiper-button-prev {
+.laymic_isVertView .laymic_paginationPrev {
 	top: 0;
-	bottom: auto;
-  -webkit-transform: rotate(90deg);
-  transform: rotate(90deg);
+  /* ページ中央に位置調整し、上向きにする */
+  transform: translateX(-50%) rotate(90deg);
 }
 
-/* for mobile */
+/* for mobile and zooming */
 
 .laymic_isMobile .laymic_pagination,
-.laymic_isMobile .laymic_preferencePaginationVisibility {
-  display: none;
+.laymic_isZoomed .laymic_pagination {
+  /* モバイル環境ではクリックイベントを透過するように */
+  pointer-events: none;
+  /* モバイル環境ではアイコンハイライト色をオフにする */
+  color: rgba(255, 255, 255, .3);
 }
 
 /* for unsupported fullscreen api  */
 
 .laymic_isUnsupportedFullscreen .laymic_fullscreen,
-.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen {
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsAutoFullscreen,
+.laymic_isUnsupportedFullscreen .laymic_preferenceIsDisabledDoubleTapResetZoom {
+  display: none;
+}
+
+/* zoom */
+
+.laymic_zoomWrapper {
+  width: 100%;
+  height: 100%;
+  /* 左上基準前提で処理を書いたので
+  この値を変えると表示崩れするはず */
+  transform-origin: top left;
+}
+
+.laymic_zoomController {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  /* 非ズーム時は裏側に隠す */
+  z-index: -1;
+}
+
+.laymic_isZoomed .laymic_zoomController {
+  /* 他要素より前にせりでて操作を妨害する */
+  z-index: 20;
+}
+
+/* disable zoom button for mobile  */
+
+.laymic_isMobile .laymic_zoom,
+.laymic_isMobile .laymic_preferenceZoomButtonRatio {
   display: none;
 }
 
@@ -715,17 +805,16 @@
   width: var(--icon-size);
 }
 
-.laymic_preferenceButton .laymic_svgIcon {
-  --icon-size: 2rem;
-}
-
-.icon_checkBoxInner {
+.icon_checkboxInner {
+  /* checkboxOuter要素と重ねる */
   position: absolute;
+  right: 0;
+  top: 0
 }
 
 .laymic_root .icon_horizView,
 .laymic_root .icon_exitFullscreen,
-.laymic_root .icon_checkBoxInner,
+.laymic_root .icon_checkboxInner,
 .laymic_isVertView .icon_vertView,
 .laymic_isFullscreen .icon_fullscreen {
   display: none;
@@ -733,6 +822,15 @@
 
 .laymic_isVertView .icon_horizView,
 .laymic_isFullscreen .icon_exitFullscreen,
-.laymic_preferenceButton.laymic_isActive .icon_checkBoxInner {
+.laymic_preferenceButton[aria-checked="true"] .icon_checkboxInner {
   display: block;
+}
+
+/*
+  helpでのページ送り方向アイコン
+  縦読みモードでは90度回転させる
+*/
+
+.laymic_isVertView .icon_viewerDirection {
+  transform: rotate(90deg);
 }
