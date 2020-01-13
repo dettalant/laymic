@@ -338,6 +338,14 @@ export default class LaymicSlider {
     }
   }
 
+  sliderMouseDownHandler(e: MouseEvent) {
+    // ホイールクリック以外では処理終了
+    if (e.button !== 1) return;
+
+    // ホイールクリックと紐付いたデフォルト機能を停止
+    e.preventDefault();
+  }
+
   /**
    * スライダー部分のマウスアップハンドラ
    * ホイールクリックはclickでは取れないようなので
@@ -357,6 +365,9 @@ export default class LaymicSlider {
     // ホイールクリック以外では処理終了
     if (e.button !== 1) return;
 
+    // ホイールクリックと紐付いたデフォルト機能を停止
+    e.preventDefault();
+
     if (this.zoom.isZoomed) {
       // ズーム中はクリック同様ズーム終了
       this.zoom.disable();
@@ -364,7 +375,7 @@ export default class LaymicSlider {
       const ratio = this.preference.zoomButtonRatio;
 
       const [nx, ny] = getNormalizedPos(e);
-      
+
       this.zoom.enable(ratio, nx, ny);
       this.hideViewerUI();
     }

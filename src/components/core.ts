@@ -419,9 +419,12 @@ export default class Laymic {
       } else {
         // 非モバイル環境
 
+        // ホイールクリックでのmousedown純正イベントを止める
+        el.addEventListener("mousedown", e => this.slider.sliderMouseDownHandler(e));
+
         // zoom.enable()はモバイル環境を想定していないので
         // モバイル環境ではホイールクリック用処理を動かさない
-        el.addEventListener("mouseup", e => this.slider.sliderMouseUpHandler(e))
+        el.addEventListener("mouseup", e => this.slider.sliderMouseUpHandler(e));
       }
     });
 
@@ -602,7 +605,7 @@ export default class Laymic {
     const escKeys = ["Escape", "Esc"];
     // スペースキーの名前セット
     const spaceKeys = [" ", "Spacebar"];
-    
+
     // 英字キーの名前セット群
     const zKeys = ["z", "Z"];
     const hKeys = ["h", "H"];
