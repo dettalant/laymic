@@ -5,6 +5,9 @@
   "types": "dist/types/index.d.ts",
   "author": "dettalant <lilac@dettalant.com> (https://dettalant.com/)",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "browserslist": [
     "> 1% in JP"
   ],
