@@ -6,8 +6,11 @@ import pkg from "./package.json";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+// dealing with scoped package name
+const pkgName = pkg.name.split("/").pop();
+
 const bannerComment = `/*!
- *   ${pkg.name}.js
+ *   ${pkgName}.js
  *
  * Reference: [swiper](https://github.com/nolimits4web/swiper)
  *
@@ -45,7 +48,7 @@ const cjsOutput = {
   dir: dirName,
   entryFileNames: buildName.join(""),
   format: "cjs",
-  name: pkg.name,
+  name: pkgName,
   banner: bannerComment,
   sourceMap: "inline",
 }
