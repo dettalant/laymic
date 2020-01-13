@@ -226,6 +226,7 @@ html側に付与出来る引数は概ね`LaymicOptions`と似ていますが、�
 css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）に追加されます。
 
 |変数名|意味合い|
+|---|---|
 |`--page-width`|現在ページ横幅|
 |`--page-height`|現在ページ縦幅|
 |`--page-max-width`|最大ページ横幅。ページがこれ以上の横幅になることはない|
