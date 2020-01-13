@@ -80,7 +80,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 
 ## Laymicの引数型詳細
 
-&nbsp;
+<br>
 
 **LaymicPages**
 |名前|型|説明|
@@ -88,7 +88,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`pages`|`(string | Element)[]`|表示する漫画ページセット|
 |`thumbs`|`string[]`|サムネイルとして表示する画像セット|
 
-&nbsp;
+<br>
 
 **LaymicOptions**
 
@@ -111,14 +111,14 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`isInstantOpen`|`true`|`location.hash`と`viewerId`が一致していた場合、ページ読み込み直後にビューワーを開く機能。`false`で無効化|
 |`progressBarWidth`|`"auto"`|進捗バーの太さを変更する。使用できる値は`"auto"`, `"none"`, `"tint"`, `"medium"`, `"bold"`の五つ|
 
-&nbsp;
+<br>
 
 **LaymicClassNames**
 
 書き出すのめんどくさいから[ここ]()参照のこと
 
 
-&nbsp;
+<br>
 
 **LaymicStateClassNames**
 
@@ -138,7 +138,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`ltr`|`"laymic_isLTR"`|`isLTR`設定が有効な場合に付与|
 |`mobile`|`"laymic_isMobile"`|モバイル端末の場合に付与|
 
-&nbsp;
+<br>
 
 **ViewerIcons**
 
@@ -161,7 +161,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`touchApp`|ヘルプ表示に用いられるタッチアイコン|
 |`chevronLeft`|ページ送り方向アイコン<br>css回転で向きを合わせるので左向きのみ用意|
 
-&nbsp;
+<br>
 
 **IconData**
 
@@ -173,7 +173,7 @@ const applicator = new laymic.LaymicApplicator(".laymic_template", {
 |`pathDs`|`string[]`|アイコンのpath要素d属性に用いられる文字列配列|
 
 
-&nbsp;
+<br>
 
 **LaymicApplicatorOptions**
 
@@ -263,7 +263,7 @@ css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）�
 |Z|ズーム切り替え（モバイルブラウザでは無効）|
 |Tab|ビューワーUIを表示（ブラウザデフォルトのフォーカス移動も行う）|
 
-&nbsp;
+<br>
 
 **横読み時**
 
@@ -272,7 +272,7 @@ css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）�
 |ArrowRight|前のページへ|
 |ArrowLeft|次のページへ|
 
-&nbsp;
+<br>
 
 **横読みLTR設定時**
 
@@ -281,7 +281,7 @@ css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）�
 |ArrowLeft|前のページへ|
 |ArrowRight|次のページへ|
 
-&nbsp;
+<br>
 
 **縦読みモード固有**
 
@@ -290,7 +290,7 @@ css変数はどれもlaymicのroot要素（初期状態では`.laymic_root`）�
 |ArrowUp|前のページへ|
 |ArrowDown|次のページへ|
 
-&nbsp;
+<br>
 
 **ズーム中固有**
 
