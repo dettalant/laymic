@@ -9,9 +9,12 @@ const isProduction = process.env.NODE_ENV === "production";
 const bannerComment = `/*!
  *   ${pkg.name}.js
  *
+ * Reference: [swiper](https://github.com/nolimits4web/swiper)
+ *
  * @author dettalant
  * @version v${pkg.version}
  * @license ${pkg.license} License
+ *
  */`;
 
 const plugins = [

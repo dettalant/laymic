@@ -4,13 +4,6 @@
  * laymicの動作に必要な部分だけ抜粋
  */
 
-@font-face {
-  font-family: 'swiper-icons';
-  src: url("data:application/font-woff;charset=utf-8;base64, d09GRgABAAAAAAZgABAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAAGRAAAABoAAAAci6qHkUdERUYAAAWgAAAAIwAAACQAYABXR1BPUwAABhQAAAAuAAAANuAY7+xHU1VCAAAFxAAAAFAAAABm2fPczU9TLzIAAAHcAAAASgAAAGBP9V5RY21hcAAAAkQAAACIAAABYt6F0cBjdnQgAAACzAAAAAQAAAAEABEBRGdhc3AAAAWYAAAACAAAAAj//wADZ2x5ZgAAAywAAADMAAAD2MHtryVoZWFkAAABbAAAADAAAAA2E2+eoWhoZWEAAAGcAAAAHwAAACQC9gDzaG10eAAAAigAAAAZAAAArgJkABFsb2NhAAAC0AAAAFoAAABaFQAUGG1heHAAAAG8AAAAHwAAACAAcABAbmFtZQAAA/gAAAE5AAACXvFdBwlwb3N0AAAFNAAAAGIAAACE5s74hXjaY2BkYGAAYpf5Hu/j+W2+MnAzMYDAzaX6QjD6/4//Bxj5GA8AuRwMYGkAPywL13jaY2BkYGA88P8Agx4j+/8fQDYfA1AEBWgDAIB2BOoAeNpjYGRgYNBh4GdgYgABEMnIABJzYNADCQAACWgAsQB42mNgYfzCOIGBlYGB0YcxjYGBwR1Kf2WQZGhhYGBiYGVmgAFGBiQQkOaawtDAoMBQxXjg/wEGPcYDDA4wNUA2CCgwsAAAO4EL6gAAeNpj2M0gyAACqxgGNWBkZ2D4/wMA+xkDdgAAAHjaY2BgYGaAYBkGRgYQiAHyGMF8FgYHIM3DwMHABGQrMOgyWDLEM1T9/w8UBfEMgLzE////P/5//f/V/xv+r4eaAAeMbAxwIUYmIMHEgKYAYjUcsDAwsLKxc3BycfPw8jEQA/gZBASFhEVExcQlJKWkZWTl5BUUlZRVVNXUNTQZBgMAAMR+E+gAEQFEAAAAKgAqACoANAA+AEgAUgBcAGYAcAB6AIQAjgCYAKIArAC2AMAAygDUAN4A6ADyAPwBBgEQARoBJAEuATgBQgFMAVYBYAFqAXQBfgGIAZIBnAGmAbIBzgHsAAB42u2NMQ6CUAyGW568x9AneYYgm4MJbhKFaExIOAVX8ApewSt4Bic4AfeAid3VOBixDxfPYEza5O+Xfi04YADggiUIULCuEJK8VhO4bSvpdnktHI5QCYtdi2sl8ZnXaHlqUrNKzdKcT8cjlq+rwZSvIVczNiezsfnP/uznmfPFBNODM2K7MTQ45YEAZqGP81AmGGcF3iPqOop0r1SPTaTbVkfUe4HXj97wYE+yNwWYxwWu4v1ugWHgo3S1XdZEVqWM7ET0cfnLGxWfkgR42o2PvWrDMBSFj/IHLaF0zKjRgdiVMwScNRAoWUoH78Y2icB/yIY09An6AH2Bdu/UB+yxopYshQiEvnvu0dURgDt8QeC8PDw7Fpji3fEA4z/PEJ6YOB5hKh4dj3EvXhxPqH/SKUY3rJ7srZ4FZnh1PMAtPhwP6fl2PMJMPDgeQ4rY8YT6Gzao0eAEA409DuggmTnFnOcSCiEiLMgxCiTI6Cq5DZUd3Qmp10vO0LaLTd2cjN4fOumlc7lUYbSQcZFkutRG7g6JKZKy0RmdLY680CDnEJ+UMkpFFe1RN7nxdVpXrC4aTtnaurOnYercZg2YVmLN/d/gczfEimrE/fs/bOuq29Zmn8tloORaXgZgGa78yO9/cnXm2BpaGvq25Dv9S4E9+5SIc9PqupJKhYFSSl47+Qcr1mYNAAAAeNptw0cKwkAAAMDZJA8Q7OUJvkLsPfZ6zFVERPy8qHh2YER+3i/BP83vIBLLySsoKimrqKqpa2hp6+jq6RsYGhmbmJqZSy0sraxtbO3sHRydnEMU4uR6yx7JJXveP7WrDycAAAAAAAH//wACeNpjYGRgYOABYhkgZgJCZgZNBkYGLQZtIJsFLMYAAAw3ALgAeNolizEKgDAQBCchRbC2sFER0YD6qVQiBCv/H9ezGI6Z5XBAw8CBK/m5iQQVauVbXLnOrMZv2oLdKFa8Pjuru2hJzGabmOSLzNMzvutpB3N42mNgZGBg4GKQYzBhYMxJLMlj4GBgAYow/P/PAJJhLM6sSoWKfWCAAwDAjgbRAAB42mNgYGBkAIIbCZo5IPrmUn0hGA0AO8EFTQAA") format("woff");
-  font-weight: 400;
-  font-style: normal;
-}
-
 :root {
   --swiper-theme-color: #007aff;
 }
@@ -67,76 +60,6 @@
   /*
   --swiper-navigation-color: var(--swiper-theme-color);
   */
-}
-
-.swiper-button-prev,
-.swiper-button-next {
-  position: absolute;
-  top: 50%;
-  width: calc(44px / 44 * 27);
-  width: calc(var(--swiper-navigation-size) / 44 * 27);
-  height: 44px;
-  height: var(--swiper-navigation-size);
-  margin-top: calc(-1 * 44px / 2);
-  margin-top: calc(-1 * var(--swiper-navigation-size) / 2);
-  z-index: 10;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--swiper-theme-color);
-  color: var(--swiper-navigation-color, var(--swiper-theme-color));
-}
-
-.swiper-button-prev.swiper-button-disabled,
-.swiper-button-next.swiper-button-disabled {
-  opacity: 0.35;
-  cursor: auto;
-  pointer-events: none;
-}
-
-.swiper-button-prev:after,
-.swiper-button-next:after {
-  font-family: swiper-icons;
-  font-size: 44px;
-  font-size: var(--swiper-navigation-size);
-  text-transform: none !important;
-}
-
-.swiper-button-prev,
-.swiper-container-rtl .swiper-button-next {
-  left: 10px;
-  right: auto;
-}
-
-.swiper-button-prev:after,
-.swiper-container-rtl .swiper-button-next:after {
-  content: 'prev';
-}
-
-.swiper-button-next,
-.swiper-container-rtl .swiper-button-prev {
-  right: 10px;
-  left: auto;
-}
-
-.swiper-button-next:after,
-.swiper-container-rtl .swiper-button-prev:after {
-  content: 'next';
-}
-
-.swiper-button-prev.swiper-button-white,
-.swiper-button-next.swiper-button-white {
-  --swiper-navigation-color: #ffffff;
-}
-
-.swiper-button-prev.swiper-button-black,
-.swiper-button-next.swiper-button-black {
-  --swiper-navigation-color: #000000;
-}
-
-.swiper-button-lock {
-  display: none;
 }
 
 /* Progress */
@@ -285,6 +208,8 @@
   transition: transform .3s;
   /* 親要素のカーソル変化に追従させない */
   cursor: auto;
+  /* 子要素のfocus表示をはみ出させないためのpadding */
+  padding: 2px 0;
 }
 
 .laymic_controllerTop {
@@ -305,12 +230,28 @@
 
 .laymic_progressbar {
   /* #888か#999くらいの配色が良さそう */
-  --swiper-pagination-color: rgba(255, 255, 255, .3);
+  --swiper-pagination-color: rgba(255, 255, 255, .2);
+  /* 当たり判定インチキ要素のサイズ
+    他操作を阻害しないよう最低限の太さにしておく */
+  --collision-padding-size: .5rem;
 	width: 100%;
 	height: var(--progressbar-width);
   top: 0;
   left: 0;
   z-index: 15;
+  /* button同様カーソルをポインターにしておく */
+  cursor: pointer;
+}
+
+.laymic_root .laymic_progressbar {
+  /* 進捗バーの存在をわかりやすくするための背景色 */
+  background: rgba(255, 255,255, .1);
+}
+
+/* 当たり判定インチキの影響がfocusに出ないようにする */
+
+.laymic_progressbar:focus {
+  outline: 0;
 }
 
 /* isLTR設定がfalseの際にのみ有効なスタイル */
@@ -327,6 +268,31 @@
   width: var(--progressbar-width);
   left: auto;
   right: 0;
+}
+
+/* 進捗バークリック当たり判定をインチキするための透明要素 */
+
+.laymic_progressbar::before {
+  content: "";
+  height: var(--collision-padding-size);
+  /* 通常時は横幅いっぱいまで広がる */
+  width: inherit;
+  /* 進捗バーの下へと連なるように配置 */
+  top: 100%;
+  display: block;
+  position: absolute;
+}
+
+/* 縦読み時の表示調整 */
+
+.laymic_isVertView .laymic_progressbar::before {
+  width: var(--collision-padding-size);
+  /* 縦読み時は縦幅いっぱいまで広げる */
+  height: inherit;
+  /* 画面上に貼り付ける */
+  top: 0;
+  /* 進捗バーの左に寄り添うように配置 */
+  right: 100%;
 }
 
 .laymic_isVisibleUI .laymic_controllerTop,
@@ -393,7 +359,7 @@
 }
 
 .swiper-slide img,
-.laymic_thumbItem {
+.laymic_imgThumb {
   max-width: 100%;
   max-height: 100%;
   object-fit: scale-down;
@@ -530,7 +496,7 @@
   */
   max-height: 90%;
   max-width: 90%;
-  padding: 0 var(--thumbs-wrapper-padding);
+  padding: .5rem var(--thumbs-wrapper-padding);
   background: var(--laymic-container-bg-color);
   overflow: auto;
   display: grid;
@@ -539,14 +505,14 @@
   grid-auto-rows: var(--thumb-item-height);
   width: 100%;
   justify-content: space-around;
-  /* なんか下方向のpaddingだけ上手く効かないので苦肉の策 */
+  /* 下方向のpaddingだけ上手く効かないので苦肉の策 */
   border: solid transparent;
-  border-width: 1rem 0;
+  border-width: .5rem 0;
 }
 
-.laymic_thumbItem {
-  margin: auto;
-	cursor: pointer;
+/* 優先度を上げるため冗長な書き方を行う */
+
+.laymic_thumbsWrapper .laymic_thumbItem {
   overflow: hidden;
 }
 
@@ -707,17 +673,26 @@
 }
 
 .laymic_pagination {
-  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  /* 通常時は主張控えめなアイコン色 */
+  color: rgba(255, 255, 255, .3);
   display: none;
   cursor: auto;
+  position: absolute;
+  top: calc(50% + var(--progressbar-width) / 2);
+  /* 表示位置をページ中央に合わせる */
+  transform: translateY(-50%);
+  /* .laymic_sliderの上に来るよう配置する */
+  z-index: 3;
 }
 
 .laymic_root.laymic_isVisiblePagination .laymic_pagination {
+  /* ページ送りボタンを表示する設定の際のみ表示 */
   display: flex;
 }
 
 .laymic_pagination.laymic_isActive {
-  --swiper-navigation-color: rgba(255, 255, 255, .9);
+  /* ハイライト時には主張強めなアイコン色 */
+  color: rgba(255, 255, 255, .9);
   cursor: pointer;
 }
 
@@ -728,63 +703,51 @@
 
 /* 進むボタン */
 
-.swiper-button-next,
-.laymic_isLTR .swiper-button-prev {
-  left: 10px;
-  right: auto;
-}
-
-.swiper-button-next:after,
-.laymic_isLTR .swiper-button-prev:after {
-  content: 'prev';
+.laymic_paginationNext,
+/* LTR時の戻るボタン */
+.laymic_isLTR .laymic_paginationPrev {
+  left: 0;
 }
 
 /* 戻るボタン */
 
-.swiper-button-prev,
-.laymic_isLTR .swiper-button-next {
-  right: 10px;
-  left: auto;
-}
-
-.swiper-button-prev:after,
-.laymic_isLTR .swiper-button-next:after {
-  content: 'next';
+.laymic_paginationPrev,
+/* LTR時の進むボタン */
+.laymic_isLTR .laymic_paginationNext {
+  right: 0;
+  transform: translateY(-50%) rotate(180deg);
 }
 
 /* 縦読み時戻る進むボタン */
 
-.laymic_isVertView .swiper-button-next,
-.laymic_isVertView .swiper-button-prev {
-  left: 50%;
-  right: auto;
+.laymic_isVertView .laymic_paginationNext,
+.laymic_isVertView .laymic_paginationPrev {
+  left: calc(50% + var(--progressbar-width) / 2);
+  /* top値を一旦初期値に戻す */
+  top: auto;
   margin: 0;
 }
 
-.laymic_isVertView .swiper-button-next:after,
-.laymic_isVertView .swiper-button-prev:after {
-  content: "prev";
-}
-
-.laymic_isVertView .swiper-button-next {
-  top: auto;
+.laymic_isVertView .laymic_paginationNext {
 	bottom: 0;
-  transform: rotate(-90deg);
+  /* ページ中央に位置調整し、下向きにする */
+  transform: translateX(-50%) rotate(-90deg);
 }
 
-.laymic_isVertView .swiper-button-prev {
+.laymic_isVertView .laymic_paginationPrev {
 	top: 0;
-	bottom: auto;
-  transform: rotate(90deg);
+  /* ページ中央に位置調整し、上向きにする */
+  transform: translateX(-50%) rotate(90deg);
 }
 
 /* for mobile and zooming */
 
 .laymic_isMobile .laymic_pagination,
 .laymic_isZoomed .laymic_pagination {
+  /* モバイル環境ではクリックイベントを透過するように */
   pointer-events: none;
   /* モバイル環境ではアイコンハイライト色をオフにする */
-  --swiper-navigation-color: rgba(255, 255, 255, .3);
+  color: rgba(255, 255, 255, .3);
 }
 
 /* for unsupported fullscreen api  */
@@ -800,6 +763,8 @@
 .laymic_zoomWrapper {
   width: 100%;
   height: 100%;
+  /* 左上基準前提で処理を書いたので
+  この値を変えると表示崩れするはず */
   transform-origin: top left;
 }
 

@@ -2,18 +2,18 @@ import DOMBuilder from "./builder";
 import { LaymicZoomStates } from "../interfaces/index";
 import LaymicPreference from "./preference";
 export default class LaymicZoom {
-    rootEl: HTMLElement;
-    wrapper: HTMLElement;
-    controller: HTMLElement;
-    builder: DOMBuilder;
-    preference: LaymicPreference;
-    state: LaymicZoomStates;
+    readonly rootEl: HTMLElement;
+    readonly wrapper: HTMLElement;
+    readonly controller: HTMLElement;
+    readonly builder: DOMBuilder;
+    readonly preference: LaymicPreference;
+    readonly state: LaymicZoomStates;
     constructor(builder: DOMBuilder, rootEl: HTMLElement, preference: LaymicPreference);
     /**
      * LaymicZoomStatesのデフォルト値を返す
      * @return LaymicZoomStatesデフォルト値
      */
-    readonly defaultLaymicZoomStates: LaymicZoomStates;
+    static readonly defaultLaymicZoomStates: LaymicZoomStates;
     /**
      * 現在ズームがなされているかを返す
      *
@@ -47,6 +47,12 @@ export default class LaymicZoom {
      * @param  translateY 新たなtop座標
      */
     updateZoomRect(translateX?: number, translateY?: number): void;
+    /**
+     * 過去の二点タッチ距離を更新する
+     * pastDistanceは計算に用いるので、適時更新する必要がある
+     *
+     * @param  e TouchEvent
+     */
     updatePastDistance(e: TouchEvent): void;
     /**
      * ズームモードに入る
@@ -58,7 +64,7 @@ export default class LaymicZoom {
     /**
      * 拡大縮小処理を行う
      * 引数を省略した場合は中央寄せでズームする
-     * @param  zoomRatio ズーム倍率
+     * @param  zoomRatio ズーム倍率。関連設定値を参照する
      * @param  zoomX     正規化されたズーム時中央横座標
      * @param  zoomY     正規化されたズーム時中央縦座標
      */
@@ -71,6 +77,47 @@ export default class LaymicZoom {
      * ズームモードから抜ける
      */
     disable(): void;
+    /**
+     * ズーム中に上へとスクロール可能かどうかのboolを返す
+     * @return 上へとスクロール可能ならtrue
+     */
+    readonly isScrollableUp: boolean;
+    /**
+     * ズーム中に下へとスクロール可能かどうかのboolを返す
+     * @return 下へとスクロール可能ならtrue
+     */
+    readonly isScrollableDown: boolean;
+    /**
+     * ズーム中に左へとスクロール可能かどうかのboolを返す
+     * @return 左へとスクロール可能ならtrue
+     */
+    readonly isScrollableLeft: boolean;
+    /**
+     * ズーム中に右へとスクロール可能かどうかのboolを返す
+     * @return 右へとスクロール可能ならtrue
+     */
+    readonly isScrollableRight: boolean;
+    /**
+     * ズーム中に上へとスクロールさせる
+     * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+     */
+    scrollUp(isPageScroll?: boolean): void;
+    /**
+     * ズーム中に下へとスクロールさせる
+     * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+     */
+    scrollDown(isPageScroll?: boolean): void;
+    /**
+     * ズーム中に左へとスクロールさせる
+     * @param  isPageScroll trueならばページ横幅に応じてスクロール
+     */
+    scrollLeft(isPageScroll?: boolean): void;
+    /**
+     * ズーム中に右へとスクロールさせる
+     * @param  isPageScroll trueならばページ横幅に応じてスクロール
+     */
+    scrollRight(isPageScroll?: boolean): void;
+    private scroll;
     /**
      * タッチされた二点間の距離を返す
      * reference: https://github.com/nolimits4web/swiper/blob/master/src/components/zoom/zoom.js
@@ -99,12 +146,12 @@ export default class LaymicZoom {
     private setTransformProperty;
     /**
      * touchstartに対して登録する処理まとめ
-     * @param  e タッチイベント
+     * @param  e TouchEvent
      */
     private touchStartHandler;
     /**
      * touchmoveイベントに対して登録する処理まとめ
-     * @param  e タッチイベント
+     * @param  e TouchEvent
      */
     private touchMoveHandler;
     /**

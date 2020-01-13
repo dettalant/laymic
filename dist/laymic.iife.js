@@ -1,9 +1,12 @@
 /*!
  *   laymic.js
  *
+ * Reference: [swiper](https://github.com/nolimits4web/swiper)
+ *
  * @author dettalant
- * @version v2.0.0
+ * @version v2.2.0
  * @license MIT License
+ *
  */
 var laymic = (function (exports) {
 	'use strict';
@@ -226,6 +229,12 @@ var laymic = (function (exports) {
 	 */
 	const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 	const rafSleep = () => new Promise(res => requestAnimationFrame(res));
+	const multiRafSleep = async (len = 2) => {
+	    const range = [...Array(len)].map((_, i) => i);
+	    for (let _ of range) {
+	        await rafSleep();
+	    }
+	};
 	// /**
 	//  * 画像をimg要素として読み取る
 	//  * @param   path 画像path文字列
@@ -302,6 +311,59 @@ var laymic = (function (exports) {
 	    return {
 	        listener,
 	        canceler
+	    };
+	};
+	// trackpadでの疑似ホイール移動等をまかなうため、
+	// ホイールイベントでの移動量を計算し、
+	// 一般的なマウススクロール量と同じだけスクロールした場合にのみ
+	// callbackを動作させる関数
+	const wheelThrottle = function (callback) {
+	    // DOM_DELTA_LINE時に掛け合わせるlineHeight固定値
+	    const lh = 18;
+	    // 計算に用いるtmp変数群
+	    let px = 0;
+	    let py = 0;
+	    let pastDx = 0;
+	    let pastDy = 0;
+	    // tmp変数を初期化する
+	    const resetVariable = () => {
+	        px = 0;
+	        py = 0;
+	        pastDx = 0;
+	        pastDy = 0;
+	    };
+	    return function (ev) {
+	        // callbackを呼び出す関数
+	        // 同時にtmp変数も初期化しておく
+	        const doCallback = () => {
+	            resetVariable();
+	            callback.call(this, ev);
+	        };
+	        // if DOM_DELTA_PAGE
+	        // deltaPageモードでは無条件でcallbackを呼び出す
+	        if (ev.deltaMode === 2) {
+	            doCallback();
+	            return;
+	        }
+	        const isDeltaPixel = ev.deltaMode === 0;
+	        const [dx, dy] = (isDeltaPixel)
+	            ? [ev.deltaX, ev.deltaY]
+	            : [ev.deltaX * lh, ev.deltaY * lh];
+	        // 過去の値と+-の方向が違っていたなら値をresetする
+	        // いわゆるXORと同じことを行っている
+	        if (pastDx > 0 !== dx > 0
+	            || pastDy > 0 !== dy > 0) {
+	            resetVariable();
+	        }
+	        // 値をtmp変数に足し合わせる
+	        px += dx;
+	        pastDx = dx;
+	        py += dy;
+	        pastDy = dy;
+	        // tmp変数の値が50か-50を超えていればcallbackを呼び出す
+	        if (Math.abs(px) > 50 || Math.abs(py) > 50) {
+	            doCallback();
+	        }
 	    };
 	};
 	// export const createDoubleTapHandler = function<
@@ -410,9 +472,24 @@ var laymic = (function (exports) {
 	//   }
 	//   return result;
 	// }
-	const orientationChangeFuncs = [];
-	const orientationChangeHandler = () => {
-	    orientationChangeFuncs.forEach(func => func());
+	/**
+	 * KeyboardEvent.keyの値が指定されたものと同じであるかをチェックする。
+	 * @param key    KeyboardEvent.keyの値
+	 * @param cmpKey 比較する文字列。文字列配列も指定可能
+	 */
+	const parseKey = (key, cmpKey) => {
+	    const cmp = (typeof cmpKey === "string")
+	        ? [cmpKey]
+	        : cmpKey;
+	    return cmp.includes(key);
+	};
+	const keydownHandlers = [];
+	const parentKeydownHandler = (e) => {
+	    keydownHandlers.forEach(func => func(e));
+	};
+	const orientationChangeHandlers = [];
+	const parentOrientationChangeHandler = () => {
+	    orientationChangeHandlers.forEach(func => func());
 	};
 	const getDeviceOrientation = () => {
 	    let orientation = "unknown";
@@ -464,7 +541,6 @@ var laymic = (function (exports) {
 	                controller: "laymic_controller",
 	                controllerTop: "laymic_controllerTop",
 	                controllerBottom: "laymic_controllerBottom",
-	                progressbar: "laymic_progressbar",
 	            },
 	            buttons: {
 	                direction: "laymic_direction",
@@ -476,6 +552,7 @@ var laymic = (function (exports) {
 	                nextPage: "laymic_paginationNext",
 	                prevPage: "laymic_paginationPrev",
 	                zoom: "laymic_zoom",
+	                progressbar: "laymic_progressbar",
 	            },
 	            svg: {
 	                icon: "laymic_svgIcon",
@@ -667,6 +744,7 @@ var laymic = (function (exports) {
 	                "M18.17 12.002l-4.243 4.242 1.41 1.41 5.662-5.652-5.657-5.658-1.41 1.42zm-12.34 0l4.24-4.242-1.41-1.41L3 12.002l5.662 5.662 1.41-1.42z"
 	            ]
 	        };
+	        // material.io: touch_app
 	        const touchApp = {
 	            id: "laymic_svgTouchApp",
 	            className: "icon_touchApp",
@@ -675,6 +753,7 @@ var laymic = (function (exports) {
 	                "M9.156 9.854v-3.56a2.381 2.381 0 014.76 0v3.56a4.27 4.27 0 001.904-3.56 4.279 4.279 0 00-4.284-4.285 4.279 4.279 0 00-4.284 4.284 4.27 4.27 0 001.904 3.561zm9.368 4.408l-4.322-2.152a1.34 1.34 0 00-.514-.104h-.724V6.293c0-.79-.638-1.428-1.428-1.428-.79 0-1.428.638-1.428 1.428V16.52l-3.266-.686c-.076-.01-.143-.029-.228-.029-.295 0-.562.124-.752.315l-.752.761 4.703 4.703c.257.258.619.42 1.009.42h6.464c.714 0 1.267-.524 1.371-1.22l.714-5.017c.01-.066.02-.133.02-.19 0-.59-.362-1.104-.867-1.314z"
 	            ]
 	        };
+	        // material.io: chevron_left
 	        const chevronLeft = {
 	            id: "laymic_svgChevronLeft",
 	            className: "icon_chevronLeft",
@@ -708,11 +787,10 @@ var laymic = (function (exports) {
 	     * @return           swiper-container要素
 	     */
 	    createSwiperContainer(pages, isLTR, isFirstSlideEmpty, isAppendEmptySlide) {
-	        const swiperEl = this.createDiv();
-	        swiperEl.className = "swiper-container " + this.classNames.slider;
+	        const swiperEl = this.createDiv("swiper-container " + this.classNames.slider);
 	        swiperEl.dir = (isLTR) ? "" : "rtl";
-	        const wrapperEl = this.createDiv();
-	        wrapperEl.className = "swiper-wrapper";
+	        swiperEl.tabIndex = -1;
+	        const wrapperEl = this.createDiv("swiper-wrapper");
 	        // isFirstSlideEmpty引数がtrueならば
 	        // 空の要素を一番目に入れる
 	        if (isFirstSlideEmpty) {
@@ -720,8 +798,7 @@ var laymic = (function (exports) {
 	            wrapperEl.appendChild(emptyEl);
 	        }
 	        for (let p of pages) {
-	            const divEl = this.createDiv();
-	            divEl.className = "swiper-slide";
+	            const divEl = this.createDiv("swiper-slide");
 	            if (p instanceof Element) {
 	                divEl.appendChild(p);
 	            }
@@ -749,50 +826,29 @@ var laymic = (function (exports) {
 	     * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
 	     */
 	    createViewerController() {
-	        const btnClassNames = this.classNames.buttons;
-	        const ctrlClassNames = this.classNames.controller;
-	        const ctrlEl = this.createDiv();
-	        ctrlEl.className = ctrlClassNames.controller;
-	        const progressEl = this.createDiv();
-	        progressEl.className = "swiper-pagination " + ctrlClassNames.progressbar;
-	        const ctrlTopEl = this.createDiv();
-	        ctrlTopEl.className = ctrlClassNames.controllerTop;
+	        const btnsNames = this.classNames.buttons;
+	        const ctrlNames = this.classNames.controller;
+	        const ctrlEl = this.createDiv(ctrlNames.controller);
+	        ctrlEl.tabIndex = -1;
+	        const progressbar = this.createDiv("swiper-pagination " + btnsNames.progressbar);
+	        const ctrlTopEl = this.createDiv(ctrlNames.controllerTop);
 	        ctrlTopEl.setAttribute("aria-orientation", "horizontal");
 	        setRole(ctrlTopEl, "menu");
-	        const direction = this.createButton();
-	        direction.classList.add(btnClassNames.direction);
-	        [
-	            this.createSvgUseElement(this.icons.vertView),
-	            this.createSvgUseElement(this.icons.horizView),
-	        ].forEach(icon => direction.appendChild(icon));
-	        const fullscreen = this.createButton();
-	        [
-	            this.createSvgUseElement(this.icons.fullscreen),
-	            this.createSvgUseElement(this.icons.exitFullscreen),
-	        ].forEach(icon => fullscreen.appendChild(icon));
-	        fullscreen.classList.add(btnClassNames.fullscreen);
-	        const thumbs = this.createButton();
-	        [
-	            this.createSvgUseElement(this.icons.showThumbs),
-	        ].forEach(icon => thumbs.appendChild(icon));
-	        thumbs.classList.add(btnClassNames.thumbs);
-	        const preference = this.createButton();
-	        preference.classList.add(btnClassNames.preference);
-	        const preferenceIcon = this.createSvgUseElement(this.icons.preference);
-	        preference.appendChild(preferenceIcon);
-	        const close = this.createButton();
-	        close.classList.add(btnClassNames.close);
-	        const closeIcon = this.createSvgUseElement(this.icons.close);
-	        close.appendChild(closeIcon);
-	        const help = this.createButton();
-	        help.classList.add(btnClassNames.help);
-	        const helpIcon = this.createSvgUseElement(this.icons.showHelp);
-	        help.appendChild(helpIcon);
-	        const zoom = this.createButton();
-	        zoom.classList.add(btnClassNames.zoom);
-	        [
-	            this.createSvgUseElement(this.icons.zoomIn),
-	        ].forEach(icon => zoom.appendChild(icon));
+	        const direction = this.createUIButton(btnsNames.direction, "縦読み/横読み切り替え (d)", [
+	            this.icons.vertView,
+	            this.icons.horizView
+	        ]);
+	        const fullscreen = this.createUIButton(btnsNames.fullscreen, "全画面切り替え (f)", [
+	            this.icons.fullscreen,
+	            this.icons.exitFullscreen
+	        ]);
+	        const thumbs = this.createUIButton(btnsNames.thumbs, "サムネイル (t)", [this.icons.showThumbs]);
+	        const preference = this.createUIButton(btnsNames.preference, "設定 (p)", [this.icons.preference]);
+	        const close = this.createUIButton(btnsNames.close, "ビューワーを閉じる (Escape)", [
+	            this.icons.close
+	        ]);
+	        const help = this.createUIButton(btnsNames.help, "ヘルプ (h)", [this.icons.showHelp]);
+	        const zoom = this.createUIButton(btnsNames.zoom, "拡大 (z/ホイールクリック)", [this.icons.zoomIn]);
 	        [
 	            preference,
 	            thumbs,
@@ -800,9 +856,9 @@ var laymic = (function (exports) {
 	        ].forEach(el => el.setAttribute("aria-haspopup", "true"));
 	        [
 	            help,
+	            zoom,
 	            direction,
 	            thumbs,
-	            zoom,
 	            fullscreen,
 	            preference,
 	            close
@@ -811,8 +867,14 @@ var laymic = (function (exports) {
 	            ctrlTopEl.appendChild(btn);
 	        });
 	        const paginationClass = this.classNames.pagination;
-	        const nextPage = this.createButton(`${paginationClass} ${btnClassNames.nextPage} swiper-button-next`);
-	        const prevPage = this.createButton(`${paginationClass} ${btnClassNames.prevPage} swiper-button-prev`);
+	        const nextPage = this.createButton(`${paginationClass} ${btnsNames.nextPage}`);
+	        const nextIcon = this.createSvgUseElement(this.icons.chevronLeft);
+	        nextPage.appendChild(nextIcon);
+	        nextPage.tabIndex = -1;
+	        const prevPage = this.createButton(`${paginationClass} ${btnsNames.prevPage}`);
+	        const prevIcon = this.createSvgUseElement(this.icons.chevronLeft);
+	        prevPage.appendChild(prevIcon);
+	        nextPage.tabIndex = -1;
 	        const uiButtons = {
 	            help,
 	            close,
@@ -822,23 +884,18 @@ var laymic = (function (exports) {
 	            preference,
 	            direction,
 	            nextPage,
-	            prevPage
+	            prevPage,
+	            progressbar,
 	        };
-	        const ctrlBottomEl = this.createDiv();
-	        ctrlBottomEl.className = ctrlClassNames.controllerBottom;
+	        const ctrlBottomEl = this.createDiv(ctrlNames.controllerBottom);
 	        [
 	            ctrlTopEl,
 	            ctrlBottomEl,
-	            progressEl,
+	            progressbar,
 	            nextPage,
 	            prevPage,
 	        ].forEach(el => ctrlEl.appendChild(el));
 	        return [ctrlEl, uiButtons];
-	    }
-	    createZoomWrapper() {
-	        const zoomWrapper = this.createDiv();
-	        zoomWrapper.className = this.classNames.zoom.wrapper;
-	        return zoomWrapper;
 	    }
 	    /**
 	     * use要素を内包したSVGElementを返す
@@ -895,28 +952,52 @@ var laymic = (function (exports) {
 	     * 空のdiv要素を返す
 	     * @return div要素
 	     */
-	    createDiv() {
-	        return document.createElement("div");
+	    createDiv(className = "") {
+	        const div = document.createElement("div");
+	        if (className)
+	            div.className = className;
+	        return div;
 	    }
 	    /**
 	     * 空のbutton要素を返す
 	     * @return button要素
 	     */
-	    createButton(className = this.classNames.uiButton) {
+	    createButton(className = "") {
 	        const btn = document.createElement("button");
 	        btn.type = "button";
 	        btn.className = className;
 	        return btn;
 	    }
-	    createSpan() {
-	        return document.createElement("span");
+	    createUIButton(className = "", title = "", icons) {
+	        const btn = this.createButton(this.classNames.uiButton);
+	        if (className)
+	            btn.classList.add(className);
+	        if (title)
+	            btn.title = title;
+	        icons.forEach(icon => {
+	            const svg = this.createSvgUseElement(icon);
+	            btn.appendChild(svg);
+	        });
+	        return btn;
 	    }
-	    createParagraph() {
-	        return document.createElement("p");
+	    createSpan(className = "", textContent = "") {
+	        const span = document.createElement("span");
+	        if (className)
+	            span.className = className;
+	        if (textContent)
+	            span.textContent = textContent;
+	        return span;
+	    }
+	    createParagraph(className = "", textContent = "") {
+	        const p = document.createElement("p");
+	        if (className)
+	            p.className = className;
+	        if (textContent)
+	            p.textContent = textContent;
+	        return p;
 	    }
 	    createEmptySlideEl() {
-	        const emptyEl = this.createDiv();
-	        emptyEl.className = "swiper-slide " + this.classNames.emptySlide;
+	        const emptyEl = this.createDiv("swiper-slide " + this.classNames.emptySlide);
 	        return emptyEl;
 	    }
 	    /**
@@ -924,13 +1005,11 @@ var laymic = (function (exports) {
 	     * @return helpWrapperとして用いられるHTMLElement
 	     */
 	    createHelpWrapperEl() {
-	        const helpClassNames = this.classNames.help;
-	        const wrapperEl = this.createDiv();
-	        wrapperEl.className = helpClassNames.wrapper;
+	        const helpNames = this.classNames.help;
+	        const wrapperEl = this.createDiv(helpNames.wrapper);
 	        const innerWrapperEl = this.createHelpInnerWrapperEl();
 	        const touchAppIcon = this.createSvgUseElement(this.icons.touchApp);
-	        const chevronsContainer = this.createDiv();
-	        chevronsContainer.className = helpClassNames.chevronsContainer;
+	        const chevronsContainer = this.createDiv(helpNames.chevronsContainer);
 	        const iconChevron = this.icons.chevronLeft;
 	        // 右向き矢印は一度生成してから反転クラス名を付与する
 	        const chevronRight = this.createSvgUseElement(iconChevron);
@@ -951,9 +1030,8 @@ var laymic = (function (exports) {
 	     * @return アイコン説明を散りばめたHTMLElement
 	     */
 	    createHelpInnerWrapperEl() {
-	        const helpClassNames = this.classNames.help;
-	        const innerWrapper = this.createDiv();
-	        innerWrapper.className = helpClassNames.innerWrapper;
+	        const helpNames = this.classNames.help;
+	        const innerWrapper = this.createDiv(helpNames.innerWrapper);
 	        setRole(innerWrapper, "list");
 	        [
 	            {
@@ -967,12 +1045,7 @@ var laymic = (function (exports) {
 	            {
 	                icons: [this.icons.fullscreen, this.icons.exitFullscreen],
 	                label: "全画面切り替え",
-	                className: helpClassNames.fullscreenItem,
-	            },
-	            {
-	                icons: [this.icons.zoomIn],
-	                label: "拡大表示",
-	                className: helpClassNames.zoomItem,
+	                className: helpNames.fullscreenItem,
 	            },
 	            {
 	                icons: [this.icons.showThumbs],
@@ -981,6 +1054,11 @@ var laymic = (function (exports) {
 	            {
 	                icons: [this.icons.vertView, this.icons.horizView],
 	                label: "縦読み/横読み"
+	            },
+	            {
+	                icons: [this.icons.zoomIn],
+	                label: "拡大",
+	                className: helpNames.zoomItem,
 	            },
 	            {
 	                icons: [this.icons.showHelp],
@@ -995,17 +1073,13 @@ var laymic = (function (exports) {
 	                label: "機能呼び出し"
 	            }
 	        ].forEach(obj => {
-	            const item = this.createDiv();
-	            item.className = helpClassNames.innerItem;
+	            const item = this.createDiv(helpNames.innerItem);
 	            setRole(item, "listitem");
 	            if (obj.className)
 	                item.classList.add(obj.className);
-	            const iconWrapper = this.createDiv();
-	            iconWrapper.className = helpClassNames.iconWrapper;
+	            const iconWrapper = this.createDiv(helpNames.iconWrapper);
 	            obj.icons.forEach(icon => iconWrapper.appendChild(this.createSvgUseElement(icon)));
-	            const label = this.createSpan();
-	            label.textContent = obj.label;
-	            label.className = helpClassNames.iconLabel;
+	            const label = this.createSpan(helpNames.iconLabel, obj.label);
 	            [iconWrapper, label].forEach(el => item.appendChild(el));
 	            innerWrapper.appendChild(item);
 	        });
@@ -1241,8 +1315,6 @@ var laymic = (function (exports) {
 	        this.el.container.dispatchEvent(ev);
 	    }
 	    onKeyDownHandler(e) {
-	        // イベントのバブリングを停止させる
-	        e.stopPropagation();
 	        if (!this.isActive) {
 	            // 非アクティブ状態の際は特殊モード
 	            this.showDropdown();
@@ -1404,6 +1476,7 @@ var laymic = (function (exports) {
 	        this.PREFERENCE_KEY = "laymic_preferenceData";
 	        // preference save data
 	        this.data = LaymicPreference.defaultPreferenceData;
+	        this._isActive = false;
 	        this.builder = builder;
 	        const selectBuilder = new dist_4(this.builder.classNames.select);
 	        const icons = this.builder.icons;
@@ -1411,13 +1484,13 @@ var laymic = (function (exports) {
 	            inner: this.builder.createSvgUseElement(icons.checkboxInner),
 	            outer: this.builder.createSvgUseElement(icons.checkboxOuter),
 	        });
-	        const containerEl = builder.createDiv();
-	        setAriaExpanded(containerEl, false);
+	        // preference class names
 	        const names = this.builder.classNames.preference;
-	        containerEl.className = names.container;
-	        const wrapperEl = builder.createDiv();
-	        wrapperEl.className = names.wrapper;
+	        const containerEl = builder.createDiv(names.container);
+	        setAriaExpanded(containerEl, false);
+	        const wrapperEl = builder.createDiv(names.wrapper);
 	        setRole(wrapperEl, "list");
+	        wrapperEl.tabIndex = -1;
 	        const isAutoFullscreen = checkboxBuilder.create("ビューワー展開時の自動全画面化", false, this.genPreferenceButtonClass(names.isAutoFullscreen));
 	        const isDisabledTapSlidePage = checkboxBuilder.create("タップでのページ送り無効化", false, this.genPreferenceButtonClass(names.isDisabledTapSlidePage));
 	        const isDisabledForceHorizView = checkboxBuilder.create("端末横持ち時の強制2p表示無効化", false, this.genPreferenceButtonClass(names.isDisabledForceHorizView));
@@ -1425,14 +1498,12 @@ var laymic = (function (exports) {
 	        const progressBarWidth = selectBuilder.create("進捗バー表示設定", this.barWidthItems, this.genPreferenceButtonClass());
 	        const paginationVisibility = selectBuilder.create("ページ送りボタン表示設定", this.uiVisibilityItems, this.genPreferenceButtonClass(names.paginationVisibility));
 	        const zoomButtonRatio = selectBuilder.create("ズームボタン倍率設定", this.zoomButtonRatioItems, this.genPreferenceButtonClass(names.zoomButtonRatio));
-	        const noticeEl = builder.createDiv();
-	        noticeEl.className = names.notice;
+	        const noticeEl = builder.createDiv(names.notice);
 	        [
 	            "※1: 自動全画面化設定はビューワー展開ボタンクリック時にのみ用いられます",
 	            "※2: タップページ送り無効化設定は次回ページ読み込み時に適用されます",
 	        ].forEach(s => {
-	            const p = builder.createParagraph();
-	            p.textContent = s;
+	            const p = builder.createParagraph(undefined, s);
 	            noticeEl.appendChild(p);
 	        });
 	        const prefItemEls = [
@@ -1468,6 +1539,13 @@ var laymic = (function (exports) {
 	        this.applyEventListeners();
 	    }
 	    /**
+	     * 設定画面が現在表示中であるかのboolを返す
+	     * @return 設定画面表示中であるならばtrue
+	     */
+	    get isActive() {
+	        return this._isActive;
+	    }
+	    /**
 	     * defaultデータは静的メソッドとして、
 	     * 外部からも容易に呼び出せるようにしておく
 	     */
@@ -1479,68 +1557,144 @@ var laymic = (function (exports) {
 	            isDisabledDoubleTapResetZoom: false,
 	            progressBarWidth: "auto",
 	            paginationVisibility: "auto",
-	            zoomButtonRatio: 1.5,
+	            zoomButtonRatio: 2.0,
 	        };
 	    }
+	    /**
+	     * ビューワー展開時の自動フルスクリーン化のbool
+	     * この設定がtrueであっても、ユーザー操作イベント経由でないと
+	     * 自動全画面化は行われない
+	     *
+	     * @return trueなら自動フルスクリーン化
+	     */
 	    get isAutoFullscreen() {
 	        return this.data.isAutoFullscreen;
 	    }
+	    /**
+	     * ビューワー展開時の自動フルスクリーン化のbool
+	     * @param  bool trueなら自動フルスクリーン化
+	     */
 	    set isAutoFullscreen(bool) {
 	        this.data.isAutoFullscreen = bool;
 	        this.savePreferenceData();
 	    }
+	    /**
+	     * タップでのページ送りを無効化するかのbool
+	     * @return trueならばタップでのページ送り無効化
+	     */
 	    get isDisabledTapSlidePage() {
 	        return this.data.isDisabledTapSlidePage;
 	    }
+	    /**
+	     * タップでのページ送りを無効化するかのbool
+	     * 同時にPreferenceUpdateEventを発火させる
+	     *
+	     * @param  bool trueならばタップでのページ送り無効化
+	     */
 	    set isDisabledTapSlidePage(bool) {
 	        this.data.isDisabledTapSlidePage = bool;
 	        this.savePreferenceData();
 	        this.dispatchPreferenceUpdateEvent("isDisabledTapSlidePage");
 	    }
+	    /**
+	     * モバイル環境横持ち時の強制2p表示を無効化するかのbool
+	     * @return trueならば強制2p表示無効化
+	     */
 	    get isDisabledForceHorizView() {
 	        return this.data.isDisabledForceHorizView;
 	    }
+	    /**
+	     * モバイル環境横持ち時の強制2p表示を無効化するかのbool
+	     * 同時にPreferenceUpdateEventを発火させる
+	     *
+	     * @param  bool trueならば強制2p表示無効化
+	     */
 	    set isDisabledForceHorizView(bool) {
 	        this.data.isDisabledForceHorizView = bool;
 	        this.savePreferenceData();
 	        this.dispatchPreferenceUpdateEvent("isDisabledForceHorizView");
 	    }
+	    /**
+	     * ズーム時ダブルタップでのズーム終了機能を無効化するかのbool
+	     * @return trueならばダブルタップでのズーム終了を無効化
+	     */
 	    get isDisabledDoubleTapResetZoom() {
 	        return this.data.isDisabledDoubleTapResetZoom;
 	    }
+	    /**
+	     * ズーム時ダブルタップでのズーム終了機能を無効化するかのbool
+	     * @param  bool trueならばダブルタップでのズーム終了を無効化
+	     */
 	    set isDisabledDoubleTapResetZoom(bool) {
 	        this.data.isDisabledDoubleTapResetZoom = bool;
 	        this.savePreferenceData();
 	    }
+	    /**
+	     * 進捗バーの太さ値を返す
+	     * @return BarWidth文字列
+	     */
 	    get progressBarWidth() {
 	        return this.data.progressBarWidth;
 	    }
+	    /**
+	     * 新たな進捗バーの太さ値を設定する
+	     * 同時にPreferenceUpdateEventを発火させる
+	     *
+	     * @param  width BarWidth文字列
+	     */
 	    set progressBarWidth(width) {
 	        this.data.progressBarWidth = width;
 	        this.savePreferenceData();
 	        this.dispatchPreferenceUpdateEvent("progressBarWidth");
 	    }
+	    /**
+	     * ページ送りボタンの表示設定値を返す
+	     * @return UIVisibility文字列
+	     */
 	    get paginationVisibility() {
 	        return this.data.paginationVisibility;
 	    }
+	    /**
+	     * 新たなページ送りボタン表示設定値を設定する
+	     * 同時にPreferenceUpdateEventを発火させる
+	     *
+	     * @param  visibility UIVisibility文字列
+	     */
 	    set paginationVisibility(visibility) {
 	        this.data.paginationVisibility = visibility;
 	        this.savePreferenceData();
 	        this.dispatchPreferenceUpdateEvent("paginationVisibility");
 	    }
+	    /**
+	     * PC版ズームボタン押下時のズーム率を返す
+	     * @return ズーム率数値
+	     */
 	    get zoomButtonRatio() {
 	        return this.data.zoomButtonRatio;
 	    }
+	    /**
+	     * PC版ズームボタン押下時のズーム率を設定する
+	     * @param  ratio ズーム率数値
+	     */
 	    set zoomButtonRatio(ratio) {
 	        this.data.zoomButtonRatio = ratio;
 	        this.savePreferenceData();
 	    }
+	    /**
+	     * 設定ボタン要素に指定するクラス名を生成する
+	     * @param  className preferenceButtonクラスに加えて指定するクラス名
+	     * @return           ボタンクラス名文字列
+	     */
 	    genPreferenceButtonClass(className = "") {
-	        let btnClassName = this.builder.classNames.preference.button;
+	        let btnName = this.builder.classNames.preference.button;
 	        if (className)
-	            btnClassName += " " + className;
-	        return btnClassName;
+	            btnName += " " + className;
+	        return btnName;
 	    }
+	    /**
+	     * BarWidth Itemの内部値と表示ラベル値をまとめたものを返す
+	     * @return BarWidth Itemをまとめた配列
+	     */
 	    get barWidthItems() {
 	        return [
 	            { value: "auto", label: "初期値" },
@@ -1550,6 +1704,10 @@ var laymic = (function (exports) {
 	            { value: "bold", label: "太い" },
 	        ];
 	    }
+	    /**
+	     * UIVisibility Itemの内部値と表示ラベルをまとめたものを返す
+	     * @return UIVisibility Itemをまとめた配列
+	     */
 	    get uiVisibilityItems() {
 	        return [
 	            { value: "auto", label: "初期値" },
@@ -1557,10 +1715,14 @@ var laymic = (function (exports) {
 	            { value: "visible", label: "表示" },
 	        ];
 	    }
+	    /**
+	     * zoomButtonRatioの内部値と表示ラベルをまとめたものを返す
+	     * @return zoomButtonRatio Itemをまとめた配列
+	     */
 	    get zoomButtonRatioItems() {
 	        return [
 	            { value: 1.5, label: "1.5倍" },
-	            { value: 2.0, label: "2.0倍" },
+	            { value: 2.0, label: "2.0倍", selected: true },
 	            { value: 2.5, label: "2.5倍" },
 	            { value: 3.0, label: "3.0倍" },
 	        ];
@@ -1594,6 +1756,12 @@ var laymic = (function (exports) {
 	    show() {
 	        this.rootEl.classList.add(this.builder.stateNames.showPreference);
 	        setAriaExpanded(this.rootEl, true);
+	        this._isActive = true;
+	        // 五回ほどrafSleepしてフォーカス移動タイミングをずらす
+	        // 小手先技コードなので、デバイスによっては上手く動かないかも
+	        multiRafSleep(5).then(() => {
+	            this.wrapperEl.focus();
+	        });
 	    }
 	    /**
 	     * 設定画面を非表示とする
@@ -1601,6 +1769,9 @@ var laymic = (function (exports) {
 	    hide() {
 	        this.rootEl.classList.remove(this.builder.stateNames.showPreference);
 	        setAriaExpanded(this.rootEl, false);
+	        this._isActive = false;
+	        // 設定画面を閉じる際にrootElへとフォーカスを移す
+	        this.rootEl.focus();
 	    }
 	    /**
 	     * BarWidthの値から進捗バー幅数値を取得する
@@ -1620,9 +1791,17 @@ var laymic = (function (exports) {
 	        }
 	        return width;
 	    }
+	    /**
+	     * 現在の設定値オブジェクトをlocalStorageに保存する
+	     */
 	    savePreferenceData() {
 	        localStorage.setItem(this.PREFERENCE_KEY, JSON.stringify(this.data));
 	    }
+	    /**
+	     * LaymicPreferenceUpdateイベントを発火させる
+	     * このイベントはlaymicの設定値が変更された際に発火するイベントである。
+	     * @param  detail どの値が変更されたかを通知する文字列
+	     */
 	    dispatchPreferenceUpdateEvent(detail) {
 	        const ev = new CustomEvent("LaymicPreferenceUpdate", {
 	            detail
@@ -1637,7 +1816,7 @@ var laymic = (function (exports) {
 	        let data = LaymicPreference.defaultPreferenceData;
 	        if (dataStr) {
 	            try {
-	                data = JSON.parse(dataStr);
+	                data = Object.assign(data, JSON.parse(dataStr));
 	            }
 	            catch (e) {
 	                console.error(e);
@@ -1769,22 +1948,26 @@ var laymic = (function (exports) {
 
 	class LaymicThumbnails {
 	    constructor(builder, rootEl, pages, thumbPages, state) {
+	        this._isActive = false;
 	        this.builder = builder;
-	        const thumbsClassNames = this.builder.classNames.thumbs;
-	        const thumbsEl = builder.createDiv();
-	        thumbsEl.className = thumbsClassNames.container;
+	        const thumbsNames = this.builder.classNames.thumbs;
+	        const thumbsEl = builder.createDiv(thumbsNames.container);
 	        // 初期状態では表示しないようにしておく
 	        thumbsEl.style.display = "none";
 	        setAriaExpanded(thumbsEl, false);
-	        const wrapperEl = builder.createDiv();
-	        wrapperEl.className = thumbsClassNames.wrapper;
+	        const wrapperEl = builder.createDiv(thumbsNames.wrapper);
 	        setRole(wrapperEl, "list");
+	        wrapperEl.tabIndex = -1;
 	        const thumbEls = [];
+	        const thumbButtons = [];
 	        const loopLen = pages.length;
 	        // idxを使いたいので古めかしいforループを使用
 	        for (let i = 0; i < loopLen; i++) {
 	            const p = pages[i];
 	            const t = thumbPages[i] || "";
+	            const btn = builder.createButton(thumbsNames.item);
+	            btn.title = (i + 1) + "P目へと遷移";
+	            setRole(btn, "listitem");
 	            let el;
 	            if (t !== "" || typeof p === "string") {
 	                let src = "";
@@ -1796,7 +1979,7 @@ var laymic = (function (exports) {
 	                }
 	                const img = new Image();
 	                img.dataset.src = src;
-	                img.className = `${thumbsClassNames.lazyload} ${thumbsClassNames.imgThumb}`;
+	                img.className = `${thumbsNames.lazyload} ${thumbsNames.imgThumb}`;
 	                el = img;
 	            }
 	            else {
@@ -1805,18 +1988,18 @@ var laymic = (function (exports) {
 	                if (!(slideEl instanceof Element))
 	                    continue;
 	                el = slideEl;
-	                el.classList.add(thumbsClassNames.slideThumb);
+	                el.classList.add(thumbsNames.slideThumb);
 	            }
-	            el.classList.add(thumbsClassNames.item);
-	            if (el instanceof HTMLElement)
-	                setRole(el, "listitem");
 	            thumbEls.push(el);
-	            wrapperEl.appendChild(el);
+	            thumbButtons.push(btn);
+	            btn.appendChild(el);
+	            wrapperEl.appendChild(btn);
 	        }
 	        thumbsEl.appendChild(wrapperEl);
 	        this.el = thumbsEl;
 	        this.wrapperEl = wrapperEl;
 	        this.thumbEls = thumbEls;
+	        this.thumbButtons = thumbButtons;
 	        this.state = state;
 	        this.rootEl = rootEl;
 	        [
@@ -1840,6 +2023,13 @@ var laymic = (function (exports) {
 	        this.applyEventListeners();
 	    }
 	    /**
+	     * サムネイル画面表示中か否かのboolを返す
+	     * @return サムネイル画面表示中ならばtrue
+	     */
+	    get isActive() {
+	        return this._isActive;
+	    }
+	    /**
 	     * thumbsWrapperElのwidthを計算し、
 	     * 折り返しが発生しないようなら横幅の値を書き換える
 	     */
@@ -1859,6 +2049,9 @@ var laymic = (function (exports) {
 	            : "";
 	        this.wrapperEl.style.width = widthStyleStr;
 	    }
+	    /**
+	     * サムネイル画面を表示する
+	     */
 	    show() {
 	        if (this.el.style.display === "none") {
 	            // ページ読み込み後一度だけ動作する
@@ -1867,21 +2060,31 @@ var laymic = (function (exports) {
 	        }
 	        this.rootEl.classList.add(this.builder.stateNames.showThumbs);
 	        setAriaExpanded(this.rootEl, true);
+	        this._isActive = true;
+	        // 少々遅延させてからフォーカスを移動させる
+	        // 適当に5回ほどrafSleepする
+	        multiRafSleep(5).then(() => {
+	            this.wrapperEl.focus();
+	        });
 	    }
+	    /**
+	     * サムネイル画面を閉じる
+	     */
 	    hide() {
 	        this.rootEl.classList.remove(this.builder.stateNames.showThumbs);
 	        setAriaExpanded(this.rootEl, false);
+	        this._isActive = false;
+	        // サムネイル閉止時にrootElへとfocusを戻す
+	        this.rootEl.focus();
 	    }
 	    /**
 	     * 読み込み待ち状態のimg elementを全て読み込む
 	     * いわゆるlazyload処理
+	     * @return  全画像読み込み完了を受け取れるPromiseオブジェクト
 	     */
 	    revealImgs() {
 	        const { lazyload, lazyloading, lazyloaded } = this.builder.classNames.thumbs;
-	        this.thumbEls.forEach(el => {
-	            if (!(el instanceof HTMLImageElement)) {
-	                return;
-	            }
+	        const revealImg = (el) => new Promise(res => {
 	            const s = el.dataset.src;
 	            if (s) {
 	                // 読み込み中はクラス名を変更
@@ -1889,10 +2092,23 @@ var laymic = (function (exports) {
 	                // 読み込みが終わるとクラス名を再変更
 	                el.addEventListener("load", () => {
 	                    el.classList.replace(lazyloading, lazyloaded);
+	                    res();
+	                });
+	                el.addEventListener("error", () => {
+	                    // 読み込み失敗時はとりあえずコンソール出力しておく
+	                    console.error("サムネイル画像読み込みに失敗: " + s);
+	                    res();
 	                });
 	                el.src = s;
 	            }
 	        });
+	        return Promise.all(this.thumbEls
+	            .map((el) => {
+	            if (!(el instanceof HTMLImageElement))
+	                return;
+	            return revealImg(el);
+	        })
+	            .filter(maybePromise => maybePromise !== void 0));
 	    }
 	    /**
 	     * 各種イベントリスナーの登録
@@ -1912,47 +2128,106 @@ var laymic = (function (exports) {
 	class LaymicHelp {
 	    constructor(builder, rootEl) {
 	        this.ISDISPLAYED_KEY = "laymic_isHelpDisplayed";
+	        // 表示中か否かを判別するbool
+	        this._isActive = false;
 	        // 表示済みか否かを判別するbool
-	        this._isDisplayed = false;
+	        this._isDisplayed = this.loadIsDisplayed();
 	        this.rootEl = rootEl;
 	        this.builder = builder;
-	        const helpClassNames = builder.classNames.help;
-	        const containerEl = builder.createDiv();
-	        containerEl.className = helpClassNames.container;
+	        const helpNames = builder.classNames.help;
+	        const containerEl = builder.createDiv(helpNames.container);
 	        setAriaExpanded(containerEl, false);
+	        containerEl.tabIndex = -1;
 	        const wrapperEl = builder.createHelpWrapperEl();
 	        containerEl.appendChild(wrapperEl);
 	        this.el = containerEl;
 	        this.wrapperEl = containerEl;
 	        // 各種イベントをボタンに適用
 	        this.applyEventListeners();
-	        this.loadIsDisplayedData();
+	    }
+	    /**
+	     * ヘルプ画面が現在表示中であるかのboolを返す
+	     * @return ヘルプ画面表示中ならばtrue
+	     */
+	    get isActive() {
+	        return this._isActive;
+	    }
+	    /**
+	     * ヘルプ表示済みかどうかをlocalStorageから取得する
+	     * @return 表示済みならばtrue
+	     */
+	    loadIsDisplayed() {
+	        let isDisplayed = false;
+	        const isDisplayedStr = localStorage.getItem(this.ISDISPLAYED_KEY) || "";
+	        if (isDisplayedStr === "true")
+	            isDisplayed = true;
+	        return isDisplayed;
+	    }
+	    /**
+	     * ヘルプが表示済みかの値を更新する
+	     * 主に「laymic初回表示がなされて、かつ二回目以降の表示も同じページ読み込みの際に行われた」時に表示済みとするための関数
+	     *
+	     * isDisplayedがすでにtrueの場合は処理スキップ
+	     * falseの場合にのみlocalStorageの値を取得する
+	     */
+	    updateIsDisplayed() {
+	        if (this.isDisplayed)
+	            return;
+	        this._isDisplayed = this.loadIsDisplayed();
+	    }
+	    /**
+	     * ヘルプが表示済みかのboolを返す
+	     * @return 表示済みならばtrue
+	     */
+	    get isDisplayed() {
+	        return this._isDisplayed;
+	    }
+	    /**
+	     * ヘルプ表示済みかの値を切り返る
+	     * @param  bool 新しく指定する値
+	     */
+	    set isDisplayed(bool) {
+	        this._isDisplayed = bool;
+	        const boolStr = (bool) ? "true" : "false";
+	        localStorage.setItem(this.ISDISPLAYED_KEY, boolStr);
+	    }
+	    /**
+	     * ヘルプ画面を表示する
+	     */
+	    show() {
+	        this.rootEl.classList.add(this.builder.stateNames.showHelp);
+	        setAriaExpanded(this.rootEl, true);
+	        this._isActive = true;
+	        // フォーカス移動
+	        // 余裕を持って5回ほどrafSleepする
+	        multiRafSleep(5).then(() => {
+	            this.el.focus();
+	        });
+	    }
+	    /**
+	     * ヘルプ画面を閉じる
+	     */
+	    hide() {
+	        this.rootEl.classList.remove(this.builder.stateNames.showHelp);
+	        setAriaExpanded(this.rootEl, false);
+	        this.isDisplayed = true;
+	        this._isActive = false;
+	        // 閉止時にrootElへとフォーカスを移す
+	        this.rootEl.focus();
+	    }
+	    /**
+	     * localStorageの値を参照して、
+	     * 全てのlaymicインスタンス共通で一度だけヘルプ表示する
+	     */
+	    showOnlyOnce() {
+	        this.updateIsDisplayed();
 	        if (!this.isDisplayed) {
 	            this.show();
 	        }
 	    }
-	    loadIsDisplayedData() {
-	        const isDisplayedStr = localStorage.getItem(this.ISDISPLAYED_KEY) || "";
-	        if (isDisplayedStr === "true") {
-	            this._isDisplayed = true;
-	        }
-	    }
-	    get isDisplayed() {
-	        return this._isDisplayed;
-	    }
-	    set isHelpDisplayed(bool) {
-	        this._isDisplayed = bool;
-	        localStorage.setItem(this.ISDISPLAYED_KEY, "true");
-	    }
-	    show() {
-	        this.rootEl.classList.add(this.builder.stateNames.showHelp);
-	        setAriaExpanded(this.rootEl, true);
-	    }
-	    hide() {
-	        this.rootEl.classList.remove(this.builder.stateNames.showHelp);
-	        setAriaExpanded(this.rootEl, false);
-	        this.isHelpDisplayed = true;
-	    }
+	    /**
+	     * ヘルプ画面と関連するイベントリスナーを設定する
+	     */
 	    applyEventListeners() {
 	        this.el.addEventListener("click", () => {
 	            this.hide();
@@ -1962,12 +2237,14 @@ var laymic = (function (exports) {
 
 	class LaymicZoom {
 	    constructor(builder, rootEl, preference) {
-	        this.state = this.defaultLaymicZoomStates;
-	        const zoomEl = builder.createDiv();
-	        zoomEl.className = builder.classNames.zoom.controller;
+	        this.state = LaymicZoom.defaultLaymicZoomStates;
+	        const zoomNames = builder.classNames.zoom;
+	        const zoomEl = builder.createDiv(zoomNames.controller);
 	        this.controller = zoomEl;
 	        this.rootEl = rootEl;
-	        this.wrapper = builder.createZoomWrapper();
+	        this.wrapper = builder.createDiv(zoomNames.wrapper);
+	        // focus操作を受け付けるようにしておく
+	        this.wrapper.tabIndex = -1;
 	        this.builder = builder;
 	        this.preference = preference;
 	        this.applyEventListeners();
@@ -1976,7 +2253,7 @@ var laymic = (function (exports) {
 	     * LaymicZoomStatesのデフォルト値を返す
 	     * @return LaymicZoomStatesデフォルト値
 	     */
-	    get defaultLaymicZoomStates() {
+	    static get defaultLaymicZoomStates() {
 	        return {
 	            zoomRatio: 1.0,
 	            minRatio: 1.0,
@@ -2044,8 +2321,8 @@ var laymic = (function (exports) {
 	        // その平均値をズームの中心座標とする
 	        const [bx, by] = this.getNormalizedPosBetweenTouches(e);
 	        const [cx, cy] = this.getNormalizedCurrentCenter();
-	        const zoomX = (bx + cx) / 2;
 	        const zoomY = (by + cy) / 2;
+	        const zoomX = (bx + cx) / 2;
 	        this.enableZoom(zoomRatio, zoomX, zoomY);
 	        this.state.pastDistance = distance;
 	    }
@@ -2074,6 +2351,12 @@ var laymic = (function (exports) {
 	        }
 	        this.state.zoomRect = zoomRect;
 	    }
+	    /**
+	     * 過去の二点タッチ距離を更新する
+	     * pastDistanceは計算に用いるので、適時更新する必要がある
+	     *
+	     * @param  e TouchEvent
+	     */
 	    updatePastDistance(e) {
 	        const distance = this.getDistanceBetweenTouches(e);
 	        this.state.pastDistance = distance;
@@ -2084,18 +2367,18 @@ var laymic = (function (exports) {
 	     * @param  zoomX     正規化されたズーム時中央横座標
 	     * @param  zoomY     正規化されたズーム時中央縦座標
 	     */
-	    enable(zoomRatio = 1.5, zoomX = 0.5, zoomY = 0.5) {
+	    enable(zoomRatio = this.preference.zoomButtonRatio, zoomX = 0.5, zoomY = 0.5) {
 	        this.enableController();
 	        this.enableZoom(zoomRatio, zoomX, zoomY);
 	    }
 	    /**
 	     * 拡大縮小処理を行う
 	     * 引数を省略した場合は中央寄せでズームする
-	     * @param  zoomRatio ズーム倍率
+	     * @param  zoomRatio ズーム倍率。関連設定値を参照する
 	     * @param  zoomX     正規化されたズーム時中央横座標
 	     * @param  zoomY     正規化されたズーム時中央縦座標
 	     */
-	    enableZoom(zoomRatio = 1.5, zoomX = 0.5, zoomY = 0.5) {
+	    enableZoom(zoomRatio = this.preference.zoomButtonRatio, zoomX = 0.5, zoomY = 0.5) {
 	        const { clientWidth: cw, clientHeight: ch } = this.rootEl;
 	        const translateX = -((cw * zoomRatio - cw) * zoomX);
 	        const translateY = -((ch * zoomRatio - ch) * zoomY);
@@ -2112,6 +2395,7 @@ var laymic = (function (exports) {
 	    enableController() {
 	        const zoomed = this.builder.stateNames.zoomed;
 	        this.wrapper.classList.add(zoomed);
+	        this.wrapper.focus();
 	    }
 	    /**
 	     * ズームモードから抜ける
@@ -2121,6 +2405,124 @@ var laymic = (function (exports) {
 	        this.wrapper.classList.remove(zoomed);
 	        this.state.zoomRatio = 1.0;
 	        this.wrapper.style.transform = "";
+	        // ズーム解除時にはrootElへとフォーカスを移す
+	        this.rootEl.focus();
+	    }
+	    /**
+	     * ズーム中に上へとスクロール可能かどうかのboolを返す
+	     * @return 上へとスクロール可能ならtrue
+	     */
+	    get isScrollableUp() {
+	        const ch = this.rootEl.clientHeight;
+	        const ry = this.state.zoomRect.t;
+	        return this.isZoomed && ch > ch - Math.abs(ry);
+	    }
+	    /**
+	     * ズーム中に下へとスクロール可能かどうかのboolを返す
+	     * @return 下へとスクロール可能ならtrue
+	     */
+	    get isScrollableDown() {
+	        const ch = this.rootEl.clientHeight;
+	        const { t: ry, h: rh } = this.state.zoomRect;
+	        return this.isZoomed && rh - ch > Math.abs(ry);
+	    }
+	    /**
+	     * ズーム中に左へとスクロール可能かどうかのboolを返す
+	     * @return 左へとスクロール可能ならtrue
+	     */
+	    get isScrollableLeft() {
+	        const cw = this.rootEl.clientWidth;
+	        const rx = this.state.zoomRect.l;
+	        return this.isZoomed && cw > cw - Math.abs(rx);
+	    }
+	    /**
+	     * ズーム中に右へとスクロール可能かどうかのboolを返す
+	     * @return 右へとスクロール可能ならtrue
+	     */
+	    get isScrollableRight() {
+	        const cw = this.rootEl.clientWidth;
+	        const { l: rx, w: rw } = this.state.zoomRect;
+	        return this.isZoomed && rw - cw > Math.abs(rx);
+	    }
+	    /**
+	     * ズーム中に上へとスクロールさせる
+	     * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+	     */
+	    scrollUp(isPageScroll = false) {
+	        if (!this.isScrollableUp)
+	            return;
+	        this.scroll("up", isPageScroll);
+	    }
+	    /**
+	     * ズーム中に下へとスクロールさせる
+	     * @param  isPageScroll trueならばページ縦幅に応じてスクロール
+	     */
+	    scrollDown(isPageScroll = false) {
+	        if (!this.isScrollableDown)
+	            return;
+	        this.scroll("down", isPageScroll);
+	    }
+	    /**
+	     * ズーム中に左へとスクロールさせる
+	     * @param  isPageScroll trueならばページ横幅に応じてスクロール
+	     */
+	    scrollLeft(isPageScroll = false) {
+	        if (!this.isScrollableLeft)
+	            return;
+	        this.scroll("left", isPageScroll);
+	    }
+	    /**
+	     * ズーム中に右へとスクロールさせる
+	     * @param  isPageScroll trueならばページ横幅に応じてスクロール
+	     */
+	    scrollRight(isPageScroll = false) {
+	        if (!this.isScrollableRight)
+	            return;
+	        this.scroll("right", isPageScroll);
+	    }
+	    scroll(direction, isPageScroll = false) {
+	        const { clientWidth: cw, clientHeight: ch } = this.rootEl;
+	        const { l: rx, t: ry, w: rw, h: rh } = this.state.zoomRect;
+	        const maxX = rw - cw;
+	        const maxY = rh - ch;
+	        // maxX/maxYが0の場合はバグるので早期リターン
+	        if (maxX === 0 || maxY === 0)
+	            return;
+	        let scrollSize = 60;
+	        // isPageScrollがtrueであれば、移動量をpage幅にする
+	        if (isPageScroll) {
+	            // 上下移動の場合はclientHeightを、
+	            // 左右移動の場合はclientWidthを用いる
+	            scrollSize = (direction === "up" || direction === "down")
+	                ? ch
+	                : cw;
+	        }
+	        let adjustX = 0;
+	        let adjustY = 0;
+	        if (direction === "up") {
+	            // up
+	            adjustY = -scrollSize;
+	        }
+	        else if (direction === "down") {
+	            // down
+	            adjustY = scrollSize;
+	        }
+	        else if (direction === "left") {
+	            // left
+	            adjustX = -scrollSize;
+	        }
+	        else {
+	            // right
+	            adjustX = scrollSize;
+	        }
+	        // `0 / 0`とした際はNaNとなってバグが出るので
+	        // max値に1を足しておく
+	        const nx = (Math.abs(rx) + adjustX) / maxX;
+	        const ny = (Math.abs(ry) + adjustY) / maxY;
+	        // 0~1の間にclampする
+	        const clampX = Math.max(Math.min(nx, 1), 0);
+	        const clampY = Math.max(Math.min(ny, 1), 0);
+	        this.enableZoom(this.state.zoomRatio, clampX, clampY);
 	    }
 	    /**
 	     * タッチされた二点間の距離を返す
@@ -2163,16 +2565,15 @@ var laymic = (function (exports) {
 	     * @return [centeringX, centeringY]
 	     */
 	    getNormalizedCurrentCenter() {
-	        const { innerWidth: cw, innerHeight: ch } = window;
+	        const { innerWidth: iw, innerHeight: ih } = window;
 	        const { l: rx, t: ry, w: rw, h: rh } = this.state.zoomRect;
-	        const maxX = rw - cw;
-	        const maxY = rh - ch;
-	        // `0 / 0`とした際はNaNとなってバグが出るので
-	        // max値に1を足しておく
-	        const nx = Math.abs(rx) / (maxX + 1);
-	        const ny = Math.abs(ry) / (maxY + 1);
-	        // 戻り値が[0, 0]の場合は[0.5, 0.5]を返す
-	        return (nx !== 0 || ny !== 0) ? [nx, ny] : [0.5, 0.5];
+	        // 画面中心座標を出す
+	        const cx = Math.abs(rx) + iw / 2;
+	        const cy = Math.abs(ry) + ih / 2;
+	        // 画面中心座標を最大幅で割る
+	        const nx = cx / rw;
+	        const ny = cy / rh;
+	        return [nx, ny];
 	    }
 	    /**
 	     * css transformの値を設定する
@@ -2193,7 +2594,7 @@ var laymic = (function (exports) {
 	    }
 	    /**
 	     * touchstartに対して登録する処理まとめ
-	     * @param  e タッチイベント
+	     * @param  e TouchEvent
 	     */
 	    touchStartHandler(e) {
 	        e.stopPropagation();
@@ -2206,7 +2607,7 @@ var laymic = (function (exports) {
 	    }
 	    /**
 	     * touchmoveイベントに対して登録する処理まとめ
-	     * @param  e タッチイベント
+	     * @param  e TouchEvent
 	     */
 	    touchMoveHandler(e) {
 	        // rafThrottleでの非同期呼び出しを行うので
@@ -2232,6 +2633,7 @@ var laymic = (function (exports) {
 	     * インスタンス生成時に一度だけ呼ばれることを想定
 	     */
 	    applyEventListeners() {
+	        // モバイル環境でのaddEventListnerまとめ
 	        const applyEventsForMobile = () => {
 	            this.controller.addEventListener("touchstart", e => this.touchStartHandler(e));
 	            const touchMove = cancelableRafThrottle(e => this.touchMoveHandler(e));
@@ -2259,6 +2661,7 @@ var laymic = (function (exports) {
 	                }
 	            }));
 	        };
+	        // PC環境でのaddEventListenerまとめ
 	        const applyEventsForPC = () => {
 	            this.controller.addEventListener("click", () => {
 	                // ドラッグ操作がなされている場合は処理をスキップ
@@ -2375,7 +2778,7 @@ var laymic = (function (exports) {
 	     * 厳密な表示サイズを計算する仕様に変更
 	     */
 	    updatePageSize() {
-	        const { w: width, h: height } = this.getPageRealSize();
+	        const { w: width, h: height } = this.getPageSize();
 	        this.el.rootEl.style.setProperty("--page-width", width + "px");
 	        this.el.rootEl.style.setProperty("--page-height", height + "px");
 	    }
@@ -2413,47 +2816,11 @@ var laymic = (function (exports) {
 	        calcWindowVH(this.el.rootEl);
 	    }
 	    /**
-	     * cssレイアウトに用いる各ページサイズを返す
-	     * 正確な値ではないことに注意
-	     */
-	    // private getPageSize(): PageSize {
-	    //   const {w: aw, h: ah} = this.state.pageAspect;
-	    //   const {offsetWidth: ow, offsetHeight: oh} = this.el.rootEl;
-	    //   const {progressBarWidth: pbw, viewerPadding: vp, isVertView} = this.state;
-	    //
-	    //   const paddingNum = vp * 2;
-	    //   // 最大サイズ
-	    //   const [mw, mh] = (!isVertView)
-	    //     ? [ow - paddingNum, oh - (pbw + paddingNum)]
-	    //     : [ow - (pbw + paddingNum), oh - paddingNum];
-	    //
-	    //   let {w: pageWidth, h: pageHeight} = this.state.pageSize;
-	    //
-	    //   // 横読み時にはプログレスバー幅を差し引いた縦幅を計算に使い、
-	    //   // 縦読み時はプログレスバー幅を差し引いた横幅を計算に使う
-	    //   if (!this.state.isVertView && mw < pageWidth * 2
-	    //     || mw > pageWidth && mh < pageHeight)
-	    //   {
-	    //     // 横読み時または縦読み時で横幅が狭い場合でのサイズ計算
-	    //     pageWidth = Math.round(mh * aw / ah);
-	    //     pageHeight = Math.round(pageWidth * ah / aw);
-	    //   } else if (mh < pageHeight) {
-	    //     // 縦読み時で縦幅が狭い場合のサイズ計算
-	    //     pageHeight = Math.round(mw * ah / aw);
-	    //     pageWidth = Math.round(pageHeight * aw / ah);
-	    //   }
-	    //
-	    //   return {
-	    //     w: pageWidth,
-	    //     h: pageHeight
-	    //   }
-	    // }
-	    /**
 	     * pageMaxSizeとpageRealSizeの差異から縮小率を返す
 	     * @return                        scaleに用いる縮小表示率
 	     */
 	    getPageScaleRatio() {
-	        const { w: realW, h: realH } = this.getPageRealSize();
+	        const { w: realW, h: realH } = this.getPageSize();
 	        const { w: pageW, h: pageH } = this.state.pageSize;
 	        // アスペクト比固定の縮小表示を想定しているため
 	        // 対角線上の長さを取ってから比較する
@@ -2463,11 +2830,11 @@ var laymic = (function (exports) {
 	        return Math.min(realD / pageD, 1);
 	    }
 	    /**
+	     * cssレイアウトに用いる、
 	     * ページの実寸表示数値を出力する
-	     * getPageSize()と比較して、厳密な計算を行っていることが特徴
-	     * @return                        実寸のページサイズ
+	     * @return 実寸のページサイズ
 	     */
-	    getPageRealSize() {
+	    getPageSize() {
 	        const { w: aw, h: ah } = this.state.pageAspect;
 	        const { offsetWidth: ow, offsetHeight: oh } = this.el.rootEl;
 	        const { progressBarWidth: pbw, viewerPadding: vp, isVertView, isDoubleSlideHorizView } = this.state;
@@ -2495,8 +2862,8 @@ var laymic = (function (exports) {
 	            height = width * ah / aw;
 	        }
 	        return {
-	            w: width,
-	            h: height
+	            w: Math.round(width),
+	            h: Math.round(height)
 	        };
 	    }
 	}
@@ -7001,120 +7368,6 @@ var laymic = (function (exports) {
 	  },
 	};
 
-	const Keyboard = {
-	  handle(event) {
-	    const swiper = this;
-	    const { rtlTranslate: rtl } = swiper;
-	    let e = event;
-	    if (e.originalEvent) e = e.originalEvent; // jquery fix
-	    const kc = e.keyCode || e.charCode;
-	    // Directions locks
-	    if (!swiper.allowSlideNext && ((swiper.isHorizontal() && kc === 39) || (swiper.isVertical() && kc === 40) || kc === 34)) {
-	      return false;
-	    }
-	    if (!swiper.allowSlidePrev && ((swiper.isHorizontal() && kc === 37) || (swiper.isVertical() && kc === 38) || kc === 33)) {
-	      return false;
-	    }
-	    if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
-	      return undefined;
-	    }
-	    if (doc.activeElement && doc.activeElement.nodeName && (doc.activeElement.nodeName.toLowerCase() === 'input' || doc.activeElement.nodeName.toLowerCase() === 'textarea')) {
-	      return undefined;
-	    }
-	    if (swiper.params.keyboard.onlyInViewport && (kc === 33 || kc === 34 || kc === 37 || kc === 39 || kc === 38 || kc === 40)) {
-	      let inView = false;
-	      // Check that swiper should be inside of visible area of window
-	      if (swiper.$el.parents(`.${swiper.params.slideClass}`).length > 0 && swiper.$el.parents(`.${swiper.params.slideActiveClass}`).length === 0) {
-	        return undefined;
-	      }
-	      const windowWidth = win.innerWidth;
-	      const windowHeight = win.innerHeight;
-	      const swiperOffset = swiper.$el.offset();
-	      if (rtl) swiperOffset.left -= swiper.$el[0].scrollLeft;
-	      const swiperCoord = [
-	        [swiperOffset.left, swiperOffset.top],
-	        [swiperOffset.left + swiper.width, swiperOffset.top],
-	        [swiperOffset.left, swiperOffset.top + swiper.height],
-	        [swiperOffset.left + swiper.width, swiperOffset.top + swiper.height],
-	      ];
-	      for (let i = 0; i < swiperCoord.length; i += 1) {
-	        const point = swiperCoord[i];
-	        if (
-	          point[0] >= 0 && point[0] <= windowWidth
-	          && point[1] >= 0 && point[1] <= windowHeight
-	        ) {
-	          inView = true;
-	        }
-	      }
-	      if (!inView) return undefined;
-	    }
-	    if (swiper.isHorizontal()) {
-	      if (kc === 33 || kc === 34 || kc === 37 || kc === 39) {
-	        if (e.preventDefault) e.preventDefault();
-	        else e.returnValue = false;
-	      }
-	      if (((kc === 34 || kc === 39) && !rtl) || ((kc === 33 || kc === 37) && rtl)) swiper.slideNext();
-	      if (((kc === 33 || kc === 37) && !rtl) || ((kc === 34 || kc === 39) && rtl)) swiper.slidePrev();
-	    } else {
-	      if (kc === 33 || kc === 34 || kc === 38 || kc === 40) {
-	        if (e.preventDefault) e.preventDefault();
-	        else e.returnValue = false;
-	      }
-	      if (kc === 34 || kc === 40) swiper.slideNext();
-	      if (kc === 33 || kc === 38) swiper.slidePrev();
-	    }
-	    swiper.emit('keyPress', kc);
-	    return undefined;
-	  },
-	  enable() {
-	    const swiper = this;
-	    if (swiper.keyboard.enabled) return;
-	    $(doc).on('keydown', swiper.keyboard.handle);
-	    swiper.keyboard.enabled = true;
-	  },
-	  disable() {
-	    const swiper = this;
-	    if (!swiper.keyboard.enabled) return;
-	    $(doc).off('keydown', swiper.keyboard.handle);
-	    swiper.keyboard.enabled = false;
-	  },
-	};
-
-	var keyboard = {
-	  name: 'keyboard',
-	  params: {
-	    keyboard: {
-	      enabled: false,
-	      onlyInViewport: true,
-	    },
-	  },
-	  create() {
-	    const swiper = this;
-	    Utils.extend(swiper, {
-	      keyboard: {
-	        enabled: false,
-	        enable: Keyboard.enable.bind(swiper),
-	        disable: Keyboard.disable.bind(swiper),
-	        handle: Keyboard.handle.bind(swiper),
-	      },
-	    });
-	  },
-	  on: {
-	    init() {
-	      const swiper = this;
-	      if (swiper.params.keyboard.enabled) {
-	        swiper.keyboard.enable();
-	      }
-	    },
-	    destroy() {
-	      const swiper = this;
-	      if (swiper.keyboard.enabled) {
-	        swiper.keyboard.disable();
-	      }
-	    },
-	  },
-	};
-
 	const Pagination = {
 	  update() {
 	    // Render || Update Pagination bullets/items
@@ -7701,23 +7954,41 @@ var laymic = (function (exports) {
 
 	Swiper.use(components);
 
-	Swiper.use([keyboard, pagination, lazy]);
+	Swiper.use([pagination, lazy]);
 	class LaymicSlider {
-	    constructor(el, builder, states) {
+	    constructor(el, builder, states, preference, zoom) {
 	        // 現在のviewType文字列
 	        this.viewType = "horizontal2p";
+	        this._isViewerUIActive = false;
 	        this.el = el;
 	        this.builder = builder;
 	        this.state = states;
+	        this.preference = preference;
+	        this.zoom = zoom;
 	        // 強制2p表示する条件が揃っていれば2p表示で初期化する
 	        const conf = (this.state.isDoubleSlideHorizView)
 	            ? this.swiper2pHorizViewConf
 	            : this.swiper1pHorizViewConf;
 	        this.swiper = new Swiper(this.el.swiperEl, conf);
 	    }
+	    /**
+	     * ビューワー操作UIが現在表示されているかのboolを返す
+	     * @return ビューワー操作UIが表示されているならtrue
+	     */
+	    get isViewerUIActive() {
+	        return this._isViewerUIActive;
+	    }
+	    /**
+	     * 現在表示中のページ数を表示する
+	     * @return swiper.activeIndexを返す
+	     */
 	    get activeIdx() {
 	        return this.swiper.activeIndex;
 	    }
+	    /**
+	     * 横読み1p表示にて用いる設定値
+	     * @return SwiperOptions
+	     */
 	    get swiper1pHorizViewConf() {
 	        return {
 	            direction: "horizontal",
@@ -7729,7 +8000,6 @@ var laymic = (function (exports) {
 	                el: ".swiper-pagination",
 	                type: "progressbar",
 	            },
-	            keyboard: true,
 	            preloadImages: false,
 	            lazy: {
 	                loadPrevNext: true,
@@ -7737,6 +8007,10 @@ var laymic = (function (exports) {
 	            },
 	        };
 	    }
+	    /**
+	     * 横読み2p表示にて用いる設定値
+	     * @return SwiperOptions
+	     */
 	    get swiper2pHorizViewConf() {
 	        const conf = this.swiper1pHorizViewConf;
 	        const patch = {
@@ -7745,6 +8019,10 @@ var laymic = (function (exports) {
 	        };
 	        return Object.assign(conf, patch);
 	    }
+	    /**
+	     * 縦読み表示にて用いる設定値
+	     * @return SwiperOptions
+	     */
 	    get swiperVertViewConf() {
 	        const conf = this.swiper1pHorizViewConf;
 	        const patch = {
@@ -7757,6 +8035,10 @@ var laymic = (function (exports) {
 	        };
 	        return Object.assign(conf, patch);
 	    }
+	    /**
+	     * 縦読み/横読み表示のトグル切り替えを行う
+	     * 同時にビューワーUIを隠し、rootElへとフォーカスを移す
+	     */
 	    toggleVerticalView() {
 	        if (!this.state.isVertView) {
 	            this.enableVerticalView();
@@ -7764,8 +8046,9 @@ var laymic = (function (exports) {
 	        else {
 	            this.disableVerticalView();
 	        }
-	        // 縦読みトグル時にはビューワーUIを隠す
-	        this.hideViewerUI();
+	        // 縦読み/横読みトグル時にはビューワーUIを隠す
+	        // 同時にrootElへとフォーカスを移す
+	        this.hideViewerUI(true);
 	    }
 	    /**
 	     * 縦読み表示へと切り替える
@@ -7849,8 +8132,7 @@ var laymic = (function (exports) {
 	            // イベントを登録
 	            this.attachSwiperEvents();
 	            // lazyload指定
-	            if (this.swiper.lazy)
-	                this.swiper.lazy.load();
+	            this.forceLoadLazyImgs();
 	            // 表示調整イベント発火
 	            this.dispatchViewUpdate();
 	        }
@@ -7884,7 +8166,7 @@ var laymic = (function (exports) {
 	    /**
 	     * 画面幅に応じて、横読み時の
 	     * 「1p表示 <-> 2p表示」を切り替える
-	     * @param isUpdateSwiper swiper.update()を行うか否か
+	     * @param  isUpdateSwiper swiper.update()を行うか否か
 	     */
 	    switchSingleSlideState(isUpdateSwiper = true) {
 	        // swiperが初期化されていないなら早期リターン
@@ -7910,7 +8192,7 @@ var laymic = (function (exports) {
 	     *
 	     * クリック判定基準についてはgetClickPoint()を参照のこと
 	     *
-	     * @param  e  mouse event
+	     * @param  e MouseEvent
 	     */
 	    slideClickHandler(e) {
 	        const [isNextClick, isPrevClick] = this.getClickPoint(e);
@@ -7929,10 +8211,62 @@ var laymic = (function (exports) {
 	        }
 	    }
 	    /**
-	     * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
-	     * @param  e  mouse event
+	     * スライダー部分のクリックハンドラ
+	     * swiperElとcontrollerEl両方にこのハンドラが用いられる
+	     * @param  e MouseEvent
 	     */
-	    slideMouseHoverHandler(e) {
+	    sliderClickHandler(e) {
+	        if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
+	            // モバイルブラウザでのタップページ送り無効化設定時は
+	            // viewerUIのトグルだけ行う
+	            this.toggleViewerUI();
+	        }
+	        else {
+	            this.slideClickHandler(e);
+	        }
+	    }
+	    sliderMouseDownHandler(e) {
+	        // ホイールクリック以外では処理終了
+	        if (e.button !== 1)
+	            return;
+	        // ホイールクリックと紐付いたデフォルト機能を停止
+	        e.preventDefault();
+	    }
+	    /**
+	     * スライダー部分のマウスアップハンドラ
+	     * ホイールクリックはclickでは取れないようなので
+	     * 苦肉の策としてmouseupを用いる
+	     * @param  e MouseEvent
+	     */
+	    sliderMouseUpHandler(e) {
+	        const getNormalizedPos = (e) => {
+	            const { clientX: cx, clientY: cy } = e;
+	            const { clientWidth: cw, clientHeight: ch } = this.el.rootEl;
+	            const nx = cx / cw;
+	            const ny = cy / ch;
+	            return [nx, ny];
+	        };
+	        // ホイールクリック以外では処理終了
+	        if (e.button !== 1)
+	            return;
+	        // ホイールクリックと紐付いたデフォルト機能を停止
+	        e.preventDefault();
+	        if (this.zoom.isZoomed) {
+	            // ズーム中はクリック同様ズーム終了
+	            this.zoom.disable();
+	        }
+	        else {
+	            const ratio = this.preference.zoomButtonRatio;
+	            const [nx, ny] = getNormalizedPos(e);
+	            this.zoom.enable(ratio, nx, ny);
+	            this.hideViewerUI();
+	        }
+	    }
+	    /**
+	     * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
+	     * @param  e MouseEvent
+	     */
+	    sliderMouseMoveHandler(e) {
 	        const [isNextClick, isPrevClick] = this.getClickPoint(e);
 	        const { nextPage, prevPage } = this.el.buttons;
 	        const active = this.builder.stateNames.active;
@@ -7940,7 +8274,7 @@ var laymic = (function (exports) {
 	        /**
 	         * swiperElとcontrollerElにおける
 	         * カーソル状態を一括設定する
-	         * @param isPointer trueならばポインターが乗っかっている状態とみなす
+	         * @param  isPointer trueならばポインターが乗っかっている状態とみなす
 	         */
 	        const setCursorStyle = (isPointer) => {
 	            const cursor = (isPointer) ? "pointer" : "";
@@ -7965,6 +8299,104 @@ var laymic = (function (exports) {
 	        setCursorStyle(isCursorPointer);
 	    }
 	    /**
+	     * スライダー部分でのマウスホイール操作ハンドラ
+	     * @param  e WheelEvent
+	     */
+	    sliderWheelHandler(e) {
+	        const mainModeHandler = (e) => {
+	            const dx = e.deltaX;
+	            const dy = e.deltaY;
+	            const isLTR = this.state.isLTR;
+	            // 上下ホイール判定
+	            // || RTL時の左右ホイール判定
+	            // || LTR時の左右ホイール判定
+	            const isNext = dy > 0
+	                || !isLTR && dx < 0
+	                || isLTR && dx > 0;
+	            const isPrev = dy < 0
+	                || !isLTR && dx > 0
+	                || isLTR && dx < 0;
+	            if (isNext) {
+	                // 進む
+	                this.slideNext();
+	            }
+	            else if (isPrev) {
+	                // 戻る
+	                this.slidePrev();
+	            }
+	        };
+	        if (this.zoom.isZoomed) {
+	            this.zoom.disable();
+	        }
+	        mainModeHandler(e);
+	    }
+	    /**
+	     * スライダー部分でのTouchStartハンドラ
+	     * @param  e TouchEvent
+	     */
+	    sliderTouchStartHandler(e) {
+	        this.zoom.updatePastDistance(e);
+	    }
+	    /**
+	     * スライダー部分でのTouchMoveハンドラ
+	     * @param  e TouchEvent
+	     */
+	    sliderTouchMoveHandler(e) {
+	        // マルチタッチでない場合と全画面状態でない場合は早期リターン
+	        if (!isMultiTouch(e))
+	            return;
+	        // フルスクリーン時は自前でのズームを行い、
+	        // そうでない際は内部のscale値だけ加算させる
+	        this.zoom.pinchZoom(e);
+	    }
+	    /**
+	     * スライダー部分でのTouchEndハンドラ
+	     */
+	    sliderTouchEndHandler() {
+	        // 自前ズームかデバイス側ズームがなされている場合
+	        // zoomControllerを表出させる
+	        if (this.zoom.isZoomed) {
+	            this.zoom.enableController();
+	            this.hideViewerUI();
+	        }
+	    }
+	    /**
+	     * 進捗バー部分でのClickハンドラ
+	     * @param  e MouseEvent
+	     */
+	    progressbarClickHandler(e) {
+	        const { isLTR, isVertView } = this.state;
+	        const max = (isVertView)
+	            ? window.innerHeight
+	            : window.innerWidth;
+	        // クリックされた場所を正規化して取得
+	        // 縦読み時はe.clientYの値を、
+	        // 通常横読み時はinnerWidthで反転させたe.clientXを
+	        // LTR横読み時はe.clientXの値を用いる
+	        let p = (isVertView)
+	            ? e.clientY
+	            : max - e.clientX;
+	        if (isLTR)
+	            p = e.clientX;
+	        const pageLen = this.swiper.slides.length;
+	        const idx = Math.floor(p / (max / pageLen));
+	        this.slideTo(idx);
+	    }
+	    /**
+	     * orientationcange eventに登録する処理
+	     */
+	    orientationChange() {
+	        const { isVertView, isMobile } = this.state;
+	        // PC、または縦読みモード、
+	        // または強制2p表示が無効化されている場合は早期リターン
+	        if (!isMobile || isVertView)
+	            return;
+	        this.switchHorizViewSize();
+	    }
+	    slideTo(idx, speed) {
+	        this.swiper.slideTo(idx, speed);
+	    }
+	    /**
 	     * swiper各種イベントを無効化する
 	     */
 	    detachSwiperEvents() {
@@ -7974,8 +8406,6 @@ var laymic = (function (exports) {
 	            "slideChange"
 	        ];
 	        detachEvents.forEach(evName => this.swiper.off(evName));
-	        // キーボード操作を止める
-	        this.disableSwiperKeyboardEvent();
 	    }
 	    /**
 	     * swiper各種イベントを有効化する
@@ -7997,45 +8427,51 @@ var laymic = (function (exports) {
 	        ];
 	        // イベント受け付けを再開させる
 	        attachEvents.forEach(ev => this.swiper.on(ev.name, ev.handler.bind(this)));
-	        // キーボード操作が止まっている場合はキーボード操作を再開させる
-	        this.enableSwiperKeyboardEvent();
 	    }
 	    /**
 	     * ビューワー操作UIをトグルさせる
+	     * @param isMoveFocus trueであればrootElへとフォーカスを移す
 	     */
-	    toggleViewerUI() {
-	        this.el.rootEl.classList.toggle(this.builder.stateNames.visibleUI);
+	    toggleViewerUI(isMoveFocus = false) {
+	        if (this.isViewerUIActive) {
+	            this.hideViewerUI(isMoveFocus);
+	        }
+	        else {
+	            this.showViewerUI();
+	        }
+	    }
+	    /**
+	     * ビューワー操作UIを表示する
+	     */
+	    showViewerUI() {
+	        const stateName = this.builder.stateNames.visibleUI;
+	        this.el.rootEl.classList.add(stateName);
+	        this._isViewerUIActive = true;
 	    }
 	    /**
 	     * ビューワー操作UIを非表示化する
+	     * @param isMoveFocus trueであればrootElへとフォーカスを移す
 	     */
-	    hideViewerUI() {
+	    hideViewerUI(isMoveFocus = false) {
 	        const stateName = this.builder.stateNames.visibleUI;
-	        if (this.el.rootEl.classList.contains(stateName)) {
-	            this.el.rootEl.classList.remove(stateName);
-	        }
+	        this.el.rootEl.classList.remove(stateName);
+	        this._isViewerUIActive = false;
+	        // isMoveFocusがtrueの際、
+	        // viewerUIを隠すと同時にrootElへとフォーカスを戻す
+	        if (isMoveFocus)
+	            this.el.rootEl.focus();
 	    }
-	    loadLazyImg() {
+	    /**
+	     * swiper内画像をlazyloadする
+	     */
+	    loadLazyImgs() {
 	        if (this.swiper.lazy) {
 	            this.swiper.lazy.load();
 	        }
 	    }
 	    /**
-	     * orientationcange eventに登録する処理
-	     */
-	    orientationChange() {
-	        const { isVertView, isMobile } = this.state;
-	        // PC、または縦読みモード、
-	        // または強制2p表示が無効化されている場合は早期リターン
-	        if (!isMobile || isVertView)
-	            return;
-	        this.switchHorizViewSize();
-	    }
-	    slideTo(idx, speed) {
-	        this.swiper.slideTo(idx, speed);
-	    }
-	    /**
 	     * 一つ前のスライドを表示する
+	     *
 	     * swiper.slidePrev()には
 	     * 特定状況下で0番スライドに巻き戻る不具合が
 	     * 存在するようなので、slideTo()を用いて手動で動かしている
@@ -8047,6 +8483,10 @@ var laymic = (function (exports) {
 	        const prevIdx = (idx > 0) ? idx - 1 : 0;
 	        this.swiper.slideTo(prevIdx, speed);
 	    }
+	    /**
+	     * 一つ次のスライドを表示する
+	     * @param  speed アニメーション速度
+	     */
 	    slideNext(speed) {
 	        this.swiper.slideNext(speed);
 	    }
@@ -8210,28 +8650,33 @@ var laymic = (function (exports) {
 	            nextPage.classList.remove(hidden);
 	        }
 	    }
-	    enableSwiperKeyboardEvent() {
-	        if (this.swiper.keyboard && !this.swiper.keyboard.enabled) {
-	            this.swiper.keyboard.enable();
-	        }
-	    }
-	    disableSwiperKeyboardEvent() {
-	        if (this.swiper.keyboard) {
-	            this.swiper.keyboard.disable();
-	        }
+	    /**
+	     * 画像読み込み中にswiper.lazy.load()を呼び出した際に
+	     * 画像読み込み中のまま止まるバグを回避するための関数
+	     *
+	     * lazyloading中を示すクラス名を
+	     * 一旦削除してから読み込み直す
+	     */
+	    forceLoadLazyImgs() {
+	        if (!this.swiper.lazy)
+	            return;
+	        const loadingClassName = "swiper-lazy-loading";
+	        const loadingImgs = this.swiper.wrapperEl.getElementsByClassName(loadingClassName);
+	        Array.from(loadingImgs).forEach(img => img.classList.remove(loadingClassName));
+	        this.swiper.lazy.load();
 	    }
 	}
 
 	class Laymic {
 	    constructor(laymicPages, options = {}) {
-	        // mangaViewer内部で用いるステートまとめ
+	        // laymic内部で用いるステートまとめ
 	        this.state = new LaymicStates();
 	        // 初期化引数を保管
 	        this.initOptions = options;
 	        const builder = new DOMBuilder(options.icons, options.classNames, options.stateNames);
-	        const rootEl = builder.createDiv();
 	        const { stateNames, classNames } = builder;
 	        this.builder = builder;
+	        const rootEl = builder.createDiv(classNames.root);
 	        const [pages, thumbPages] = (isLaymicPages(laymicPages))
 	            ? [laymicPages.pages, laymicPages.thumbs || []]
 	            : [laymicPages, []];
@@ -8240,8 +8685,10 @@ var laymic = (function (exports) {
 	            // svgコンテナは一度だけ追加する
 	            const svgCtn = builder.createSVGIcons();
 	            document.body.appendChild(svgCtn);
-	            // 向き変更イベント自体は一度のみ登録する
-	            window.addEventListener("orientationchange", () => orientationChangeHandler());
+	            // 向き変更親イベントは一度のみ登録する
+	            window.addEventListener("orientationchange", () => parentOrientationChangeHandler());
+	            // keydown親イベントも一度のみ登録する
+	            window.addEventListener("keydown", e => parentKeydownHandler(e));
 	        }
 	        if (options.pageWidth && options.pageHeight) {
 	            // ページサイズ数値が指定されていた場合の処理
@@ -8284,7 +8731,7 @@ var laymic = (function (exports) {
 	        this.zoom = new LaymicZoom(builder, rootEl, this.preference);
 	        // 画像読み込みなどを防ぐため初期状態ではdisplay: noneにしておく
 	        rootEl.style.display = "none";
-	        rootEl.classList.add(classNames.root, stateNames.visibleUI);
+	        rootEl.tabIndex = 0;
 	        if (this.state.isLTR)
 	            rootEl.classList.add(stateNames.ltr);
 	        if (this.state.isMobile)
@@ -8315,7 +8762,7 @@ var laymic = (function (exports) {
 	        // 一旦DOMから外していたroot要素を再度放り込む
 	        document.body.appendChild(this.el.rootEl);
 	        // swiper管理クラスの追加
-	        this.slider = new LaymicSlider(this.el, this.builder, this.state);
+	        this.slider = new LaymicSlider(this.el, this.builder, this.state, this.preference, this.zoom);
 	        // ビューワー方向の初期値が縦読みの場合はそれを表示
 	        if (options.viewerDirection === "vertical")
 	            this.slider.enableVerticalView(false);
@@ -8324,7 +8771,11 @@ var laymic = (function (exports) {
 	        // location.hashにmangaViewerIdと同値が指定されている場合は
 	        // 即座に開く
 	        if (this.state.isInstantOpen && location.hash === "#" + this.state.viewerId) {
-	            this.open(true);
+	            // progressbarが正常に表示されない不具合を避けるため
+	            // rafSleepを噛ませておく
+	            rafSleep().then(() => {
+	                this.open(true);
+	            });
 	        }
 	    }
 	    /**
@@ -8338,12 +8789,28 @@ var laymic = (function (exports) {
 	        // display:none状態の場合でだけ動く部分
 	        if (isInitialOpen) {
 	            this.el.rootEl.style.display = "";
-	            sleep(5).then(() => {
-	                // slideが追加された後に処理を行う必要があるため
-	                // sleepを噛ませて非同期処理とする
-	                this.slider.switchSingleSlideState();
-	            });
+	            // 表示していない場合のみヘルプ表示を行う
+	            this.help.showOnlyOnce();
 	        }
+	        rafSleep()
+	            .then(() => {
+	            // slideが追加された後に処理を行う必要があるため
+	            // rafSleepを噛ませて非同期処理とする
+	            if (isInitialOpen)
+	                this.slider.switchSingleSlideState();
+	            return multiRafSleep(4);
+	        })
+	            .then(() => {
+	            // 確実なウェイトを取るため2回rafSleep
+	            // rootElにフォーカスを移す
+	            this.el.rootEl.focus();
+	            return rafSleep();
+	        })
+	            .then(() => {
+	            // rootElにfocusが当たるとviewerUIが隠れてしまうので
+	            // rafSleepを挟んでからshowViewerUIして打ち消す
+	            this.slider.showViewerUI();
+	        });
 	        // preferenceかinitOptionの値を適用する
 	        this.preference.applyPreferenceValues();
 	        this.slider.attachSwiperEvents();
@@ -8365,7 +8832,7 @@ var laymic = (function (exports) {
 	        // 「lazyloadとfreeModeを併用した際初期画像の読み込みが行われない」
 	        // 不具合があるようなので手動で画像読み込み
 	        if (this.state.isVertView && this.slider.activeIdx === 0) {
-	            this.slider.loadLazyImg();
+	            this.slider.loadLazyImgs();
 	        }
 	        // 履歴を追加せずにhash値を書き換える
 	        if (this.state.isInstantOpen) {
@@ -8397,6 +8864,11 @@ var laymic = (function (exports) {
 	        // 非アクティブ状態に変更
 	        this.state.isActive = false;
 	    }
+	    /**
+	     * LaymicPreferenceの値が更新された際に
+	     * 発火するイベントのハンドラ
+	     * @param  e CustomEvent。e.detailに変更されたプロパティ名を格納する
+	     */
 	    laymicPreferenceUpdateHandler(e) {
 	        if (e.detail === "progressBarWidth") {
 	            // progressBarWidth数値を取得する
@@ -8457,9 +8929,14 @@ var laymic = (function (exports) {
 	        });
 	        // サムネイルのクリックイベント
 	        // 各サムネイルとswiper各スライドとを紐づける
-	        this.thumbs.thumbEls.forEach((el, i) => el.addEventListener("click", () => {
+	        this.thumbs.thumbButtons.forEach((el, i) => el.addEventListener("click", () => {
+	            const { isFirstSlideEmpty: isFSE, isDoubleSlideHorizView: isDSHV } = this.state;
+	            // 空白ページを加味した正確なインデックス数値を計算
+	            const idx = (isFSE && isDSHV)
+	                ? i + 1
+	                : i;
 	            this.thumbs.hide();
-	            this.slider.slideTo(i);
+	            this.slider.slideTo(idx);
 	        }));
 	        // ズームボタンのクリックイベント
 	        this.el.buttons.zoom.addEventListener("click", () => {
@@ -8469,8 +8946,7 @@ var laymic = (function (exports) {
 	            }
 	            else {
 	                // 非ズーム時
-	                const ratio = this.preference.zoomButtonRatio;
-	                this.zoom.enable(ratio);
+	                this.zoom.enable();
 	            }
 	            this.slider.hideViewerUI();
 	        });
@@ -8488,79 +8964,61 @@ var laymic = (function (exports) {
 	        this.el.buttons.close.addEventListener("click", () => {
 	            this.close();
 	        });
+	        // 次ページボタンのクリックイベント
 	        this.el.buttons.nextPage.addEventListener("click", () => {
 	            this.slider.slideNext();
 	        });
+	        // 前ページボタンのクリックイベント
 	        this.el.buttons.prevPage.addEventListener("click", () => {
 	            this.slider.slidePrev();
 	        });
+	        // 進捗バーのクリックイベント
+	        this.el.buttons.progressbar.addEventListener("click", e => this.slider.progressbarClickHandler(e));
 	        // swiperElと周囲余白にあたるcontrollerElへの各種イベント登録
 	        [
 	            this.el.swiperEl,
 	            this.el.controllerEl
 	        ].forEach(el => {
 	            // クリック時のイベント
-	            el.addEventListener("click", e => {
-	                if (this.state.isMobile && this.preference.isDisabledTapSlidePage) {
-	                    // モバイルブラウザでのタップページ送り無効化設定時は
-	                    // viewerUIのトグルだけ行う
-	                    this.slider.toggleViewerUI();
-	                }
-	                else {
-	                    this.slider.slideClickHandler(e);
-	                }
-	            });
+	            el.addEventListener("click", e => this.slider.sliderClickHandler(e));
 	            // マウス操作時のイベント
 	            el.addEventListener("mousemove", rafThrottle(e => {
-	                this.slider.slideMouseHoverHandler(e);
+	                this.slider.sliderMouseMoveHandler(e);
 	            }));
 	            // マウスホイールでのイベント
 	            // swiper純正のマウスホイール処理は動作がすっとろいので自作
-	            el.addEventListener("wheel", rafThrottle(e => {
-	                // 上下ホイール判定
-	                // || RTL時の左右ホイール判定
-	                // || LTR時の左右ホイール判定
-	                const isNext = e.deltaY > 0
-	                    || !this.state.isLTR && e.deltaX < 0
-	                    || this.state.isLTR && e.deltaX > 0;
-	                const isPrev = e.deltaY < 0
-	                    || !this.state.isLTR && e.deltaX > 0
-	                    || this.state.isLTR && e.deltaX < 0;
-	                if (isNext) {
-	                    // 進む
-	                    this.slider.slideNext();
-	                }
-	                else if (isPrev) {
-	                    // 戻る
-	                    this.slider.slidePrev();
-	                }
-	            }));
+	            el.addEventListener("wheel", wheelThrottle(rafThrottle(e => this.slider.sliderWheelHandler(e))));
 	            if (this.state.isMobile) {
-	                el.addEventListener("touchstart", e => {
-	                    this.zoom.updatePastDistance(e);
-	                });
-	                el.addEventListener("touchmove", rafThrottle(e => {
-	                    // マルチタッチでない場合と全画面状態でない場合は早期リターン
-	                    if (!isMultiTouch(e))
-	                        return;
-	                    // フルスクリーン時は自前でのズームを行い、
-	                    // そうでない際は内部のscale値だけ加算させる
-	                    this.zoom.pinchZoom(e);
-	                }));
-	                el.addEventListener("touchend", () => {
-	                    // 自前ズームかデバイス側ズームがなされている場合
-	                    // zoomControllerを表出させる
-	                    if (this.zoom.isZoomed) {
-	                        this.zoom.enableController();
-	                        this.slider.hideViewerUI();
-	                    }
-	                });
+	                // モバイル環境
+	                el.addEventListener("touchstart", e => this.slider.sliderTouchStartHandler(e));
+	                el.addEventListener("touchmove", rafThrottle(e => this.slider.sliderTouchMoveHandler(e)));
+	                el.addEventListener("touchend", () => this.slider.sliderTouchEndHandler());
+	            }
+	            else {
+	                // 非モバイル環境
+	                // ホイールクリックでのmousedown純正イベントを止める
+	                el.addEventListener("mousedown", e => this.slider.sliderMouseDownHandler(e));
+	                // zoom.enable()はモバイル環境を想定していないので
+	                // モバイル環境ではホイールクリック用処理を動かさない
+	                el.addEventListener("mouseup", e => this.slider.sliderMouseUpHandler(e));
 	            }
 	        });
 	        this.el.rootEl.addEventListener("fullscreenchange", () => this.fullscreenChange());
+	        // rootElにフォーカスが当たった際にはviewerUIを隠す
+	        this.el.rootEl.addEventListener("focus", () => this.slider.hideViewerUI());
 	        // ユーザビリティのため「クリックしても何も起きない」
 	        // 場所ではイベント伝播を停止させる
 	        Array.from(this.el.controllerEl.children).forEach(el => el.addEventListener("click", e => e.stopPropagation()));
+	        // ViewerUIButtonsに属するbutton要素に対してのkeydownイベント
+	        Object.values(this.el.buttons)
+	            .filter(el => el instanceof HTMLButtonElement)
+	            .forEach((el) => el.addEventListener("keydown", e => {
+	            // 決定役割のキーが押された場合のみ
+	            // バブリングを停止させる
+	            if (["Enter", " ", "Spacebar"].includes(e.key)) {
+	                e.stopPropagation();
+	            }
+	        }));
 	        // カスタムイベント登録
 	        this.el.rootEl.addEventListener("LaymicPreferenceUpdate", ((e) => this.laymicPreferenceUpdateHandler(e)));
 	        this.el.rootEl.addEventListener("LaymicViewUpdate", rafThrottle(() => {
@@ -8568,8 +9026,10 @@ var laymic = (function (exports) {
 	            // viewUpdate()関数を呼び出す
 	            this.viewUpdate();
 	        }));
+	        // keydownイベント登録
+	        keydownHandlers.push(this.keydownHandler.bind(this));
 	        // orientationchangeイベント登録
-	        orientationChangeFuncs.push(this.slider.orientationChange.bind(this.slider));
+	        orientationChangeHandlers.push(this.slider.orientationChange.bind(this.slider));
 	    }
 	    /**
 	     * mangaViewer表示を更新する
@@ -8640,7 +9100,7 @@ var laymic = (function (exports) {
 	        const docEl = document.documentElement;
 	        docEl.style.overflowY = "";
 	        document.body.style.overflowY = "";
-	        sleep(1).then(() => {
+	        rafSleep().then(() => {
 	            // 次のプロセスへと移してから
 	            // スクロール状況を復帰させる
 	            docEl.scrollTop = this.state.bodyScrollTop;
@@ -8679,6 +9139,156 @@ var laymic = (function (exports) {
 	            // 通常時
 	            this.el.rootEl.classList.remove(fsClass);
 	        }
+	    }
+	    /**
+	     * keydown時に呼び出されるハンドラ
+	     * laymicでのキーボード操作をすべてこの関数でまかなう
+	     * @param  e KeyboardEvent
+	     */
+	    keydownHandler(e) {
+	        // ビューワーがアクティブ状態になければ早期リターン
+	        if (!this.state.isActive)
+	            return;
+	        const isZoomed = this.zoom.isZoomed;
+	        const isHelpActive = this.help.isActive;
+	        const isThumbsActive = this.thumbs.isActive;
+	        const isPreferenceActive = this.preference.isActive;
+	        // escキーの名前セット
+	        const escKeys = ["Escape", "Esc"];
+	        // スペースキーの名前セット
+	        const spaceKeys = [" ", "Spacebar"];
+	        // 英字キーの名前セット群
+	        const zKeys = ["z", "Z"];
+	        const hKeys = ["h", "H"];
+	        const tKeys = ["t", "T"];
+	        const pKeys = ["p", "P"];
+	        const vKeys = ["v", "V"];
+	        const dKeys = ["d", "D"];
+	        const fKeys = ["f", "F"];
+	        // 単体キーの名前群
+	        const tab = "Tab";
+	        const pageDown = "PageDown";
+	        const pageUp = "PageUp";
+	        const arrowUp = "ArrowUp";
+	        const arrowDown = "ArrowDown";
+	        const arrowLeft = "ArrowLeft";
+	        const arrowRight = "ArrowRight";
+	        const enter = "Enter";
+	        // サブモード時の処理
+	        const subModeHandler = (e) => {
+	            const key = e.key;
+	            const { isMobile } = this.state;
+	            if (isZoomed && !isMobile) {
+	                // ズーム時操作
+	                if (parseKey(key, escKeys.concat([
+	                    enter, ...zKeys
+	                ])))
+	                    this.zoom.disable();
+	                if (parseKey(key, arrowUp))
+	                    this.zoom.scrollUp();
+	                if (parseKey(key, arrowDown))
+	                    this.zoom.scrollDown();
+	                if (parseKey(key, arrowLeft))
+	                    this.zoom.scrollLeft();
+	                if (parseKey(key, arrowRight))
+	                    this.zoom.scrollRight();
+	                if (parseKey(key, pageDown)
+	                    || !e.shiftKey && parseKey(key, spaceKeys)) {
+	                    this.zoom.scrollDown(true);
+	                }
+	                else if (parseKey(key, pageUp) || e.shiftKey && parseKey(key, spaceKeys)) {
+	                    this.zoom.scrollUp(true);
+	                }
+	            }
+	            else if (isHelpActive) {
+	                // ヘルプ展開時操作
+	                // Escape, Space, Enter, hで閉じる
+	                if (parseKey(key, escKeys.concat([enter, ...spaceKeys, ...hKeys])))
+	                    this.help.hide();
+	            }
+	            else if (isThumbsActive) {
+	                // サムネイル表示展開時操作
+	                if (parseKey(key, escKeys.concat(tKeys)))
+	                    this.thumbs.hide();
+	            }
+	            else if (isPreferenceActive) {
+	                // 設定画面展開時操作
+	                if (parseKey(key, escKeys.concat(pKeys)))
+	                    this.preference.hide();
+	            }
+	        };
+	        // メインモードでの処理
+	        const mainModeHandler = (e) => {
+	            const key = e.key;
+	            const { isLTR, isVertView, isMobile } = this.state;
+	            // 前のページへと移動させるキーセット
+	            const prevKeys = [pageUp];
+	            // 次のページへと移動させるキーセット
+	            const nextKeys = [pageDown];
+	            const closeKeys = escKeys.slice();
+	            if (isVertView) {
+	                // 縦読み時操作
+	                // 縦読み時は上キーで前ページへ、下キーで次ページへ
+	                prevKeys.push(arrowUp);
+	                nextKeys.push(arrowDown);
+	            }
+	            else if (isLTR) {
+	                // LTR時操作
+	                // LTR時は左キーで前ページへ、右キーで次ページへ
+	                prevKeys.push(arrowLeft);
+	                nextKeys.push(arrowRight);
+	            }
+	            else {
+	                // 通常時操作
+	                // 通常時は右キーで前ページへ、左キーで次ページへ
+	                prevKeys.push(arrowRight);
+	                nextKeys.push(arrowLeft);
+	            }
+	            // Escキーが押されたならビューワーを閉じる
+	            if (parseKey(key, closeKeys))
+	                this.close();
+	            // 特定のキーが押されたならページを戻す
+	            if (parseKey(key, prevKeys) || e.shiftKey && parseKey(key, spaceKeys))
+	                this.slider.slidePrev();
+	            // 特定のキーが押されたならページを進める
+	            if (parseKey(key, nextKeys) || !e.shiftKey && parseKey(key, spaceKeys))
+	                this.slider.slideNext();
+	            // ヘルプ展開
+	            if (parseKey(key, hKeys))
+	                this.help.show();
+	            // サムネイル展開
+	            if (parseKey(key, tKeys))
+	                this.thumbs.show();
+	            // 設定展開
+	            if (parseKey(key, pKeys))
+	                this.preference.show();
+	            // 縦読み/横読み切り替え
+	            if (parseKey(key, dKeys))
+	                this.slider.toggleVerticalView();
+	            // ビューワーUI切り替え
+	            if (parseKey(key, vKeys))
+	                this.slider.toggleViewerUI(true);
+	            // タブキーを押した際にビューワーUI表示
+	            if (!this.slider.isViewerUIActive && parseKey(key, tab))
+	                this.slider.showViewerUI();
+	            // 非モバイルデバイスでのみズーム切り替え
+	            if (!isMobile && parseKey(key, zKeys))
+	                this.zoom.enable();
+	        };
+	        // サブモードが有効であるかのbool
+	        const isSubModeActive = isZoomed || isHelpActive || isThumbsActive || isPreferenceActive;
+	        if (isSubModeActive) {
+	            // ズーム/ヘルプ/サムネイル/設定の
+	            // いずれかが展開している状態での処理
+	            subModeHandler(e);
+	        }
+	        else {
+	            // メイン操作モードでの処理
+	            mainModeHandler(e);
+	        }
+	        // フルスクリーン切り替えは常時受け付ける
+	        if (parseKey(e.key, fKeys))
+	            this.toggleFullscreen();
 	    }
 	    /**
 	     * state内のrootElの要素サイズを更新する
@@ -8739,6 +9349,7 @@ var laymic = (function (exports) {
 	        const viewerDirection = (el.dataset.viewerDirection === "vertical") ? "vertical" : undefined;
 	        const isVisiblePagination = compareString(el.dataset.isVisiblePagination || "", "true", true);
 	        const isFirstSlideEmpty = compareString(el.dataset.isFirstSlideEmpty || "", "false", false);
+	        const isAppendEmptySlide = compareString(el.dataset.isAppendEmptySlide || "", "false", false);
 	        const isInstantOpen = compareString(el.dataset.isInstantOpen || "", "false", false);
 	        const isLTR = compareString(el.dir, "ltr", true);
 	        const options = {
@@ -8746,6 +9357,7 @@ var laymic = (function (exports) {
 	            progressBarWidth,
 	            viewerDirection,
 	            isFirstSlideEmpty,
+	            isAppendEmptySlide,
 	            isInstantOpen,
 	            isVisiblePagination,
 	            isLTR,

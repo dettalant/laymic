@@ -1,18 +1,48 @@
 import { Swiper } from "swiper/js/swiper.esm";
 import LaymicStates from "./states";
+import LaymicPreference from "./preference";
+import LaymicZoom from "./zoom";
 import { ViewerElements, SwiperViewType } from "../interfaces/index";
 import DOMBuilder from "./builder";
 export default class LaymicSlider {
-    el: ViewerElements;
-    swiper: Swiper;
-    state: LaymicStates;
-    builder: DOMBuilder;
     viewType: SwiperViewType;
-    constructor(el: ViewerElements, builder: DOMBuilder, states: LaymicStates);
+    swiper: Swiper;
+    readonly el: ViewerElements;
+    readonly state: LaymicStates;
+    readonly builder: DOMBuilder;
+    readonly preference: LaymicPreference;
+    readonly zoom: LaymicZoom;
+    private _isViewerUIActive;
+    constructor(el: ViewerElements, builder: DOMBuilder, states: LaymicStates, preference: LaymicPreference, zoom: LaymicZoom);
+    /**
+     * ビューワー操作UIが現在表示されているかのboolを返す
+     * @return ビューワー操作UIが表示されているならtrue
+     */
+    readonly isViewerUIActive: boolean;
+    /**
+     * 現在表示中のページ数を表示する
+     * @return swiper.activeIndexを返す
+     */
     readonly activeIdx: number;
+    /**
+     * 横読み1p表示にて用いる設定値
+     * @return SwiperOptions
+     */
     private readonly swiper1pHorizViewConf;
+    /**
+     * 横読み2p表示にて用いる設定値
+     * @return SwiperOptions
+     */
     private readonly swiper2pHorizViewConf;
+    /**
+     * 縦読み表示にて用いる設定値
+     * @return SwiperOptions
+     */
     private readonly swiperVertViewConf;
+    /**
+     * 縦読み/横読み表示のトグル切り替えを行う
+     * 同時にビューワーUIを隠し、rootElへとフォーカスを移す
+     */
     toggleVerticalView(): void;
     /**
      * 縦読み表示へと切り替える
@@ -39,7 +69,7 @@ export default class LaymicSlider {
     /**
      * 画面幅に応じて、横読み時の
      * 「1p表示 <-> 2p表示」を切り替える
-     * @param isUpdateSwiper swiper.update()を行うか否か
+     * @param  isUpdateSwiper swiper.update()を行うか否か
      */
     switchSingleSlideState(isUpdateSwiper?: boolean): void;
     /**
@@ -47,14 +77,57 @@ export default class LaymicSlider {
      *
      * クリック判定基準についてはgetClickPoint()を参照のこと
      *
-     * @param  e  mouse event
+     * @param  e MouseEvent
      */
-    slideClickHandler(e: MouseEvent): void;
+    private slideClickHandler;
+    /**
+     * スライダー部分のクリックハンドラ
+     * swiperElとcontrollerEl両方にこのハンドラが用いられる
+     * @param  e MouseEvent
+     */
+    sliderClickHandler(e: MouseEvent): void;
+    sliderMouseDownHandler(e: MouseEvent): void;
+    /**
+     * スライダー部分のマウスアップハンドラ
+     * ホイールクリックはclickでは取れないようなので
+     * 苦肉の策としてmouseupを用いる
+     * @param  e MouseEvent
+     */
+    sliderMouseUpHandler(e: MouseEvent): void;
     /**
      * クリックポイント上にマウス座標が重なっていたならマウスホバー処理を行う
-     * @param  e  mouse event
+     * @param  e MouseEvent
      */
-    slideMouseHoverHandler(e: MouseEvent): void;
+    sliderMouseMoveHandler(e: MouseEvent): void;
+    /**
+     * スライダー部分でのマウスホイール操作ハンドラ
+     * @param  e WheelEvent
+     */
+    sliderWheelHandler(e: WheelEvent): void;
+    /**
+     * スライダー部分でのTouchStartハンドラ
+     * @param  e TouchEvent
+     */
+    sliderTouchStartHandler(e: TouchEvent): void;
+    /**
+     * スライダー部分でのTouchMoveハンドラ
+     * @param  e TouchEvent
+     */
+    sliderTouchMoveHandler(e: TouchEvent): void;
+    /**
+     * スライダー部分でのTouchEndハンドラ
+     */
+    sliderTouchEndHandler(): void;
+    /**
+     * 進捗バー部分でのClickハンドラ
+     * @param  e MouseEvent
+     */
+    progressbarClickHandler(e: MouseEvent): void;
+    /**
+     * orientationcange eventに登録する処理
+     */
+    orientationChange(): void;
+    slideTo(idx: number, speed?: number): void;
     /**
      * swiper各種イベントを無効化する
      */
@@ -65,20 +138,25 @@ export default class LaymicSlider {
     attachSwiperEvents(): void;
     /**
      * ビューワー操作UIをトグルさせる
+     * @param isMoveFocus trueであればrootElへとフォーカスを移す
      */
-    toggleViewerUI(): void;
+    toggleViewerUI(isMoveFocus?: boolean): void;
+    /**
+     * ビューワー操作UIを表示する
+     */
+    showViewerUI(): void;
     /**
      * ビューワー操作UIを非表示化する
+     * @param isMoveFocus trueであればrootElへとフォーカスを移す
      */
-    hideViewerUI(): void;
-    loadLazyImg(): void;
+    hideViewerUI(isMoveFocus?: boolean): void;
     /**
-     * orientationcange eventに登録する処理
+     * swiper内画像をlazyloadする
      */
-    orientationChange(): void;
-    slideTo(idx: number, speed?: number): void;
+    loadLazyImgs(): void;
     /**
      * 一つ前のスライドを表示する
+     *
      * swiper.slidePrev()には
      * 特定状況下で0番スライドに巻き戻る不具合が
      * 存在するようなので、slideTo()を用いて手動で動かしている
@@ -86,6 +164,10 @@ export default class LaymicSlider {
      * @param  speed アニメーション速度
      */
     slidePrev(speed?: number): void;
+    /**
+     * 一つ次のスライドを表示する
+     * @param  speed アニメーション速度
+     */
     slideNext(speed?: number): void;
     /**
     * viewType文字列を更新する。
@@ -140,6 +222,12 @@ export default class LaymicSlider {
      * どうあがいても非表示となる
      */
     private changePaginationVisibility;
-    private enableSwiperKeyboardEvent;
-    private disableSwiperKeyboardEvent;
+    /**
+     * 画像読み込み中にswiper.lazy.load()を呼び出した際に
+     * 画像読み込み中のまま止まるバグを回避するための関数
+     *
+     * lazyloading中を示すクラス名を
+     * 一旦削除してから読み込み直す
+     */
+    private forceLoadLazyImgs;
 }

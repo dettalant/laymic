@@ -8,16 +8,16 @@ import LaymicStates from "./states";
 import LaymicSlider from "./slider";
 import { ViewerPages, ViewerElements, LaymicPages, LaymicOptions } from "../interfaces/index";
 export default class Laymic {
-    el: ViewerElements;
-    state: LaymicStates;
-    initOptions: LaymicOptions;
-    preference: LaymicPreference;
-    thumbs: LaymicThumbnails;
-    help: LaymicHelp;
-    zoom: LaymicZoom;
-    cssVar: LaymicCSSVariables;
-    slider: LaymicSlider;
-    builder: DOMBuilder;
+    readonly el: ViewerElements;
+    readonly state: LaymicStates;
+    readonly initOptions: LaymicOptions;
+    readonly preference: LaymicPreference;
+    readonly thumbs: LaymicThumbnails;
+    readonly help: LaymicHelp;
+    readonly zoom: LaymicZoom;
+    readonly cssVar: LaymicCSSVariables;
+    readonly slider: LaymicSlider;
+    readonly builder: DOMBuilder;
     constructor(laymicPages: LaymicPages | ViewerPages, options?: LaymicOptions);
     /**
      * オーバーレイ表示を展開させる
@@ -28,6 +28,11 @@ export default class Laymic {
      * オーバーレイ表示を閉じる
      */
     close(): void;
+    /**
+     * LaymicPreferenceの値が更新された際に
+     * 発火するイベントのハンドラ
+     * @param  e CustomEvent。e.detailに変更されたプロパティ名を格納する
+     */
     private laymicPreferenceUpdateHandler;
     /**
      * 各種イベントの登録
@@ -78,6 +83,12 @@ export default class Laymic {
      * 最低限の見た目だけは整えるために分離
      */
     private fullscreenChange;
+    /**
+     * keydown時に呼び出されるハンドラ
+     * laymicでのキーボード操作をすべてこの関数でまかなう
+     * @param  e KeyboardEvent
+     */
+    private keydownHandler;
     /**
      * state内のrootElの要素サイズを更新する
      */

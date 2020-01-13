@@ -1,8 +1,8 @@
 import LaymicStates from "./states";
 import { ViewerElements } from "../interfaces/index";
 export default class LaymicCSSVariables {
-    el: ViewerElements;
-    state: LaymicStates;
+    readonly el: ViewerElements;
+    readonly state: LaymicStates;
     constructor(el: ViewerElements, state: LaymicStates);
     /**
      * laymicインスタンスの初期化時に行うcss変数登録まとめ関数
@@ -34,18 +34,14 @@ export default class LaymicCSSVariables {
     updatePageScaleRatio(): void;
     updateJsVh(): void;
     /**
-     * cssレイアウトに用いる各ページサイズを返す
-     * 正確な値ではないことに注意
-     */
-    /**
      * pageMaxSizeとpageRealSizeの差異から縮小率を返す
      * @return                        scaleに用いる縮小表示率
      */
     private getPageScaleRatio;
     /**
+     * cssレイアウトに用いる、
      * ページの実寸表示数値を出力する
-     * getPageSize()と比較して、厳密な計算を行っていることが特徴
-     * @return                        実寸のページサイズ
+     * @return 実寸のページサイズ
      */
-    private getPageRealSize;
+    private getPageSize;
 }

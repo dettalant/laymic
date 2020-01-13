@@ -1,6 +1,6 @@
 import { ViewerPages, ViewerIcons, ViewerUIButtons, IconData, LaymicClassNames, LaymicStateClassNames } from "../interfaces/index";
 export default class DOMBuilder {
-    icons: ViewerIcons;
+    readonly icons: ViewerIcons;
     readonly classNames: LaymicClassNames;
     readonly stateNames: LaymicStateClassNames;
     constructor(icons?: Partial<ViewerIcons>, classNames?: Partial<LaymicClassNames>, stateNames?: Partial<LaymicStateClassNames>);
@@ -26,7 +26,6 @@ export default class DOMBuilder {
      * @return       [コントローラー要素, コントローラー要素が内包するボタンオブジェクト]
      */
     createViewerController(): [HTMLElement, ViewerUIButtons];
-    createZoomWrapper(): HTMLElement;
     /**
      * use要素を内包したSVGElementを返す
      * @param  linkId    xlink:hrefに指定するid名
@@ -44,14 +43,15 @@ export default class DOMBuilder {
      * 空のdiv要素を返す
      * @return div要素
      */
-    createDiv(): HTMLDivElement;
+    createDiv(className?: string): HTMLDivElement;
     /**
      * 空のbutton要素を返す
      * @return button要素
      */
     createButton(className?: string): HTMLButtonElement;
-    createSpan(): HTMLSpanElement;
-    createParagraph(): HTMLParagraphElement;
+    private createUIButton;
+    createSpan(className?: string, textContent?: string): HTMLSpanElement;
+    createParagraph(className?: string, textContent?: string): HTMLParagraphElement;
     createEmptySlideEl(): HTMLElement;
     /**
      * ヘルプとして表示する部分を出力する
