@@ -3,5 +3,8 @@ jest.config.js
 rollup.config.js
 postcss.config.js
 Makefile.toml
+tsconfig.json
+tsconfig-build.json
 
 __tests__
+public
