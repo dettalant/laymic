@@ -1,6 +1,6 @@
 {
   "name": "@dettalant/laymic",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "main": "dist/laymic.js",
   "types": "dist/types/index.d.ts",
   "author": "dettalant <lilac@dettalant.com> (https://dettalant.com/)",
