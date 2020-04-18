@@ -15,7 +15,7 @@ laymic - overlay comic viewer
 
 ```javascript
 
-const { Laymic } = require("laymic"); 
+const { Laymic } = require("@dettalant/laymic"); 
 
 const pages = [
   "page0.png",
